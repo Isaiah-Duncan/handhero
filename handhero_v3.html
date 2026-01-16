@@ -736,7 +736,8 @@ const CONFIG = {
     RESET_HOLD_MS: 800,          // Must hold fist for this long
     
     // Isolation strictness
-    NON_TARGET_MAX_EXTENSION: 0.40,  // Non-target fingers must be curled this much
+    NON_TARGET_MAX_EXTENSION: 0.25, // allow "yellow" looseness for non-target fingers
+
 };
 
 // ============================================
@@ -1417,9 +1418,11 @@ function updateExecutePhase() {
         });
         
         if (!nonTargetsCurled) {
-            isolationValid = false;
-            accuracy = 0.2; // Penalty for non-isolated movement
-        } else if (targetExtended) {
+    isolationValid = false;
+    // Keep accuracy based on target fingers only.
+    // Non-target fingers simply block "completion" when they're clearly too extended.
+} else if (targetExtended) {
+
             // Calculate how well the target fingers are extended
             const targetScore = ex.targetFingers.map(i => {
                 const curl = state.curls[i];
