@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HandHero | Gentle Hand Therapy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Gentle, camera-based hand therapy exercises you can do at home." />
+
+  <!-- Tailwind (matches app stack) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Font (consistent with app) -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(135deg, #fdfbf7 0%, #e8f0e5 100%);
+      color: #4a5568;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-6">
+
+  <main class="w-full max-w-xl bg-white border border-[#e8e4df] rounded-3xl p-10 shadow-xl">
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="mx-auto mb-4 w-20 h-20 rounded-2xl flex items-center justify-center text-4xl"
+           style="background: linear-gradient(135deg, #87a878 0%, #6b9960 100%);">
+        🌱
+      </div>
+      <h1 class="text-3xl font-extrabold mb-2">HandHero</h1>
+      <p class="text-gray-500">Your gentle hand therapy companion</p>
+    </div>
+
+    <!-- Value proposition -->
+    <div class="space-y-4 text-center mb-10">
+      <p>
+        HandHero helps you practice gentle hand exercises using your camera for real-time guidance.
+      </p>
+      <p class="text-sm text-gray-500">
+        Designed for daily mobility support — not diagnosis or medical treatment.
+      </p>
+    </div>
+
+    <!-- Primary actions -->
+    <div class="space-y-4">
+      <a href="handhero_dashboard.html"
+         class="block w-full text-center py-4 rounded-2xl font-bold text-white transition"
+         style="background: linear-gradient(135deg, #87a878 0%, #6b9960 100%); box-shadow: 0 12px 28px -6px rgba(135,168,120,0.45);">
+        Continue to Dashboard
+      </a>
+
+      <p class="text-center text-sm text-gray-400">
+        You will be able to sign in or create an account on the next screen
+      </p>
+    </div>
+
+    <!-- Trust / disclaimer -->
+    <div class="mt-10 text-xs text-gray-400 text-center leading-relaxed">
+      <p class="mb-2">
+        HandHero is not a medical device and does not provide diagnosis or treatment.
+        Stop exercising if you feel pain or discomfort.
+      </p>
+      <p>
+        By continuing, you agree to our
+        <a href="#" class="underline">Terms</a> and
+        <a href="#" class="underline">Privacy Policy</a>.
+      </p>
+    </div>
+
+  </main>
+
+</body>
+</html>

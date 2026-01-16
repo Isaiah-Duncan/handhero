@@ -1,0 +1,2212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandHero | Your Hand Therapy Journey</title>
+    <meta name="description" content="Track your hand therapy progress with personalized exercises and insights">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-cream: #fdfbf7;
+            --color-warm-white: #faf8f5;
+            --color-sage: #87a878;
+            --color-sage-dark: #6b9960;
+            --color-sage-light: #a8c99b;
+            --color-sage-pale: #e8f0e5;
+            --color-coral: #e8998d;
+            --color-coral-light: #f2b5ad;
+            --color-coral-pale: #fef0ed;
+            --color-gold: #d4a574;
+            --color-gold-light: #e8c9a8;
+            --color-gold-pale: #fdf6ed;
+            --color-slate: #4a5568;
+            --color-slate-light: #718096;
+            --color-slate-pale: #a0aec0;
+            --color-success: #68b37a;
+            --color-warning: #e8b44d;
+            --color-danger: #d97b7b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            background-color: var(--color-cream); 
+            color: var(--color-slate); 
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Focus styles */
+        *:focus-visible {
+            outline: 3px solid var(--color-sage);
+            outline-offset: 2px;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d4d0c8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b8b4ac; }
+
+        /* ============================================
+           LAYOUT
+           ============================================ */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e8e4df;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 50;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid #f0ece6;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--color-slate);
+        }
+
+        .logo-sub {
+            font-size: 0.7rem;
+            color: var(--color-slate-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--color-slate-pale);
+            padding: 0 12px;
+            margin-bottom: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: var(--color-slate-light);
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: var(--color-sage-pale);
+            color: var(--color-slate);
+        }
+
+        .nav-item.active {
+            background: var(--color-sage-pale);
+            color: var(--color-sage-dark);
+        }
+
+        .nav-item-icon {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-item-badge {
+            margin-left: auto;
+            background: var(--color-coral);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid #f0ece6;
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-card:hover {
+            background: var(--color-warm-white);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-coral) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-weight: 700;
+            color: var(--color-slate);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-streak {
+            font-size: 0.75rem;
+            color: var(--color-slate-light);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 32px;
+            min-height: 100vh;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--color-slate);
+            margin-bottom: 4px;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--color-slate-light);
+        }
+
+        /* ============================================
+           CARDS
+           ============================================ */
+        .card {
+            background: white;
+            border: 1px solid #e8e4df;
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 24px -8px rgba(0,0,0,0.08);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-slate);
+        }
+
+        .card-action {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-sage);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .card-action:hover {
+            color: var(--color-sage-dark);
+        }
+
+        /* ============================================
+           STATS CARDS
+           ============================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e8e4df;
+            border-radius: 20px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .stat-card.sage::before { background: linear-gradient(90deg, var(--color-sage), var(--color-sage-light)); }
+        .stat-card.gold::before { background: linear-gradient(90deg, var(--color-gold), var(--color-gold-light)); }
+        .stat-card.coral::before { background: linear-gradient(90deg, var(--color-coral), var(--color-coral-light)); }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+
+        .stat-card.sage .stat-icon { background: var(--color-sage-pale); }
+        .stat-card.gold .stat-icon { background: var(--color-gold-pale); }
+        .stat-card.coral .stat-icon { background: var(--color-coral-pale); }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--color-slate);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--color-slate-light);
+            font-weight: 600;
+        }
+
+        .stat-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .stat-change.up {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .stat-change.down {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* ============================================
+           START SESSION CARD
+           ============================================ */
+        .start-session-card {
+            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+            border: none;
+            color: white;
+            padding: 32px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .start-session-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px -8px rgba(135, 168, 120, 0.4);
+        }
+
+        .start-session-icon {
+            width: 72px;
+            height: 72px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        .start-session-content {
+            flex: 1;
+        }
+
+        .start-session-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .start-session-subtitle {
+            opacity: 0.85;
+            font-size: 0.95rem;
+        }
+
+        .start-session-arrow {
+            font-size: 1.5rem;
+            opacity: 0.7;
+        }
+
+        /* ============================================
+           WEEKLY CHART
+           ============================================ */
+        .weekly-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 120px;
+            gap: 12px;
+            padding: 20px 0;
+        }
+
+        .chart-day {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-bar-container {
+            width: 100%;
+            height: 80px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .chart-bar {
+            width: 100%;
+            max-width: 32px;
+            border-radius: 8px 8px 4px 4px;
+            background: var(--color-sage-pale);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .chart-bar.active {
+            background: linear-gradient(180deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+        }
+
+        .chart-bar.today {
+            box-shadow: 0 0 0 3px var(--color-gold);
+        }
+
+        .chart-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--color-slate-light);
+        }
+
+        .chart-label.today {
+            color: var(--color-gold);
+        }
+
+        /* ============================================
+           RECENT SESSIONS
+           ============================================ */
+        .session-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .session-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--color-warm-white);
+            border-radius: 14px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .session-item:hover {
+            background: var(--color-sage-pale);
+        }
+
+        .session-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .session-icon.completed {
+            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+        }
+
+        .session-icon.partial {
+            background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-light) 100%);
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .session-title {
+            font-weight: 700;
+            color: var(--color-slate);
+            margin-bottom: 2px;
+        }
+
+        .session-meta {
+            font-size: 0.8rem;
+            color: var(--color-slate-light);
+        }
+
+        .session-grade {
+            font-size: 1.1rem;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 10px;
+        }
+
+        .session-grade.a { background: #d4edda; color: #155724; }
+        .session-grade.b { background: #fff3cd; color: #856404; }
+        .session-grade.c { background: #ffe0b2; color: #e65100; }
+
+        /* ============================================
+           EXERCISE LIBRARY
+           ============================================ */
+        .exercise-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .exercise-card {
+            background: white;
+            border: 1px solid #e8e4df;
+            border-radius: 20px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .exercise-card:hover {
+            border-color: var(--color-sage);
+            box-shadow: 0 8px 24px -8px rgba(135, 168, 120, 0.2);
+        }
+
+        .exercise-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .exercise-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .exercise-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            background: var(--color-sage-pale);
+        }
+
+        .exercise-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-slate);
+            margin-bottom: 4px;
+        }
+
+        .exercise-category {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-sage);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .exercise-desc {
+            font-size: 0.9rem;
+            color: var(--color-slate-light);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .exercise-stats {
+            display: flex;
+            gap: 16px;
+        }
+
+        .exercise-stat {
+            font-size: 0.8rem;
+        }
+
+        .exercise-stat-value {
+            font-weight: 700;
+            color: var(--color-slate);
+        }
+
+        .exercise-stat-label {
+            color: var(--color-slate-light);
+        }
+
+        /* ============================================
+           PROFILE PAGE
+           ============================================ */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .profile-avatar-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-coral) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            position: relative;
+        }
+
+        .profile-avatar-edit {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 32px;
+            height: 32px;
+            background: white;
+            border: 2px solid var(--color-cream);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .profile-avatar-edit:hover {
+            background: var(--color-sage-pale);
+        }
+
+        .profile-info h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--color-slate);
+            margin-bottom: 4px;
+        }
+
+        .profile-info p {
+            color: var(--color-slate-light);
+        }
+
+        .profile-section {
+            margin-bottom: 32px;
+        }
+
+        .profile-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--color-slate);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-slate-light);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e8e4df;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .form-input:focus {
+            border-color: var(--color-sage);
+            outline: none;
+        }
+
+        .form-input::placeholder {
+            color: var(--color-slate-pale);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .avatar-picker {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .avatar-option {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+            background: var(--color-warm-white);
+        }
+
+        .avatar-option:hover {
+            background: var(--color-sage-pale);
+        }
+
+        .avatar-option.selected {
+            border-color: var(--color-sage);
+            background: var(--color-sage-pale);
+        }
+
+        .hand-selector {
+            display: flex;
+            gap: 12px;
+        }
+
+        .hand-option {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e8e4df;
+            border-radius: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hand-option:hover {
+            border-color: var(--color-sage-light);
+        }
+
+        .hand-option.selected {
+            border-color: var(--color-sage);
+            background: var(--color-sage-pale);
+        }
+
+        .hand-option-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .hand-option-label {
+            font-weight: 700;
+            color: var(--color-slate);
+        }
+
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+            color: white;
+            box-shadow: 0 8px 24px -4px rgba(135, 168, 120, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -4px rgba(135, 168, 120, 0.5);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--color-slate);
+            border: 2px solid #e8e4df;
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-warm-white);
+            border-color: var(--color-sage);
+        }
+
+        .btn-danger {
+            background: var(--color-coral-pale);
+            color: var(--color-danger);
+        }
+
+        .btn-danger:hover {
+            background: #fde8e8;
+        }
+
+        /* ============================================
+           AUTH SCREENS
+           ============================================ */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--color-cream) 0%, var(--color-sage-pale) 100%);
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 28px;
+            padding: 48px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 20px 60px -10px rgba(0,0,0,0.1);
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-logo-icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 16px;
+        }
+
+        .auth-logo h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--color-slate);
+        }
+
+        .auth-logo p {
+            color: var(--color-slate-light);
+            margin-top: 4px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--color-warm-white);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 28px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--color-slate-light);
+        }
+
+        .auth-tab.active {
+            background: white;
+            color: var(--color-sage);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+            color: var(--color-slate-pale);
+            font-size: 0.85rem;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e8e4df;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: var(--color-slate-light);
+        }
+
+        .auth-footer a {
+            color: var(--color-sage);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ============================================
+           EMPTY STATES
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-slate);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-desc {
+            color: var(--color-slate-light);
+            margin-bottom: 24px;
+        }
+
+        /* ============================================
+           PROGRESS PAGE
+           ============================================ */
+        .progress-overview {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .progress-chart-card {
+            height: 300px;
+        }
+
+        .monthly-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .calendar-day.active {
+            background: var(--color-sage);
+            color: white;
+        }
+
+        .calendar-day.partial {
+            background: var(--color-sage-light);
+            color: white;
+        }
+
+        .calendar-day.empty {
+            background: var(--color-warm-white);
+            color: var(--color-slate-pale);
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: white;
+            border-bottom: 1px solid #e8e4df;
+            padding: 0 16px;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 40;
+        }
+
+        .mobile-menu-btn {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--color-slate);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 45;
+        }
+
+        @media (max-width: 1024px) {
+            .progress-overview {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-header {
+                display: flex;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.open {
+                display: block;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 80px 16px 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-card {
+                padding: 32px 24px;
+            }
+        }
+
+        /* ============================================
+           UTILITIES
+           ============================================ */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .mt-4 { margin-top: 16px; }
+        .mb-4 { margin-bottom: 16px; }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================
+         AUTH SCREEN
+         ============================================ -->
+    <div id="auth-screen" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="auth-logo-icon">🌱</div>
+                <h1>HandHero</h1>
+                <p>Your hand therapy journey starts here</p>
+            </div>
+
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-tab="login">Sign In</div>
+                <div class="auth-tab" data-tab="signup">Create Account</div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="login-email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                <div class="auth-footer">
+                    <a href="#" onclick="showForgotPassword()">Forgot password?</a>
+                </div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label">Your Name</label>
+                    <input type="text" class="form-input" id="signup-name" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="signup-email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="signup-password" placeholder="Create a password" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+                <p style="font-size: 0.8rem; color: var(--color-slate-light); margin-top: 16px; text-align: center;">
+                    By creating an account, you agree to our Terms of Service and Privacy Policy.
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================
+         MAIN APP
+         ============================================ -->
+    <div id="app-screen" class="app-container hidden">
+        <!-- Mobile Header -->
+        <header class="mobile-header">
+            <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+            <div class="logo">
+                <span class="logo-text">HandHero</span>
+            </div>
+            <div style="width: 44px;"></div>
+        </header>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🌱</div>
+                    <div>
+                        <div class="logo-text">HandHero</div>
+                        <div class="logo-sub">Therapy Companion</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Menu</div>
+                    <a href="#" class="nav-item active" data-page="dashboard">
+                        <span class="nav-item-icon">🏠</span>
+                        Dashboard
+                    </a>
+                    <a href="#" class="nav-item" data-page="exercises">
+                        <span class="nav-item-icon">✋</span>
+                        Exercises
+                    </a>
+                    <a href="#" class="nav-item" data-page="progress">
+                        <span class="nav-item-icon">📊</span>
+                        Progress
+                    </a>
+                    <a href="#" class="nav-item" data-page="history">
+                        <span class="nav-item-icon">📅</span>
+                        History
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Account</div>
+                    <a href="#" class="nav-item" data-page="profile">
+                        <span class="nav-item-icon">👤</span>
+                        Profile
+                    </a>
+                    <a href="#" class="nav-item" data-page="settings">
+                        <span class="nav-item-icon">⚙️</span>
+                        Settings
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-card" onclick="navigateTo('profile')">
+                    <div class="user-avatar" id="sidebar-avatar">👤</div>
+                    <div class="user-info">
+                        <div class="user-name" id="sidebar-name">User</div>
+                        <div class="user-streak">🔥 <span id="sidebar-streak">0</span> day streak</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="page-dashboard" class="page fade-in">
+                <div class="page-header">
+                    <h1 class="page-title">Welcome back, <span id="dashboard-name">User</span>!</h1>
+                    <p class="page-subtitle" id="dashboard-greeting">Ready for today's session?</p>
+                </div>
+
+                <!-- Start Session Card -->
+                <div class="card start-session-card mb-4" onclick="startSession()">
+                    <div class="start-session-icon">▶️</div>
+                    <div class="start-session-content">
+                        <div class="start-session-title">Start Today's Session</div>
+                        <div class="start-session-subtitle">6 exercises • ~5 minutes</div>
+                    </div>
+                    <div class="start-session-arrow">→</div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card sage">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-value" id="stat-streak">0</div>
+                        <div class="stat-label">Day Streak</div>
+                        <div class="stat-change up" id="streak-change">↑ Keep it going!</div>
+                    </div>
+                    <div class="stat-card gold">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="stat-sessions">0</div>
+                        <div class="stat-label">Total Sessions</div>
+                    </div>
+                    <div class="stat-card coral">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-value" id="stat-exercises">0</div>
+                        <div class="stat-label">Exercises Done</div>
+                    </div>
+                </div>
+
+                <!-- Two Column Layout -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <!-- Weekly Activity -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">This Week</div>
+                            <div class="card-action" onclick="navigateTo('progress')">View All</div>
+                        </div>
+                        <div class="weekly-chart" id="weekly-chart">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Recent Sessions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Recent Sessions</div>
+                            <div class="card-action" onclick="navigateTo('history')">View All</div>
+                        </div>
+                        <div class="session-list" id="recent-sessions">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exercises Page -->
+            <div id="page-exercises" class="page hidden fade-in">
+                <div class="page-header">
+                    <h1 class="page-title">Exercise Library</h1>
+                    <p class="page-subtitle">Practice individual exercises or start a full session</p>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                    <button class="btn btn-primary" onclick="startSession()">▶️ Start Full Session</button>
+                    <button class="btn btn-secondary">🎯 Custom Workout</button>
+                </div>
+
+                <div class="exercise-grid" id="exercise-grid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Progress Page -->
+            <div id="page-progress" class="page hidden fade-in">
+                <div class="page-header">
+                    <h1 class="page-title">Your Progress</h1>
+                    <p class="page-subtitle">Track your improvement over time</p>
+                </div>
+
+                <div class="progress-overview">
+                    <div class="card progress-chart-card">
+                        <div class="card-header">
+                            <div class="card-title">Accuracy Over Time</div>
+                            <select style="padding: 8px 12px; border-radius: 8px; border: 1px solid #e8e4df;">
+                                <option>Last 7 Days</option>
+                                <option>Last 30 Days</option>
+                                <option>All Time</option>
+                            </select>
+                        </div>
+                        <div id="accuracy-chart" style="height: 200px; display: flex; align-items: center; justify-content: center; color: var(--color-slate-light);">
+                            Chart visualization would go here
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Activity Calendar</div>
+                        </div>
+                        <div class="monthly-calendar" id="activity-calendar">
+                            <!-- Generated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Milestones -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🏆 Milestones</div>
+                    </div>
+                    <div id="milestones-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px;">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Page -->
+            <div id="page-history" class="page hidden fade-in">
+                <div class="page-header">
+                    <h1 class="page-title">Session History</h1>
+                    <p class="page-subtitle">Review your past sessions</p>
+                </div>
+
+                <div class="card">
+                    <div class="session-list" id="history-list">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Page -->
+            <div id="page-profile" class="page hidden fade-in">
+                <div class="page-header">
+                    <h1 class="page-title">Your Profile</h1>
+                    <p class="page-subtitle">Manage your account and preferences</p>
+                </div>
+
+                <div class="card" style="max-width: 600px;">
+                    <div class="profile-header">
+                        <div class="profile-avatar-large" id="profile-avatar">👤</div>
+                        <div class="profile-info">
+                            <h2 id="profile-name">User</h2>
+                            <p id="profile-email">user@example.com</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="profile-section-title">👤 Personal Info</div>
+                        <div class="form-group">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-input" id="edit-name" placeholder="Your name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Choose Your Avatar</label>
+                            <div class="avatar-picker" id="avatar-picker">
+                                <!-- Generated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="profile-section-title">✋ Therapy Settings</div>
+                        <div class="form-group">
+                            <label class="form-label">Which hand are you treating?</label>
+                            <div class="hand-selector" id="hand-selector">
+                                <div class="hand-option" data-hand="left">
+                                    <div class="hand-option-icon">🤚</div>
+                                    <div class="hand-option-label">Left Hand</div>
+                                </div>
+                                <div class="hand-option" data-hand="right">
+                                    <div class="hand-option-icon">✋</div>
+                                    <div class="hand-option-label">Right Hand</div>
+                                </div>
+                                <div class="hand-option" data-hand="both">
+                                    <div class="hand-option-icon">🙌</div>
+                                    <div class="hand-option-label">Both</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Therapy Goal (Optional)</label>
+                            <input type="text" class="form-input" id="edit-goal" placeholder="e.g., Recovery from carpal tunnel surgery">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+                        <button class="btn btn-danger" onclick="logout()">Sign Out</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="page-settings" class="page hidden fade-in">
+                <div class="page-header">
+                    <h1 class="page-title">Settings</h1>
+                    <p class="page-subtitle">Customize your experience</p>
+                </div>
+
+                <div class="card" style="max-width: 600px;">
+                    <div class="profile-section">
+                        <div class="profile-section-title">🔔 Notifications</div>
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                <input type="checkbox" id="setting-reminders" style="width: 20px; height: 20px; accent-color: var(--color-sage);">
+                                <span>Daily exercise reminders</span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                <input type="checkbox" id="setting-audio" checked style="width: 20px; height: 20px; accent-color: var(--color-sage);">
+                                <span>Voice guidance during exercises</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="profile-section-title">🎯 Exercise Preferences</div>
+                        <div class="form-group">
+                            <label class="form-label">Session Length</label>
+                            <select class="form-input" id="setting-length">
+                                <option value="4">Quick (4 exercises)</option>
+                                <option value="6" selected>Standard (6 exercises)</option>
+                                <option value="8">Extended (8 exercises)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Difficulty</label>
+                            <select class="form-input" id="setting-difficulty">
+                                <option value="easy">Easy - More forgiving</option>
+                                <option value="normal" selected>Normal - Balanced</option>
+                                <option value="hard">Hard - More precise</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="profile-section-title">📊 Data</div>
+                        <button class="btn btn-secondary" onclick="exportAllData()">📥 Export All Data</button>
+                        <button class="btn btn-danger mt-4" onclick="clearAllData()">🗑️ Clear All Data</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    // ============================================
+    // DATA STORE (localStorage-backed)
+    // ============================================
+    const Store = {
+        get(key, defaultVal = null) {
+            try {
+                const val = localStorage.getItem('handhero_' + key);
+                return val ? JSON.parse(val) : defaultVal;
+            } catch { return defaultVal; }
+        },
+        set(key, val) {
+            try {
+                localStorage.setItem('handhero_' + key, JSON.stringify(val));
+            } catch(e) { console.error('Storage error:', e); }
+        },
+        remove(key) {
+            localStorage.removeItem('handhero_' + key);
+        }
+    };
+
+    // ============================================
+    // USER STATE
+    // ============================================
+    let currentUser = null;
+
+    function getDefaultUser() {
+        return {
+            id: Date.now().toString(),
+            name: '',
+            email: '',
+            avatar: '👤',
+            hand: 'right',
+            goal: '',
+            createdAt: new Date().toISOString(),
+            settings: {
+                reminders: false,
+                audio: true,
+                sessionLength: 6,
+                difficulty: 'normal'
+            }
+        };
+    }
+
+    function getDefaultStats() {
+        return {
+            totalSessions: 0,
+            totalExercises: 0,
+            currentStreak: 0,
+            longestStreak: 0,
+            lastSessionDate: null,
+            weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
+            sessions: []
+        };
+    }
+
+    // ============================================
+    // AUTH FUNCTIONS
+    // ============================================
+    function initAuth() {
+        // Check if user is logged in
+        currentUser = Store.get('currentUser');
+        if (currentUser) {
+            showApp();
+        } else {
+            showAuth();
+        }
+
+        // Auth tabs
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-form').classList.add('active');
+            });
+        });
+
+        // Login form
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            // Check stored users
+            const users = Store.get('users', {});
+            if (users[email] && users[email].password === password) {
+                currentUser = users[email];
+                delete currentUser.password;
+                Store.set('currentUser', currentUser);
+                showApp();
+            } else {
+                alert('Invalid email or password. Try creating an account!');
+            }
+        });
+
+        // Signup form
+        document.getElementById('signup-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            
+            const users = Store.get('users', {});
+            if (users[email]) {
+                alert('An account with this email already exists.');
+                return;
+            }
+
+            // Create new user
+            currentUser = getDefaultUser();
+            currentUser.name = name;
+            currentUser.email = email;
+
+            // Store user with password
+            users[email] = { ...currentUser, password };
+            Store.set('users', users);
+
+            // Store current user (without password)
+            Store.set('currentUser', currentUser);
+
+            // Initialize stats
+            Store.set('stats_' + currentUser.id, getDefaultStats());
+
+            showApp();
+        });
+    }
+
+    function showAuth() {
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('app-screen').classList.add('hidden');
+    }
+
+    function showApp() {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
+        initDashboard();
+    }
+
+    function logout() {
+        if (confirm('Are you sure you want to sign out?')) {
+            Store.remove('currentUser');
+            currentUser = null;
+            showAuth();
+        }
+    }
+
+    // ============================================
+    // DASHBOARD
+    // ============================================
+    function initDashboard() {
+        updateUserDisplay();
+        updateStats();
+        renderWeeklyChart();
+        renderRecentSessions();
+        renderExerciseLibrary();
+        renderActivityCalendar();
+        renderMilestones();
+        renderHistoryList();
+        initProfile();
+    }
+
+    function updateUserDisplay() {
+        if (!currentUser) return;
+        
+        const firstName = currentUser.name.split(' ')[0] || 'there';
+        document.getElementById('dashboard-name').textContent = firstName;
+        document.getElementById('sidebar-name').textContent = currentUser.name || 'User';
+        document.getElementById('sidebar-avatar').textContent = currentUser.avatar;
+        document.getElementById('profile-name').textContent = currentUser.name;
+        document.getElementById('profile-email').textContent = currentUser.email;
+        document.getElementById('profile-avatar').textContent = currentUser.avatar;
+
+        // Greeting based on time
+        const hour = new Date().getHours();
+        let greeting;
+        if (hour < 12) greeting = 'Good morning! Ready to start your day with some exercises?';
+        else if (hour < 17) greeting = 'Good afternoon! Time for your hand therapy session.';
+        else greeting = 'Good evening! Let\'s end the day with some gentle exercises.';
+        document.getElementById('dashboard-greeting').textContent = greeting;
+    }
+
+    function updateStats() {
+        if (!currentUser) return;
+        
+        const stats = Store.get('stats_' + currentUser.id, getDefaultStats());
+        
+        // Update streak based on last session
+        if (stats.lastSessionDate) {
+            const lastDate = new Date(stats.lastSessionDate);
+            const today = new Date();
+            const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 1) {
+                stats.currentStreak = 0; // Streak broken
+            }
+        }
+        
+        document.getElementById('stat-streak').textContent = stats.currentStreak;
+        document.getElementById('sidebar-streak').textContent = stats.currentStreak;
+        document.getElementById('stat-sessions').textContent = stats.totalSessions;
+        document.getElementById('stat-exercises').textContent = stats.totalExercises;
+
+        // Streak change indicator
+        const changeEl = document.getElementById('streak-change');
+        if (stats.currentStreak === 0) {
+            changeEl.className = 'stat-change down';
+            changeEl.textContent = 'Start your streak!';
+        } else if (stats.currentStreak >= stats.longestStreak) {
+            changeEl.className = 'stat-change up';
+            changeEl.textContent = '🎉 Personal best!';
+        } else {
+            changeEl.className = 'stat-change up';
+            changeEl.textContent = '↑ Keep it going!';
+        }
+    }
+
+    function renderWeeklyChart() {
+        if (!currentUser) return;
+        
+        const stats = Store.get('stats_' + currentUser.id, getDefaultStats());
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const today = new Date().getDay();
+        const todayIndex = today === 0 ? 6 : today - 1; // Adjust for Monday start
+
+        const container = document.getElementById('weekly-chart');
+        container.innerHTML = '';
+
+        // Calculate weekly activity from sessions
+        const weekActivity = [0, 0, 0, 0, 0, 0, 0];
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        
+        stats.sessions.forEach(session => {
+            const sessionDate = new Date(session.date);
+            if (sessionDate >= weekAgo) {
+                const dayIdx = sessionDate.getDay();
+                const idx = dayIdx === 0 ? 6 : dayIdx - 1;
+                weekActivity[idx] += session.completed;
+            }
+        });
+
+        const maxVal = Math.max(...weekActivity, 1);
+
+        days.forEach((day, i) => {
+            const height = weekActivity[i] > 0 ? Math.max(15, (weekActivity[i] / maxVal) * 100) : 8;
+            const isToday = i === todayIndex;
+            const isActive = weekActivity[i] > 0;
+
+            container.innerHTML += `
+                <div class="chart-day">
+                    <div class="chart-bar-container">
+                        <div class="chart-bar ${isActive ? 'active' : ''} ${isToday ? 'today' : ''}" 
+                             style="height: ${height}%;"
+                             title="${weekActivity[i]} exercises"></div>
+                    </div>
+                    <div class="chart-label ${isToday ? 'today' : ''}">${day}</div>
+                </div>
+            `;
+        });
+    }
+
+    function renderRecentSessions() {
+        if (!currentUser) return;
+        
+        const stats = Store.get('stats_' + currentUser.id, getDefaultStats());
+        const container = document.getElementById('recent-sessions');
+        
+        if (stats.sessions.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div class="empty-state-title">No sessions yet</div>
+                    <div class="empty-state-desc">Complete your first session to see it here!</div>
+                </div>
+            `;
+            return;
+        }
+
+        const recent = stats.sessions.slice(-3).reverse();
+        container.innerHTML = recent.map(session => {
+            const date = new Date(session.date);
+            const timeAgo = getTimeAgo(date);
+            const gradeClass = session.grade.startsWith('A') ? 'a' : session.grade.startsWith('B') ? 'b' : 'c';
+            
+            return `
+                <div class="session-item">
+                    <div class="session-icon ${session.completed >= 6 ? 'completed' : 'partial'}">
+                        ${session.completed >= 6 ? '✓' : '◐'}
+                    </div>
+                    <div class="session-info">
+                        <div class="session-title">${session.completed} exercises completed</div>
+                        <div class="session-meta">${timeAgo} • ${session.duration}</div>
+                    </div>
+                    <div class="session-grade ${gradeClass}">${session.grade}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // ============================================
+    // EXERCISE LIBRARY
+    // ============================================
+    const EXERCISES = [
+        { id: 'starfish', name: 'Starfish', icon: '🖐️', category: 'Stretching', desc: 'Spread all fingers wide apart to improve extension.', difficulty: 1, bestScore: 0 },
+        { id: 'fist', name: 'Gentle Fist', icon: '✊', category: 'Strength', desc: 'Make a soft fist to work on finger flexion.', difficulty: 1, bestScore: 0 },
+        { id: 'thumbs', name: 'Thumbs Up', icon: '👍', category: 'Dexterity', desc: 'Extend thumb while curling other fingers.', difficulty: 2, bestScore: 0 },
+        { id: 'pointer', name: 'Pointer', icon: '☝️', category: 'Isolation', desc: 'Point with index finger only.', difficulty: 2, bestScore: 0 },
+        { id: 'ok', name: 'OK Sign', icon: '👌', category: 'Precision', desc: 'Touch thumb tip to index finger tip.', difficulty: 2, bestScore: 0 },
+        { id: 'peace', name: 'Peace Sign', icon: '✌️', category: 'Coordination', desc: 'Extend index and middle fingers together.', difficulty: 3, bestScore: 0 },
+        { id: 'pinky', name: 'Pinky Wave', icon: '🤙', category: 'Isolation', desc: 'Extend only the pinky finger.', difficulty: 3, bestScore: 0 },
+        { id: 'rock', name: 'Rock On', icon: '🤘', category: 'Advanced', desc: 'Extend index and pinky while curling others.', difficulty: 4, bestScore: 0 },
+    ];
+
+    function renderExerciseLibrary() {
+        const container = document.getElementById('exercise-grid');
+        const stats = Store.get('stats_' + currentUser?.id, getDefaultStats());
+
+        // Calculate best scores from session history
+        const bestScores = {};
+        stats.sessions.forEach(session => {
+            if (session.exercises) {
+                session.exercises.forEach(ex => {
+                    if (!bestScores[ex.id] || ex.accuracy > bestScores[ex.id]) {
+                        bestScores[ex.id] = ex.accuracy;
+                    }
+                });
+            }
+        });
+
+        container.innerHTML = EXERCISES.map(ex => {
+            const best = bestScores[ex.id] || 0;
+            const difficultyStars = '⭐'.repeat(ex.difficulty);
+            
+            return `
+                <div class="exercise-card" onclick="practiceExercise('${ex.id}')">
+                    <div class="exercise-header">
+                        <div class="exercise-icon">${ex.icon}</div>
+                        <div>
+                            <div class="exercise-title">${ex.name}</div>
+                            <div class="exercise-category">${ex.category}</div>
+                        </div>
+                    </div>
+                    <div class="exercise-desc">${ex.desc}</div>
+                    <div class="exercise-stats">
+                        <div class="exercise-stat">
+                            <span class="exercise-stat-value">${best > 0 ? best + '%' : '—'}</span>
+                            <span class="exercise-stat-label"> best</span>
+                        </div>
+                        <div class="exercise-stat">
+                            <span class="exercise-stat-value">${difficultyStars}</span>
+                            <span class="exercise-stat-label"> difficulty</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function practiceExercise(exerciseId) {
+        // Would open the session with just this exercise
+        alert(`Practice mode for "${exerciseId}" coming soon! For now, start a full session.`);
+    }
+
+    // ============================================
+    // PROGRESS & CALENDAR
+    // ============================================
+    function renderActivityCalendar() {
+        if (!currentUser) return;
+        
+        const stats = Store.get('stats_' + currentUser.id, getDefaultStats());
+        const container = document.getElementById('activity-calendar');
+        
+        // Build a map of dates with activity
+        const activityMap = {};
+        stats.sessions.forEach(session => {
+            const dateKey = new Date(session.date).toDateString();
+            activityMap[dateKey] = (activityMap[dateKey] || 0) + session.completed;
+        });
+
+        // Generate last 35 days (5 weeks)
+        const days = [];
+        for (let i = 34; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateKey = date.toDateString();
+            const activity = activityMap[dateKey] || 0;
+            
+            let cls = 'empty';
+            if (activity >= 6) cls = 'active';
+            else if (activity > 0) cls = 'partial';
+            
+            days.push(`<div class="calendar-day ${cls}" title="${date.toLocaleDateString()}: ${activity} exercises">${date.getDate()}</div>`);
+        }
+
+        container.innerHTML = days.join('');
+    }
+
+    function renderMilestones() {
+        if (!currentUser) return;
+        
+        const stats = Store.get('stats_' + currentUser.id, getDefaultStats());
+        const container = document.getElementById('milestones-grid');
+
+        const milestones = [
+            { icon: '🌟', name: 'First Session', desc: 'Complete your first session', achieved: stats.totalSessions >= 1 },
+            { icon: '🔥', name: '3 Day Streak', desc: 'Exercise 3 days in a row', achieved: stats.longestStreak >= 3 },
+            { icon: '💪', name: '10 Sessions', desc: 'Complete 10 total sessions', achieved: stats.totalSessions >= 10 },
+            { icon: '🏆', name: '7 Day Streak', desc: 'Exercise every day for a week', achieved: stats.longestStreak >= 7 },
+            { icon: '🎯', name: '100 Exercises', desc: 'Complete 100 total exercises', achieved: stats.totalExercises >= 100 },
+            { icon: '👑', name: '30 Day Streak', desc: 'Exercise every day for a month', achieved: stats.longestStreak >= 30 },
+        ];
+
+        container.innerHTML = milestones.map(m => `
+            <div class="card" style="padding: 16px; text-align: center; opacity: ${m.achieved ? 1 : 0.5};">
+                <div style="font-size: 2rem; margin-bottom: 8px;">${m.icon}</div>
+                <div style="font-weight: 700; color: var(--color-slate);">${m.name}</div>
+                <div style="font-size: 0.75rem; color: var(--color-slate-light);">${m.desc}</div>
+                ${m.achieved ? '<div style="font-size: 0.7rem; color: var(--color-success); margin-top: 8px;">✓ Achieved</div>' : ''}
+            </div>
+        `).join('');
+    }
+
+    // ============================================
+    // HISTORY
+    // ============================================
+    function renderHistoryList() {
+        if (!currentUser) return;
+        
+        const stats = Store.get('stats_' + currentUser.id, getDefaultStats());
+        const container = document.getElementById('history-list');
+        
+        if (stats.sessions.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div class="empty-state-title">No sessions yet</div>
+                    <div class="empty-state-desc">Your session history will appear here.</div>
+                </div>
+            `;
+            return;
+        }
+
+        const sessions = [...stats.sessions].reverse();
+        container.innerHTML = sessions.map(session => {
+            const date = new Date(session.date);
+            const gradeClass = session.grade.startsWith('A') ? 'a' : session.grade.startsWith('B') ? 'b' : 'c';
+            
+            return `
+                <div class="session-item">
+                    <div class="session-icon ${session.completed >= 6 ? 'completed' : 'partial'}">
+                        ${session.completed >= 6 ? '✓' : '◐'}
+                    </div>
+                    <div class="session-info">
+                        <div class="session-title">${session.completed} exercises completed</div>
+                        <div class="session-meta">${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • ${session.duration}</div>
+                    </div>
+                    <div class="session-grade ${gradeClass}">${session.grade}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // ============================================
+    // PROFILE
+    // ============================================
+    const AVATARS = ['👤', '😊', '🌟', '💪', '🌸', '🦋', '🌈', '🎯', '🔥', '✨'];
+
+    function initProfile() {
+        if (!currentUser) return;
+
+        // Avatar picker
+        const pickerContainer = document.getElementById('avatar-picker');
+        pickerContainer.innerHTML = AVATARS.map(a => `
+            <div class="avatar-option ${currentUser.avatar === a ? 'selected' : ''}" data-avatar="${a}">${a}</div>
+        `).join('');
+
+        pickerContainer.querySelectorAll('.avatar-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                pickerContainer.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+            });
+        });
+
+        // Hand selector
+        const handSelector = document.getElementById('hand-selector');
+        handSelector.querySelectorAll('.hand-option').forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.hand === currentUser.hand);
+            opt.addEventListener('click', () => {
+                handSelector.querySelectorAll('.hand-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+            });
+        });
+
+        // Fill form
+        document.getElementById('edit-name').value = currentUser.name;
+        document.getElementById('edit-goal').value = currentUser.goal || '';
+    }
+
+    function saveProfile() {
+        const name = document.getElementById('edit-name').value;
+        const goal = document.getElementById('edit-goal').value;
+        const avatar = document.querySelector('.avatar-option.selected')?.dataset?.avatar || '👤';
+        const hand = document.querySelector('.hand-option.selected')?.dataset?.hand || 'right';
+
+        currentUser.name = name;
+        currentUser.goal = goal;
+        currentUser.avatar = avatar;
+        currentUser.hand = hand;
+
+        // Update stored user
+        const users = Store.get('users', {});
+        if (users[currentUser.email]) {
+            const password = users[currentUser.email].password;
+            users[currentUser.email] = { ...currentUser, password };
+            Store.set('users', users);
+        }
+
+        Store.set('currentUser', currentUser);
+        updateUserDisplay();
+        alert('Profile saved!');
+    }
+
+    // ============================================
+    // NAVIGATION
+    // ============================================
+    function navigateTo(pageName) {
+        // Update nav
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.page === pageName);
+        });
+
+        // Show page
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.add('hidden');
+        });
+        document.getElementById('page-' + pageName)?.classList.remove('hidden');
+
+        // Close mobile sidebar
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+
+    // Setup nav clicks
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (item.dataset.page) {
+                navigateTo(item.dataset.page);
+            }
+        });
+    });
+
+    // ============================================
+    // SESSION INTEGRATION
+    // ============================================
+    function startSession() {
+        // Save current user ID to localStorage so session can access it
+        Store.set('activeUserId', currentUser.id);
+        
+        // Open session in new tab or redirect
+        // For now, we'll simulate opening the session file
+        window.location.href = 'handhero_v3.html';
+    }
+
+    // Function to be called when session completes (from session page)
+    function recordSession(sessionData) {
+        if (!currentUser) return;
+        
+        const stats = Store.get('stats_' + currentUser.id, getDefaultStats());
+        
+        // Add session
+        stats.sessions.push({
+            date: new Date().toISOString(),
+            completed: sessionData.completed,
+            duration: sessionData.duration,
+            grade: sessionData.grade,
+            exercises: sessionData.exercises || []
+        });
+
+        // Update totals
+        stats.totalSessions++;
+        stats.totalExercises += sessionData.completed;
+
+        // Update streak
+        const today = new Date().toDateString();
+        const lastDate = stats.lastSessionDate ? new Date(stats.lastSessionDate).toDateString() : null;
+        
+        if (lastDate !== today) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (lastDate === yesterday.toDateString()) {
+                stats.currentStreak++;
+            } else if (lastDate !== today) {
+                stats.currentStreak = 1;
+            }
+            
+            if (stats.currentStreak > stats.longestStreak) {
+                stats.longestStreak = stats.currentStreak;
+            }
+        }
+
+        stats.lastSessionDate = new Date().toISOString();
+        Store.set('stats_' + currentUser.id, stats);
+    }
+
+    // Check if returning from a session
+    function checkSessionReturn() {
+        const sessionResult = Store.get('lastSessionResult');
+        if (sessionResult) {
+            Store.remove('lastSessionResult');
+            recordSession(sessionResult);
+            updateStats();
+            renderWeeklyChart();
+            renderRecentSessions();
+            renderHistoryList();
+            alert(`Session recorded! You completed ${sessionResult.completed} exercises with a ${sessionResult.grade} grade.`);
+        }
+    }
+
+    // ============================================
+    // SETTINGS FUNCTIONS
+    // ============================================
+    function exportAllData() {
+        const data = {
+            user: currentUser,
+            stats: Store.get('stats_' + currentUser?.id, getDefaultStats()),
+            exportDate: new Date().toISOString()
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `handhero-data-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+    }
+
+    function clearAllData() {
+        if (confirm('This will delete ALL your data including session history. This cannot be undone. Are you sure?')) {
+            if (confirm('Really delete everything?')) {
+                Store.remove('stats_' + currentUser?.id);
+                Store.set('stats_' + currentUser?.id, getDefaultStats());
+                updateStats();
+                renderWeeklyChart();
+                renderRecentSessions();
+                renderHistoryList();
+                renderActivityCalendar();
+                renderMilestones();
+                alert('All data cleared.');
+            }
+        }
+    }
+
+    // ============================================
+    // UTILITIES
+    // ============================================
+    function getTimeAgo(date) {
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString();
+    }
+
+    // ============================================
+    // INITIALIZE
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+        initAuth();
+        checkSessionReturn();
+    });
+
+    console.log('%c🌱 HandHero Dashboard', 'font-size: 20px; font-weight: bold; color: #87a878;');
+    </script>
+</body>
+</html>
