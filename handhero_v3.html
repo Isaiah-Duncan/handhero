@@ -2254,5 +2254,78 @@ el.modal.addEventListener('click', (e) => {
 console.log('%c🌱 HandHero v5.0', 'font-size: 24px; font-weight: bold; color: #68c896;');
 console.log('%cShaded Accuracy Zones + Multi-Step Exercises', 'font-size: 14px; color: #64b4e6;');
 </script>
+<!-- PATCH: Relaxed Fist Reset (non-breaking) -->
+<script>
+// ===============================
+// RELAXED FIST RESET TUNING
+// Goal: allow a loose fist so users can quickly isolate fingers
+// No logic removal, only threshold relaxation + stability smoothing
+// ===============================
+
+// 1) Slightly relax curl requirement
+CONFIG.RESET_CURL_THRESHOLD = 0.45; // was 0.60
+
+// 2) Shorten hold time (less frustrating)
+CONFIG.RESET_HOLD_MS = 500; // was 800
+
+// 3) Allow one "imperfect" finger (camera ambiguity)
+const MAX_RELAXED_FINGERS = 1;
+
+// 4) Add temporal smoothing to avoid frame jitter
+let relaxedResetBuffer = [];
+const RESET_BUFFER_SIZE = 6;
+
+// Wrap original reset checker safely
+const _originalCheckResetPhase = checkResetPhase;
+
+checkResetPhase = function () {
+    // Count fingers that are reasonably curled
+    const curledCount = state.curls.filter(c => c >= CONFIG.RESET_CURL_THRESHOLD).length;
+
+    // Allow one finger to be slightly off
+    const relaxedCurled = curledCount >= (5 - MAX_RELAXED_FINGERS);
+
+    // Temporal smoothing (majority vote)
+    relaxedResetBuffer.push(relaxedCurled);
+    if (relaxedResetBuffer.length > RESET_BUFFER_SIZE) relaxedResetBuffer.shift();
+
+    const stableRelaxed = relaxedResetBuffer.filter(Boolean).length >= Math.ceil(RESET_BUFFER_SIZE * 0.6);
+
+    if (stableRelaxed) {
+        if (state.resetStartTime === 0) state.resetStartTime = Date.now();
+
+        const elapsed = Date.now() - state.resetStartTime;
+        const progress = Math.min(1, elapsed / CONFIG.RESET_HOLD_MS);
+
+        el.resetText.textContent = 'Loose fist detected';
+        el.bar.style.width = (progress * 50) + '%';
+
+        if (elapsed >= CONFIG.RESET_HOLD_MS) {
+            state.phase = 'EXECUTE';
+            state.resetComplete = true;
+            state.resetStartTime = 0;
+            relaxedResetBuffer = [];
+
+            el.resetInstruction.classList.remove('show');
+            el.frame.className = '';
+            updatePhaseUI();
+
+            const ex = state.exercises[state.exIdx];
+            if (ex.targetFingers) {
+                const names = ex.targetFingers.map(i => FINGER_NAMES[i]).join(' and ');
+                speak(`Good. Now extend ${names}.`);
+            } else {
+                speak(`Good. Now ${ex.desc}`);
+            }
+        }
+    } else {
+        state.resetStartTime = 0;
+        el.resetText.textContent = 'Relax fingers, then isolate';
+        el.bar.style.width = '0%';
+    }
+
+    updateAccuracyDisplay(stableRelaxed ? 0.4 : 0);
+};
+</script>
 </body>
 </html>
