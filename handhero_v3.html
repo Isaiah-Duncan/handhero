@@ -4,758 +4,214 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HandHero | Hand Therapy Companion</title>
+    <meta name="description" content="Guided hand therapy exercises with real-time tracking">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Light mode colors */
-            --bg-primary: #fdfbf7;
-            --bg-secondary: #faf8f5;
-            --bg-glass: rgba(255, 255, 255, 0.95);
-            --text-primary: #4a5568;
-            --text-secondary: #718096;
-            --border-color: rgba(255, 255, 255, 0.8);
-            
-            /* Brand colors */
+            --color-cream: #fdfbf7;
+            --color-warm-white: #faf8f5;
             --color-sage: #87a878;
-            --color-sage-dark: #6b9960;
             --color-sage-light: #a8c99b;
             --color-coral: #e8998d;
             --color-gold: #d4a574;
+            --color-slate: #4a5568;
+            --color-slate-light: #718096;
             --color-success: #68b37a;
-            
-            /* Zone colors */
-            --zone-green: rgba(104, 200, 150, 0.55);
-            --zone-green-solid: #68c896;
-            --zone-blue: rgba(100, 180, 230, 0.50);
-            --zone-blue-solid: #64b4e6;
-            --zone-yellow: rgba(240, 200, 100, 0.50);
-            --zone-yellow-solid: #f0c864;
-            --zone-orange: rgba(240, 160, 100, 0.45);
-            --zone-orange-solid: #f0a064;
-            
-            /* Skeleton color - consistent, never changes */
-            --skeleton-color: rgba(120, 220, 180, 0.9);
-            --skeleton-glow: rgba(120, 220, 180, 0.4);
         }
-        
-        [data-theme="dark"] {
-            --bg-primary: #1a1a2e;
-            --bg-secondary: #16213e;
-            --bg-glass: rgba(30, 40, 60, 0.95);
-            --text-primary: #e8e8e8;
-            --text-secondary: #a0a0b0;
-            --border-color: rgba(60, 80, 100, 0.5);
-        }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; }
         body { 
             font-family: 'Nunito', sans-serif; 
-            background: var(--bg-primary); 
-            color: var(--text-primary); 
+            background-color: var(--color-cream); 
+            color: var(--color-slate); 
             overflow: hidden; 
             user-select: none;
-            transition: background 0.3s, color 0.3s;
         }
-        
-        /* App Container */
+        *:focus-visible { outline: 3px solid var(--color-sage); outline-offset: 2px; }
+        .skip-link {
+            position: absolute; top: -40px; left: 0;
+            background: var(--color-sage); color: white;
+            padding: 8px 16px; z-index: 1000;
+        }
+        .skip-link:focus { top: 0; }
         #app-container { 
-            position: relative; 
-            width: 100vw; 
-            height: 100vh; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
+            position: relative; width: 100vw; height: 100vh; 
+            display: flex; align-items: center; justify-content: center; 
         }
-        
         #video-bg { 
-            position: absolute; 
-            inset: 0; 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-            transform: scaleX(-1); 
-            filter: blur(30px) opacity(0.3); 
-            z-index: 0;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            object-fit: cover; transform: scaleX(-1); 
+            filter: blur(30px) opacity(0.4) saturate(0.9) sepia(0.1); z-index: 0;
         }
-        
-        [data-theme="dark"] #video-bg { filter: blur(30px) opacity(0.2) brightness(0.5); }
-        
-        /* Portal */
-        #portal-wrapper { 
-            position: relative; 
-            width: 94vw; 
-            height: 90vh; 
-            max-width: 1300px; 
-            z-index: 10; 
-        }
-        
+        #portal-wrapper { position: relative; width: 90vw; height: 85vh; max-width: 1100px; z-index: 10; }
         #portal-frame {
-            position: relative;
-            width: 100%; 
-            height: 100%;
-            border-radius: 28px;
-            padding: 3px;
-            background: linear-gradient(135deg, var(--color-sage), var(--color-gold));
-            box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.15);
-            transition: all 0.4s ease;
+            position: relative; width: 100%; height: 100%; border-radius: 32px; padding: 4px; 
+            background: linear-gradient(135deg, var(--color-sage), var(--color-gold), var(--color-coral));
+            background-size: 200% 200%; animation: gradient-flow 10s ease infinite;
+            box-shadow: 0 20px 60px -10px rgba(135, 168, 120, 0.25); transition: all 0.4s ease;
         }
-        
-        #portal-frame.holding { background: linear-gradient(135deg, var(--zone-blue-solid), var(--color-sage)); }
-        #portal-frame.success { background: linear-gradient(135deg, var(--zone-green-solid), var(--color-sage-light)); box-shadow: 0 0 60px rgba(104, 200, 150, 0.4); }
-        
-        #portal-view { 
-            width: 100%; 
-            height: 100%; 
-            background: var(--bg-secondary); 
-            border-radius: 25px; 
-            overflow: hidden; 
-            position: relative; 
-        }
-        
-        #video-clean { 
-            position: absolute; 
-            top: 50%; 
-            left: 50%; 
-            width: 100vw; 
-            height: 100vh; 
-            object-fit: cover; 
-            transform: translate(-50%, -50%) scaleX(-1); 
-        }
-        
-        #output-canvas { 
-            position: absolute; 
-            inset: 0; 
-            width: 100%; 
-            height: 100%; 
-            pointer-events: none; 
-        }
-        
-        /* Top Control Bar */
-        .top-control-bar {
-            position: fixed;
-            top: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 100;
-            padding: 8px 16px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            border-radius: 50px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-        
-        .ctrl-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            position: relative;
-        }
-        
-        .ctrl-btn:hover { transform: scale(1.08); }
-        .ctrl-btn:active { transform: scale(0.95); }
-        
-        .ctrl-btn svg { width: 22px; height: 22px; }
-        
-        /* End Session (X) - Coral/Red */
-        .ctrl-btn.end-btn {
-            background: linear-gradient(135deg, #e8998d, #d88880);
-            color: white;
-        }
-        .ctrl-btn.end-btn:hover { background: linear-gradient(135deg, #d88880, #c87870); }
-        
-        /* Skip - Blue */
-        .ctrl-btn.skip-btn {
-            background: linear-gradient(135deg, #64b4e6, #5090c0);
-            color: white;
-        }
-        .ctrl-btn.skip-btn:hover { background: linear-gradient(135deg, #5090c0, #4080b0); }
-        
-        /* Audio - Green when on, Red when off */
-        .ctrl-btn.audio-btn {
-            background: linear-gradient(135deg, #68c896, #58b080);
-            color: white;
-        }
-        .ctrl-btn.audio-btn.off {
-            background: linear-gradient(135deg, #a0a0a0, #808080);
-        }
-        .ctrl-btn.audio-btn.off svg .slash { display: block; }
-        .ctrl-btn.audio-btn:not(.off) svg .slash { display: none; }
-        
-        /* Theme Toggle */
-        .ctrl-btn.theme-btn {
-            background: linear-gradient(135deg, #8080a0, #606080);
-            color: white;
-        }
-        [data-theme="dark"] .ctrl-btn.theme-btn {
-            background: linear-gradient(135deg, #f0c864, #e0b050);
-        }
-        
-        /* Settings */
-        .ctrl-btn.settings-btn {
-            background: var(--bg-glass);
-            border: 2px solid var(--border-color);
-            color: var(--text-secondary);
-        }
-        
-        /* Divider */
-        .ctrl-divider {
-            width: 1px;
-            height: 28px;
-            background: var(--border-color);
-        }
-        
-        /* HUD */
-        #hud-layer { 
-            position: absolute; 
-            inset: 0; 
-            pointer-events: none; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            padding: 70px 20px 20px 20px; 
-        }
-        
+        #portal-frame.holding { background: linear-gradient(135deg, var(--color-gold), #e8c9a8); box-shadow: 0 0 40px rgba(212, 165, 116, 0.5); }
+        #portal-frame.success { background: linear-gradient(135deg, var(--color-success), var(--color-sage-light)); box-shadow: 0 0 60px rgba(104, 179, 122, 0.6); transform: scale(1.005); }
+        #portal-frame.rest { background: linear-gradient(135deg, #a8c99b, #c9dfc0); }
+        @keyframes gradient-flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        #portal-view { width: 100%; height: 100%; background: var(--color-warm-white); border-radius: 28px; overflow: hidden; position: relative; }
+        #video-clean { position: absolute; top: 50%; left: 50%; width: 100vw; height: 100vh; object-fit: cover; transform: translate(-50%, -50%) scaleX(-1); }
+        #output-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        #hud-layer { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
         .top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-        
         .glass-pill {
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         }
-        
-        .instruction-banner { 
-            padding: 16px 28px; 
-            display: flex; 
-            align-items: center; 
-            gap: 16px; 
-            max-width: 500px; 
-        }
-        .instruction-icon { font-size: 2.2rem; }
-        .instruction-text { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
-        .instruction-sub { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; margin-top: 4px; }
-        
-        .progress-pill { padding: 10px 18px; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); }
-        
+        .instruction-banner { padding: 10px 24px; display: flex; align-items: center; gap: 12px; max-width: 400px; }
+        .instruction-icon { font-size: 1.5rem; }
+        .instruction-text { font-size: 1.1rem; font-weight: 700; color: var(--color-slate); }
+        .instruction-sub { font-size: 0.8rem; color: var(--color-slate-light); font-weight: 500; }
+        .progress-pill { padding: 8px 14px; font-size: 0.75rem; font-weight: 600; color: var(--color-slate-light); }
         .stats-bar { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-        .stat-card { padding: 12px 20px; border-radius: 16px; display: flex; align-items: center; gap: 10px; }
-        .stat-val { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); }
-        .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 700; }
-        
-        /* Accuracy Display */
-        .accuracy-display {
-            padding: 14px 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-        }
-        .accuracy-value {
-            font-size: 2rem;
-            font-weight: 800;
-            transition: color 0.2s;
-        }
-        .accuracy-value.green { color: var(--zone-green-solid); }
-        .accuracy-value.blue { color: var(--zone-blue-solid); }
-        .accuracy-value.yellow { color: var(--zone-yellow-solid); }
-        .accuracy-value.orange { color: var(--zone-orange-solid); }
-        .accuracy-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            letter-spacing: 0.05em;
-        }
-        
-        /* Progress Bar */
-        #progress-bar-container { 
-            position: absolute; 
-            bottom: 0; 
-            left: 0; 
-            right: 0; 
-            height: 6px; 
-            background: rgba(0,0,0,0.1); 
-            border-radius: 0 0 25px 25px; 
-            overflow: hidden; 
-        }
-        #progress-bar-fill { 
-            height: 100%; 
-            width: 0%; 
-            background: linear-gradient(90deg, var(--zone-blue-solid), var(--zone-green-solid)); 
-            transition: width 0.15s ease; 
-        }
-        
-        /* Center Instruction (Fist emoji popup) */
-        .center-instruction {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 20;
-        }
-        .center-instruction.show { opacity: 1; }
-        .center-emoji { font-size: 5rem; margin-bottom: 16px; filter: drop-shadow(0 4px 20px rgba(0,0,0,0.2)); }
-        .center-text { 
-            font-size: 1.4rem; 
-            font-weight: 700; 
-            color: white; 
-            text-shadow: 0 2px 20px rgba(0,0,0,0.5);
-            background: rgba(0,0,0,0.4);
-            padding: 14px 32px;
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-        }
-        
-        /* Success Feedback */
-        #feedback-message { 
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 3rem; 
-            font-weight: 800; 
-            color: var(--zone-green-solid); 
-            text-shadow: 0 4px 30px rgba(104, 200, 150, 0.5); 
-            opacity: 0; 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none;
-            z-index: 25;
-        }
-        #feedback-message.show { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        
-        /* Particles */
-        .particle { position: absolute; pointer-events: none; border-radius: 50%; animation: particle-fall 1.5s ease-out forwards; }
-        @keyframes particle-fall { 0% { opacity: 1; transform: translateY(0) rotate(0deg); } 100% { opacity: 0; transform: translateY(200px) rotate(720deg); } }
-        
-        /* Skip Suggestion Toast */
-        .skip-toast {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%) translateY(30px);
-            background: var(--bg-glass);
-            padding: 14px 24px;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            opacity: 0;
-            transition: all 0.4s;
-            pointer-events: none;
-            z-index: 30;
-        }
-        .skip-toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-            pointer-events: auto;
-        }
-        .skip-toast-text { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); }
-        .skip-toast-btn {
-            padding: 8px 18px;
-            border-radius: 10px;
-            border: none;
-            font-weight: 700;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .skip-toast-btn.yes { background: var(--zone-blue-solid); color: white; }
-        .skip-toast-btn.no { background: transparent; color: var(--text-secondary); }
-        
-        /* Overlays */
-        .overlay-screen {
+        .stat-card { padding: 8px 16px; border-radius: 16px; display: flex; align-items: center; gap: 8px; transition: transform 0.2s; }
+        .stat-card.pulse { transform: scale(1.1); background: rgba(104, 179, 122, 0.15); }
+        .stat-val { font-size: 1.1rem; font-weight: 700; color: var(--color-slate); }
+        .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-slate-light); font-weight: 700; }
+        .float-btn {
             position: fixed;
-            inset: 0;
-            z-index: 200;
-            background: var(--bg-primary);
+            z-index: 50;
+            background: rgba(255,255,255,0.96);
+            color: var(--color-slate);
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+            border-radius: 999px;
+            cursor: pointer;
+            width: 48px;
+            height: 48px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 24px;
-            transition: opacity 0.3s, visibility 0.3s;
+            font-size: 1.05rem;
+            user-select: none;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, color 0.12s ease;
+        }
+        .float-btn:hover { background: rgba(255,255,255,1); transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,0.12); }
+        .float-btn:active { transform: translateY(0px) scale(0.98); }
+        .float-btn--quit { color: #d14343; }
+        .float-btn--skip { color: #1d4ed8; }
+        .float-btn--audio { color: #6b7280; }
+        .float-btn--audio.is-on { color: #16a34a; }
+        .float-btn--audio.is-off { color: #dc2626; }
+        #btn-quit { top: 20px; left: 20px; }
+        #btn-audio { top: 20px; right: 76px; }
+        #btn-skip { top: 20px; right: 20px; }
+
+        /* Custom modal (replaces browser alert/confirm) */
+        .modal-backdrop { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); padding: 18px; }
+        .modal-backdrop.hidden { display: none; }
+        .modal { width: min(420px, 92vw); background: rgba(255,255,255,0.96); border: 1px solid rgba(255,255,255,0.7); border-radius: 18px; box-shadow: 0 24px 80px rgba(0,0,0,0.22); padding: 18px 18px 14px; }
+        .modal-title { font-size: 1.1rem; font-weight: 800; color: var(--color-slate); margin: 0 0 6px; }
+        .modal-body { margin: 0 0 14px; color: var(--color-slate-light); font-weight: 500; line-height: 1.35; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-actions .btn-secondary, .modal-actions .btn-primary { min-width: 0; padding: 12px 16px; border-radius: 14px; font-size: 0.95rem; }
+
+        #progress-bar-container { position: absolute; bottom: 0; left: 0; right: 0; height: 6px; background: rgba(0,0,0,0.05); border-radius: 0 0 28px 28px; overflow: hidden; }
+        #progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--color-sage), var(--color-success)); transition: width 0.15s ease; }
+        .center-feedback { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+        #hold-timer { font-size: 4.5rem; font-weight: 800; color: white; text-shadow: 0 4px 30px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s; }
+        #hold-timer.show { opacity: 1; }
+        #feedback-message { font-size: 2.5rem; font-weight: 800; color: var(--color-success); text-shadow: 0 4px 20px rgba(104, 179, 122, 0.4); opacity: 0; transform: scale(0.5); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #feedback-message.show { opacity: 1; transform: scale(1); }
+        .particle { position: absolute; pointer-events: none; border-radius: 50%; animation: particle-fall 1.5s ease-out forwards; }
+        @keyframes particle-fall { 0% { opacity: 1; transform: translateY(0) rotate(0deg); } 100% { opacity: 0; transform: translateY(200px) rotate(720deg); } }
+        .overlay-screen {
+            position: fixed; inset: 0; z-index: 100; background: rgba(253, 251, 247, 0.98);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.4s, visibility 0.4s; padding: 24px;
         }
         .overlay-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         .overlay-content { max-width: 480px; width: 100%; text-align: center; }
-        
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 16px 32px;
-            border-radius: 14px;
-            font-size: 1rem;
-            font-weight: 700;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-        }
         .btn-primary {
-            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
-            color: white;
-            box-shadow: 0 8px 24px -4px rgba(135, 168, 120, 0.4);
+            background: linear-gradient(135deg, var(--color-sage) 0%, #6b9960 100%);
+            padding: 16px 40px; border-radius: 20px; font-size: 1.1rem; font-weight: 700;
+            color: white; box-shadow: 0 8px 24px -4px rgba(135, 168, 120, 0.4);
+            border: none; cursor: pointer; min-width: 200px;
         }
         .btn-primary:hover { transform: translateY(-2px); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-secondary { background: var(--bg-glass); color: var(--text-primary); border: 2px solid var(--border-color); }
-        .btn-secondary:hover { border-color: var(--color-sage); }
-        .btn-ghost { background: transparent; color: var(--text-secondary); padding: 12px 20px; }
-        .btn-ghost:hover { color: var(--text-primary); }
-        
-        /* Onboarding */
+        .btn-secondary { background: white; border: 2px solid #e8e4df; padding: 12px 28px; border-radius: 16px; font-size: 1rem; font-weight: 600; color: var(--color-slate); cursor: pointer; }
+        .btn-secondary:hover { background: var(--color-warm-white); border-color: var(--color-sage); }
         .onboarding-step { display: none; }
         .onboarding-step.active { display: block; }
         .onboarding-image { font-size: 5rem; margin-bottom: 24px; }
-        .onboarding-title { font-size: 1.9rem; font-weight: 800; color: var(--text-primary); margin-bottom: 12px; }
-        .onboarding-desc { font-size: 1rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px; }
+        .onboarding-title { font-size: 1.8rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
+        .onboarding-desc { font-size: 1.05rem; color: var(--color-slate-light); line-height: 1.6; margin-bottom: 32px; }
         .onboarding-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
-        .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border-color); transition: all 0.3s; }
-        .onboarding-dot.active { background: var(--color-sage); width: 28px; border-radius: 5px; }
-        
-        /* Disclaimer */
-        .disclaimer-box { 
-            background: var(--bg-glass); 
-            border: 1px solid var(--border-color); 
-            border-radius: 14px; 
-            padding: 18px; 
-            text-align: left; 
-            margin-bottom: 20px; 
-            max-height: 160px; 
-            overflow-y: auto; 
-        }
-        .disclaimer-box h4 { font-weight: 700; color: var(--text-primary); margin-bottom: 8px; font-size: 0.95rem; }
-        .disclaimer-box p, .disclaimer-box ul { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 6px; }
-        .disclaimer-box ul { padding-left: 18px; }
+        .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: #e8e4df; transition: all 0.3s; }
+        .onboarding-dot.active { background: var(--color-sage); width: 24px; border-radius: 5px; }
+        .disclaimer-box { background: white; border: 1px solid #e8e4df; border-radius: 16px; padding: 20px; text-align: left; margin-bottom: 24px; max-height: 200px; overflow-y: auto; }
+        .disclaimer-box h4 { font-weight: 700; color: var(--color-slate); margin-bottom: 8px; }
+        .disclaimer-box p, .disclaimer-box ul { font-size: 0.85rem; color: var(--color-slate-light); line-height: 1.5; margin-bottom: 8px; }
+        .disclaimer-box ul { padding-left: 20px; }
         .checkbox-row { display: flex; align-items: flex-start; gap: 12px; text-align: left; margin-bottom: 20px; }
         .checkbox-row input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--color-sage); }
-        .checkbox-row label { font-size: 0.85rem; color: var(--text-primary); line-height: 1.4; }
-        
-        /* Ready Countdown Screen */
-        .ready-overlay { 
-            background: linear-gradient(135deg, rgba(135, 168, 120, 0.95), rgba(104, 200, 150, 0.95)); 
-        }
-        [data-theme="dark"] .ready-overlay {
-            background: linear-gradient(135deg, rgba(40, 60, 50, 0.98), rgba(30, 50, 40, 0.98));
-        }
-        .ready-countdown { 
-            font-size: 7rem; 
-            font-weight: 800; 
-            color: white; 
-            text-shadow: 0 8px 40px rgba(0,0,0,0.2); 
-            animation: pulse-scale 1s ease infinite;
-        }
-        @keyframes pulse-scale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-        .ready-preview { 
-            background: rgba(255,255,255,0.95); 
-            border-radius: 18px; 
-            padding: 20px 36px; 
-            margin-top: 28px; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 16px; 
-        }
-        [data-theme="dark"] .ready-preview { background: rgba(30, 40, 50, 0.95); }
-        .ready-icon { font-size: 2.2rem; }
-        .ready-name { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); }
-        .ready-desc { font-size: 0.85rem; color: var(--text-secondary); }
-        
-        /* Pain Check */
-        .pain-scale { display: flex; justify-content: space-between; gap: 10px; margin: 20px 0; }
-        .pain-btn { 
-            flex: 1; 
-            padding: 16px 8px; 
-            border-radius: 12px; 
-            border: 3px solid transparent; 
-            cursor: pointer; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 6px;
-            transition: all 0.2s;
-            background: var(--bg-glass);
-        }
-        .pain-btn:hover { transform: translateY(-3px); }
-        .pain-btn.selected { border-color: var(--color-sage); }
+        .checkbox-row label { font-size: 0.9rem; color: var(--color-slate); line-height: 1.4; }
+        .pain-scale { display: flex; justify-content: space-between; gap: 8px; margin: 24px 0; }
+        .pain-btn { flex: 1; padding: 16px 8px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .pain-btn:hover { transform: translateY(-2px); }
+        .pain-btn.green { background: #e8f5e9; }
+        .pain-btn.green:hover, .pain-btn.green.selected { border-color: #68b37a; background: #d4edda; }
+        .pain-btn.yellow { background: #fff8e1; }
+        .pain-btn.yellow:hover, .pain-btn.yellow.selected { border-color: #e8b44d; background: #ffecb3; }
+        .pain-btn.orange { background: #fff3e0; }
+        .pain-btn.orange:hover, .pain-btn.orange.selected { border-color: #e8998d; background: #ffe0b2; }
+        .pain-btn.red { background: #ffebee; }
+        .pain-btn.red:hover, .pain-btn.red.selected { border-color: #d97b7b; background: #ffcdd2; }
         .pain-emoji { font-size: 1.8rem; }
-        .pain-label { font-size: 0.75rem; font-weight: 700; color: var(--text-primary); }
-        
-        /* Rest Overlay */
-        .rest-overlay { 
-            background: linear-gradient(135deg, rgba(100, 180, 230, 0.95), rgba(104, 200, 150, 0.95)); 
-        }
-        .rest-timer { font-size: 4rem; font-weight: 800; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-        .rest-message { font-size: 1.1rem; color: white; margin-top: 12px; opacity: 0.9; }
-        
-        /* Complete Overlay */
-        .summary-card { 
-            background: var(--bg-glass); 
-            border: 1px solid var(--border-color); 
-            border-radius: 18px; 
-            padding: 20px; 
-            margin-bottom: 20px; 
-        }
-        .summary-stat { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+        .pain-label { font-size: 0.75rem; font-weight: 600; color: var(--color-slate); }
+        .rest-overlay { background: rgba(168, 201, 155, 0.95); }
+        .rest-timer { font-size: 4rem; font-weight: 800; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .rest-message { font-size: 1.3rem; color: white; margin-top: 16px; opacity: 0.9; }
+        .summary-card { background: white; border: 1px solid #e8e4df; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+        .summary-stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0ece6; }
         .summary-stat:last-child { border-bottom: none; }
-        .summary-label { color: var(--text-secondary); font-weight: 500; }
-        .summary-value { color: var(--text-primary); font-weight: 700; }
-        .grade-badge { display: inline-block; padding: 6px 16px; border-radius: 8px; font-weight: 800; }
-        .grade-a { background: rgba(104, 200, 150, 0.2); color: var(--zone-green-solid); }
-        .grade-b { background: rgba(100, 180, 230, 0.2); color: var(--zone-blue-solid); }
-        .grade-c { background: rgba(240, 200, 100, 0.2); color: var(--zone-yellow-solid); }
-        .complete-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-        
-        /* Settings Panel */
-        .settings-panel {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            width: 280px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 18px;
-            padding: 20px;
-            z-index: 150;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-        .settings-panel.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        .settings-title { font-size: 1rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px; }
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .setting-row:last-child { border-bottom: none; }
-        .setting-label { font-size: 0.85rem; color: var(--text-primary); font-weight: 600; }
-        .setting-desc { font-size: 0.7rem; color: var(--text-secondary); }
-        .toggle-switch {
-            width: 48px;
-            height: 26px;
-            background: var(--border-color);
-            border-radius: 13px;
-            position: relative;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .toggle-switch.on { background: var(--color-sage); }
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            top: 3px;
-            left: 3px;
-            transition: transform 0.3s;
-        }
-        .toggle-switch.on::after { transform: translateX(22px); }
-        
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 300;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s;
-        }
-        .modal-overlay.show { opacity: 1; visibility: visible; }
-        .modal-content { 
-            background: var(--bg-primary); 
-            border-radius: 20px; 
-            padding: 28px; 
-            max-width: 380px; 
-            width: 90%; 
-            text-align: center; 
-        }
-        .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 10px; }
-        .modal-desc { color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem; }
-        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
-        
-        /* Zone Legend */
-        .zone-legend {
-            position: absolute;
-            bottom: 80px;
-            left: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            background: var(--bg-glass);
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-        .zone-legend-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; }
-        .zone-legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; font-weight: 600; color: var(--text-primary); }
-        .zone-dot { width: 12px; height: 12px; border-radius: 3px; }
-        .zone-dot.green { background: var(--zone-green); border: 2px solid var(--zone-green-solid); }
-        .zone-dot.blue { background: var(--zone-blue); border: 2px solid var(--zone-blue-solid); }
-        .zone-dot.yellow { background: var(--zone-yellow); border: 2px solid var(--zone-yellow-solid); }
-        
-        /* Loading Screen */
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--border-color);
-            border-top-color: var(--color-sage);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-        }
+        .summary-label { color: var(--color-slate-light); font-weight: 500; }
+        .summary-value { color: var(--color-slate); font-weight: 700; }
+        .grade-badge { display: inline-block; padding: 4px 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
+        .grade-a { background: #d4edda; color: #155724; }
+        .grade-b { background: #fff3cd; color: #856404; }
+        .grade-c { background: #ffe0b2; color: #e65100; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
     </style>
 </head>
-<body data-theme="light">
-    <!-- Top Control Bar -->
-    <div class="top-control-bar" id="control-bar">
-        <button class="ctrl-btn end-btn" id="btn-end" title="End Session">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-        </button>
-        
-        <button class="ctrl-btn skip-btn" id="btn-skip" title="Skip Exercise">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6 18V6l8.5 6L6 18zm8.5 0V6h2v12h-2z"/>
-            </svg>
-        </button>
-        
-        <div class="ctrl-divider"></div>
-        
-        <button class="ctrl-btn audio-btn" id="btn-audio" title="Toggle Audio">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 9v6h4l5 5V4L7 9H3z"/>
-                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
-                <path d="M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                <line class="slash" x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </button>
-        
-        <button class="ctrl-btn theme-btn" id="btn-theme" title="Toggle Dark Mode">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-        </button>
-        
-        <button class="ctrl-btn settings-btn" id="btn-settings" title="Settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-        </button>
-    </div>
-    
-    <!-- Settings Panel -->
-    <div class="settings-panel" id="settings-panel">
-        <div class="settings-title">⚙️ Settings</div>
-        <div class="setting-row">
-            <div>
-                <div class="setting-label">Auto-advance</div>
-                <div class="setting-desc">Automatically start next exercise</div>
-            </div>
-            <div class="toggle-switch on" id="toggle-autoadvance" onclick="toggleSetting('autoAdvance')"></div>
-        </div>
-        <div class="setting-row">
-            <div>
-                <div class="setting-label">Voice Coach</div>
-                <div class="setting-desc">Spoken instructions</div>
-            </div>
-            <div class="toggle-switch on" id="toggle-voice" onclick="toggleSetting('voice')"></div>
-        </div>
-        <div class="setting-row">
-            <div>
-                <div class="setting-label">Sound Effects</div>
-                <div class="setting-desc">Success sounds</div>
-            </div>
-            <div class="toggle-switch on" id="toggle-sounds" onclick="toggleSetting('sounds')"></div>
-        </div>
-        <div class="setting-row">
-            <div>
-                <div class="setting-label">Countdown Time</div>
-                <div class="setting-desc">Between exercises</div>
-            </div>
-            <select id="countdown-select" style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-family: inherit;">
-                <option value="2">2 sec</option>
-                <option value="3" selected>3 sec</option>
-                <option value="4">4 sec</option>
-            </select>
-        </div>
-    </div>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <button id="btn-quit" class="float-btn hidden" aria-label="Exit session">✕</button>
+    <button id="btn-audio" class="float-btn hidden" aria-label="Toggle audio">🔊</button>
+    <button id="btn-skip" class="float-btn hidden" aria-label="Skip exercise">⏭️</button>
 
-    <!-- Main Container -->
-    <div id="app-container">
-        <video id="video-bg" playsinline muted autoplay></video>
+    <div id="app-container" role="main" id="main-content">
+        <video id="video-bg" playsinline muted autoplay aria-hidden="true"></video>
         <div id="portal-wrapper">
             <div id="portal-frame">
                 <div id="portal-view">
-                    <video id="video-clean" playsinline muted autoplay></video>
-                    <canvas id="output-canvas"></canvas>
-                    
-                    <div id="hud-layer">
+                    <video id="video-clean" playsinline muted autoplay aria-label="Camera feed"></video>
+                    <canvas id="output-canvas" aria-hidden="true"></canvas>
+                    <div id="hud-layer" aria-live="polite">
                         <div class="top-row">
-                            <div class="glass-pill progress-pill">
-                                <span id="exercise-progress">1 / 8</span>
-                            </div>
+                            <div class="glass-pill progress-pill"><span id="exercise-progress">1 of 6</span></div>
                             <div class="glass-pill instruction-banner">
-                                <span class="instruction-icon" id="instruction-icon">✊</span>
+                                <span class="instruction-icon" id="instruction-icon">👋</span>
                                 <div>
-                                    <div class="instruction-text" id="instruction-text">Make a Fist</div>
-                                    <div class="instruction-sub" id="instruction-sub">Close all fingers to begin</div>
+                                    <div class="instruction-text" id="instruction-text">Get Ready</div>
+                                    <div class="instruction-sub" id="instruction-sub">Position hand in frame</div>
                                 </div>
                             </div>
-                            <div class="glass-pill accuracy-display">
-                                <span class="accuracy-value green" id="accuracy-value">0%</span>
-                                <span class="accuracy-label">Accuracy</span>
-                            </div>
+                            <div class="glass-pill progress-pill"><span id="session-timer">0:00</span></div>
                         </div>
-                        
-                        <!-- Center instruction popup -->
-                        <div class="center-instruction" id="center-instruction">
-                            <div class="center-emoji" id="center-emoji">✊</div>
-                            <div class="center-text" id="center-text">Make a fist to begin</div>
+                        <div class="center-feedback">
+                            <div id="hold-timer">3</div>
+                            <div id="feedback-message">Nice!</div>
                         </div>
-                        
-                        <div id="feedback-message">Nice!</div>
-
                         <div class="stats-bar">
-                            <div class="glass-pill stat-card">
+                            <div class="glass-pill stat-card" id="streak-card">
                                 <span>🔥</span>
                                 <div><div id="stat-streak" class="stat-val">0</div><div class="stat-label">Streak</div></div>
                             </div>
@@ -763,471 +219,224 @@
                                 <span>✨</span>
                                 <div><div id="stat-completed" class="stat-val">0</div><div class="stat-label">Done</div></div>
                             </div>
-                            <div class="glass-pill progress-pill">
-                                <span id="session-timer">0:00</span>
-                            </div>
-                        </div>
-                        
-                        <div class="zone-legend">
-                            <div class="zone-legend-title">Accuracy Zones</div>
-                            <div class="zone-legend-item"><div class="zone-dot green"></div> 85%+ Perfect</div>
-                            <div class="zone-legend-item"><div class="zone-dot blue"></div> 65%+ Good</div>
-                            <div class="zone-legend-item"><div class="zone-dot yellow"></div> 40%+ Keep trying</div>
                         </div>
                     </div>
-                    
-                    <!-- Skip suggestion toast -->
-                    <div class="skip-toast" id="skip-toast">
-                        <span class="skip-toast-text">Having trouble? Would you like to skip?</span>
-                        <button class="skip-toast-btn yes" onclick="acceptSkip()">Skip</button>
-                        <button class="skip-toast-btn no" onclick="dismissSkip()">Keep trying</button>
-                    </div>
-
-                    <div id="progress-bar-container">
-                        <div id="progress-bar-fill"></div>
-                    </div>
+                    <div id="progress-bar-container"><div id="progress-bar-fill"></div></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- OVERLAY: Welcome -->
+    <!-- ONBOARDING OVERLAY -->
     <div id="overlay-welcome" class="overlay-screen">
         <div class="overlay-content">
             <div class="onboarding-step active" data-step="1">
                 <div class="onboarding-image">🌱</div>
                 <h1 class="onboarding-title">Welcome to HandHero</h1>
-                <p class="onboarding-desc">Your personal hand therapy companion with real-time visual feedback.</p>
-                <div class="onboarding-dots"><div class="onboarding-dot active"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div></div>
-                <button class="btn btn-primary" onclick="nextStep()">Get Started</button>
+                <p class="onboarding-desc">Your personal hand therapy companion. Gentle exercises to improve strength and mobility.</p>
+                <div class="onboarding-dots"><div class="onboarding-dot active"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div></div>
+                <button class="btn-primary" onclick="nextStep()">Get Started</button>
             </div>
             <div class="onboarding-step" data-step="2">
-                <div class="onboarding-image">🎯</div>
+                <div class="onboarding-image">✋</div>
                 <h2 class="onboarding-title">How It Works</h2>
-                <p class="onboarding-desc">
-                    <strong>Step 1:</strong> Make a fist to reset<br>
-                    <strong>Step 2:</strong> Follow the exercise<br><br>
-                    Watch the shaded zones change color to show your accuracy!
-                </p>
-                <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot active"></div><div class="onboarding-dot"></div></div>
-                <button class="btn btn-primary" onclick="nextStep()">Next</button>
-                <button class="btn btn-ghost" onclick="prevStep()">Back</button>
+                <p class="onboarding-desc">Position your hand in front of the camera. Follow the on-screen instructions. Hold each position until the timer completes.</p>
+                <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot active"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div></div>
+                <button class="btn-primary" onclick="nextStep()">Next</button>
+                <button class="btn-secondary" onclick="prevStep()" style="margin-top:12px">Back</button>
             </div>
             <div class="onboarding-step" data-step="3">
+                <div class="onboarding-image">💡</div>
+                <h2 class="onboarding-title">Tips for Success</h2>
+                <p class="onboarding-desc">• Good lighting helps accuracy<br>• Keep hand 12-18 inches from camera<br>• Move slowly and deliberately<br>• Stop if you feel any pain</p>
+                <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot active"></div><div class="onboarding-dot"></div></div>
+                <button class="btn-primary" onclick="nextStep()">Next</button>
+                <button class="btn-secondary" onclick="prevStep()" style="margin-top:12px">Back</button>
+            </div>
+            <div class="onboarding-step" data-step="4">
                 <div class="onboarding-image">⚕️</div>
-                <h2 class="onboarding-title">Safety First</h2>
+                <h2 class="onboarding-title">Safety Information</h2>
                 <div class="disclaimer-box">
                     <h4>Medical Disclaimer</h4>
-                    <p>HandHero is a wellness tool to supplement – not replace – professional care.</p>
-                    <ul>
-                        <li>NOT a medical device</li>
-                        <li>Stop if you feel pain</li>
-                    </ul>
+                    <p>HandHero is a wellness tool designed to supplement, not replace, professional medical care.</p>
+                    <ul><li>NOT a medical device</li><li>Does NOT provide diagnosis or treatment</li><li>Should NOT replace professional therapy</li></ul>
+                    <p><strong>Stop immediately if you experience:</strong> pain, numbness, tingling, swelling, or any concerning symptoms.</p>
                 </div>
                 <div class="checkbox-row">
                     <input type="checkbox" id="disclaimer-check">
-                    <label for="disclaimer-check">I understand and will stop if I feel pain.</label>
+                    <label for="disclaimer-check">I understand this is a wellness tool. I will stop if I experience pain.</label>
                 </div>
-                <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot active"></div></div>
-                <button class="btn btn-primary" id="btn-start" disabled onclick="startApp()">Begin</button>
-                <button class="btn btn-ghost" onclick="prevStep()">Back</button>
+                <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot active"></div></div>
+                <button class="btn-primary" id="btn-start" disabled onclick="startApp()">I Understand – Start</button>
+                <button class="btn-secondary" onclick="prevStep()" style="margin-top:12px">Back</button>
             </div>
         </div>
     </div>
 
-    <!-- OVERLAY: Ready Countdown -->
-    <div id="overlay-ready" class="overlay-screen ready-overlay hidden">
-        <div class="overlay-content">
-            <p style="color: white; font-size: 1rem; margin-bottom: 8px; opacity: 0.8;">Next Exercise</p>
-            <div class="ready-countdown" id="ready-countdown">3</div>
-            <div class="ready-preview">
-                <span class="ready-icon" id="ready-icon">☝️</span>
-                <div style="text-align: left;">
-                    <div class="ready-name" id="ready-name">Pointer</div>
-                    <div class="ready-desc" id="ready-desc">Extend only index finger</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- OVERLAY: Pain Check -->
+    <!-- PAIN CHECK OVERLAY -->
     <div id="overlay-pain" class="overlay-screen hidden">
         <div class="overlay-content">
             <div class="onboarding-image">💚</div>
-            <h2 class="onboarding-title">How are you feeling?</h2>
+            <h2 class="onboarding-title">Quick Check-In</h2>
+            <p class="onboarding-desc">How is your hand feeling?</p>
             <div class="pain-scale">
-                <button class="pain-btn" onclick="selectPain(0)"><span class="pain-emoji">😊</span><span class="pain-label">Great</span></button>
-                <button class="pain-btn" onclick="selectPain(1)"><span class="pain-emoji">😐</span><span class="pain-label">Mild</span></button>
-                <button class="pain-btn" onclick="selectPain(2)"><span class="pain-emoji">😕</span><span class="pain-label">Moderate</span></button>
-                <button class="pain-btn" onclick="selectPain(3)"><span class="pain-emoji">😣</span><span class="pain-label">Stop</span></button>
+                <button class="pain-btn green" onclick="selectPain(0)"><span class="pain-emoji">😊</span><span class="pain-label">Good</span></button>
+                <button class="pain-btn yellow" onclick="selectPain(1)"><span class="pain-emoji">😐</span><span class="pain-label">Mild</span></button>
+                <button class="pain-btn orange" onclick="selectPain(2)"><span class="pain-emoji">😕</span><span class="pain-label">Moderate</span></button>
+                <button class="pain-btn red" onclick="selectPain(3)"><span class="pain-emoji">😣</span><span class="pain-label">Too Much</span></button>
             </div>
-            <button class="btn btn-primary" id="btn-continue-pain" disabled onclick="continuePain()">Continue</button>
+            <p id="pain-advice" style="font-size:0.9rem;color:var(--color-slate-light);min-height:40px"></p>
+            <button class="btn-primary" id="btn-continue" disabled onclick="continuePain()">Continue</button>
         </div>
     </div>
 
-    <!-- OVERLAY: Rest -->
+    <!-- REST OVERLAY -->
     <div id="overlay-rest" class="overlay-screen rest-overlay hidden">
         <div class="overlay-content">
-            <h2 class="onboarding-title" style="color: white;">Quick Break</h2>
-            <div class="rest-timer" id="rest-timer">8</div>
-            <p class="rest-message">Shake out your hand</p>
-            <button class="btn btn-secondary" onclick="skipRest()" style="margin-top: 16px;">I'm Ready</button>
+            <h2 class="onboarding-title" style="color:white">Take a Breath</h2>
+            <div class="rest-timer" id="rest-timer">20</div>
+            <p class="rest-message">Relax your hand. We'll continue shortly.</p>
+            <button class="btn-secondary" onclick="skipRest()" style="margin-top:24px;background:rgba(255,255,255,0.9)">I'm Ready – Skip</button>
         </div>
     </div>
 
-    <!-- OVERLAY: Complete -->
+    <!-- COMPLETE OVERLAY -->
     <div id="overlay-complete" class="overlay-screen hidden">
         <div class="overlay-content">
             <div class="onboarding-image">🎉</div>
             <h2 class="onboarding-title">Session Complete!</h2>
             <div class="summary-card">
-                <div class="summary-stat"><span class="summary-label">Exercises</span><span class="summary-value" id="sum-done">8</span></div>
-                <div class="summary-stat"><span class="summary-label">Duration</span><span class="summary-value" id="sum-time">4:30</span></div>
-                <div class="summary-stat"><span class="summary-label">Best Streak</span><span class="summary-value" id="sum-streak">5 🔥</span></div>
-                <div class="summary-stat"><span class="summary-label">Avg Accuracy</span><span class="summary-value" id="sum-accuracy">78%</span></div>
+                <div class="summary-stat"><span class="summary-label">Exercises</span><span class="summary-value" id="sum-done">6</span></div>
+                <div class="summary-stat"><span class="summary-label">Duration</span><span class="summary-value" id="sum-time">3:45</span></div>
+                <div class="summary-stat"><span class="summary-label">Best Streak</span><span class="summary-value" id="sum-streak">4 🔥</span></div>
                 <div class="summary-stat"><span class="summary-label">Grade</span><span class="summary-value"><span id="sum-grade" class="grade-badge grade-a">A</span></span></div>
             </div>
-            <div class="complete-buttons">
-                <button class="btn btn-primary" onclick="goHome()">🏠 Dashboard</button>
-                <button class="btn btn-secondary" onclick="newSession()">🔄 New Session</button>
-            </div>
+            <p style="font-size:0.85rem;color:var(--color-slate-light);margin-bottom:24px">Great work! Consistency is key.</p>
+            <button class="btn-primary" onclick="exportReport()">📄 Save Report</button>
+            <button class="btn-secondary" onclick="restart()" style="margin-top:12px">New Session</button>
         </div>
     </div>
 
-    <!-- OVERLAY: Loading -->
+    <!-- LOADING OVERLAY -->
     <div id="overlay-loading" class="overlay-screen hidden">
         <div class="overlay-content">
-            <div class="loading-spinner"></div>
-            <h2 class="onboarding-title">Setting Up</h2>
-            <p class="onboarding-desc" id="loading-msg">Loading hand tracking...</p>
-        </div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div id="modal-confirm" class="modal-overlay">
-        <div class="modal-content">
-            <h3 class="modal-title" id="modal-title">End Session?</h3>
-            <p class="modal-desc" id="modal-desc">Your progress will be saved.</p>
-            <div class="modal-buttons">
-                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmEndSession()">End</button>
-            </div>
+            <div class="onboarding-image" style="animation:pulse 1.5s infinite">🖐️</div>
+            <h2 class="onboarding-title">Preparing Session</h2>
+            <p class="onboarding-desc" id="loading-msg">Loading AI model...</p>
         </div>
     </div>
 
 <script>
 // ============================================
-// CONFIGURATION
+// CONFIGURATION & CONSTANTS  
 // ============================================
-const CONFIG = {
-    EXERCISES_PER_SESSION: 8,
-    REST_SECONDS: 8,
-    PAIN_CHECK_EVERY: 4,
-    
-    // Thresholds
-    ZONE_GREEN: 0.85,
-    ZONE_BLUE: 0.65,
-    ZONE_YELLOW: 0.40,
-    
-    // Timing
-    HOLD_DURATION_MS: 2200,
-    RESET_HOLD_MS: 600,
-    STRUGGLE_TIME_MS: 8000, // Show skip suggestion after this
-    
-    // Boundary detection (distance from finger in normalized coords)
-    BOUNDARY_MARGIN: 0.025, // ~2.5% of screen = forgiving boundary
-    
-    // Progress decay (slow, doesn't reset)
-    PROGRESS_DECAY_RATE: 0.008,
-};
+const CONFIG = { EXERCISES_PER_SESSION: 6, REST_SECONDS: 20, PAIN_CHECK_EVERY: 3, GOOD_THRESHOLD: 0.70, PARTIAL_THRESHOLD: 0.50, GRACE_MS: 8000, FAIL_GRACE_MS: 350, NEXT_EX_DELAY_MS: 2500 };
+const FINGER = { THUMB: [1,2,3,4], INDEX: [5,6,7,8], MIDDLE: [9,10,11,12], RING: [13,14,15,16], PINKY: [17,18,19,20] };
+const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
 
-// Settings
-const settings = {
-    autoAdvance: true,
-    voice: true,
-    sounds: true,
-    countdownTime: 3,
-};
-
-// ============================================
-// FINGER CONSTANTS
-// ============================================
-const FINGER_TIPS = [4, 8, 12, 16, 20];
-const FINGER_BASES = [1, 5, 9, 13, 17];
-const FINGER_MIDS = [2, 6, 10, 14, 18];
-const FINGER_NAMES = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'];
-
-const FINGER = {
-    THUMB: [1, 2, 3, 4],
-    INDEX: [5, 6, 7, 8],
-    MIDDLE: [9, 10, 11, 12],
-    RING: [13, 14, 15, 16],
-    PINKY: [17, 18, 19, 20]
-};
-const FINGER_ARRAYS = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
-
-// ============================================
-// EXERCISE LIBRARY
-// ============================================
 const ALL_EXERCISES = [
-    // Isolation exercises
-    { id: 'thumbs_up', name: 'Thumbs Up', icon: '👍', desc: 'Extend only your thumb', difficulty: 2, type: 'isolation', targetFingers: [0] },
-    { id: 'pointer', name: 'Pointer', icon: '☝️', desc: 'Extend only your index finger', difficulty: 2, type: 'isolation', targetFingers: [1] },
-    { id: 'middle_lift', name: 'Middle Finger', icon: '🖕', desc: 'Extend only your middle finger', difficulty: 3, type: 'isolation', targetFingers: [2] },
-    { id: 'ring_lift', name: 'Ring Finger', icon: '💍', desc: 'Extend only your ring finger', difficulty: 4, type: 'isolation', targetFingers: [3] },
-    { id: 'pinky_out', name: 'Pinky', icon: '🤙', desc: 'Extend only your pinky', difficulty: 3, type: 'isolation', targetFingers: [4] },
-    
-    // Two finger combinations
-    { id: 'peace', name: 'Peace Sign', icon: '✌️', desc: 'Extend index and middle', difficulty: 2, type: 'isolation', targetFingers: [1, 2] },
-    { id: 'rock_on', name: 'Rock On', icon: '🤘', desc: 'Extend index and pinky', difficulty: 4, type: 'isolation', targetFingers: [1, 4] },
-    
-    // Pinch exercises
-    { id: 'ok_sign', name: 'OK Sign', icon: '👌', desc: 'Touch thumb to index tip', difficulty: 2, type: 'pinch', pinchPair: [4, 8] },
-    { id: 'thumb_middle', name: 'Thumb to Middle', icon: '🤌', desc: 'Touch thumb to middle tip', difficulty: 2, type: 'pinch', pinchPair: [4, 12] },
-    { id: 'thumb_ring', name: 'Thumb to Ring', icon: '🤏', desc: 'Touch thumb to ring tip', difficulty: 3, type: 'pinch', pinchPair: [4, 16] },
-    { id: 'thumb_pinky', name: 'Thumb to Pinky', icon: '🤙', desc: 'Touch thumb to pinky tip', difficulty: 3, type: 'pinch', pinchPair: [4, 20] },
-    
-    // Full hand
-    { id: 'starfish', name: 'Starfish', icon: '🖐️', desc: 'Spread all fingers wide', difficulty: 1, type: 'spread' },
-    { id: 'flat', name: 'Flat Hand', icon: '🤚', desc: 'Fingers together, extended', difficulty: 1, type: 'flat' },
+    { id:'starfish', name:'Starfish', icon:'🖐️', desc:'Spread all fingers wide', skeleton:'tips', duration:1500, difficulty:1 },
+    { id:'fist', name:'Gentle Fist', icon:'✊', desc:'Make a soft fist', skeleton:'curl', duration:1200, difficulty:1 },
+    { id:'thumbs', name:'Thumbs Up', icon:'👍', desc:'Thumb up, fingers curled', skeleton:'single', finger:'thumb', duration:1400, difficulty:2 },
+    { id:'pointer', name:'Pointer', icon:'☝️', desc:'Point with index finger', skeleton:'single', finger:'index', duration:1400, difficulty:2 },
+    { id:'ok', name:'OK Sign', icon:'👌', desc:'Touch thumb to index', skeleton:'pinch', targets:[4,8], duration:1200, difficulty:2 },
+    { id:'peace', name:'Peace Sign', icon:'✌️', desc:'Extend index and middle', skeleton:'two', fingers:['index','middle'], duration:1500, difficulty:3 },
+    { id:'pinky', name:'Pinky Wave', icon:'🤙', desc:'Extend pinky, curl others', skeleton:'single', finger:'pinky', duration:1500, difficulty:3 },
+    { id:'rock', name:'Rock On', icon:'🤘', desc:'Index and pinky out', skeleton:'two', fingers:['index','pinky'], duration:1800, difficulty:4 }
 ];
-
-function selectExercises() {
-    const shuffle = a => [...a].sort(() => Math.random() - 0.5);
-    const byDiff = d => ALL_EXERCISES.filter(e => e.difficulty === d);
-    const selected = [
-        ...shuffle(byDiff(1)).slice(0, 2),
-        ...shuffle(byDiff(2)).slice(0, 3),
-        ...shuffle(byDiff(3)).slice(0, 2),
-        ...shuffle(byDiff(4)).slice(0, 1),
-    ];
-    return shuffle(selected);
-}
 
 // ============================================
 // STATE
 // ============================================
 const state = {
-    step: 1,
-    screen: 'WELCOME',
-    handLandmarker: null,
-    webcamRunning: false,
-    animationFrameId: null,
-    
-    exercises: [],
-    exIdx: 0,
-    completed: 0,
-    streak: 0,
-    bestStreak: 0,
-    startTime: 0,
-    
-    // Phase: RESET -> EXECUTE
-    phase: 'RESET',
-    resetProgress: 0,
-    
-    // Exercise tracking
-    progress: 0,
-    currentAcc: 0,
-    peakAcc: 0,
-    
-    // Struggle detection
-    exerciseStartTime: 0,
-    skipToastShown: false,
-    
-    // Hand data
-    landmarks: null,
-    
-    // Boundary-based detection results
-    boundaryResults: {
-        fingerZones: [0, 0, 0, 0, 0], // 0-1 score for each finger
-        overallScore: 0,
-    },
-    
-    log: [],
-    painLevels: [],
-    selectedPain: null,
-    modalAction: null,
-    settingsOpen: false,
+    step: 1, screen: 'WELCOME', handLandmarker: null, webcamRunning: false,
+    exercises: [], exIdx: 0, completed: 0, streak: 0, bestStreak: 0, startTime: 0,
+    holding: false, holdStart: 0, holdBreakStart: 0, progress: 0, cooldown: false,
+    curls: [0,0,0,0,0], pinchIndex: 1, pinchMiddle: 1,
+    currentAcc: 0, peakAcc: 0, attemptStart: 0, hasAttempted: false, skipPrompted: false,
+    painLevels: [], selectedPain: null, log: [], animTime: 0
 };
 
 // ============================================
-// DOM REFERENCES
+// DOM ELEMENTS
 // ============================================
 const $ = id => document.getElementById(id);
 const el = {
-    welcome: $('overlay-welcome'),
-    loading: $('overlay-loading'),
-    ready: $('overlay-ready'),
-    pain: $('overlay-pain'),
-    rest: $('overlay-rest'),
-    complete: $('overlay-complete'),
-    
-    videoBg: $('video-bg'),
-    video: $('video-clean'),
-    canvas: $('output-canvas'),
-    frame: $('portal-frame'),
-    view: $('portal-view'),
-    
-    controlBar: $('control-bar'),
-    btnEnd: $('btn-end'),
-    btnSkip: $('btn-skip'),
-    btnAudio: $('btn-audio'),
-    btnTheme: $('btn-theme'),
-    btnSettings: $('btn-settings'),
-    settingsPanel: $('settings-panel'),
-    
-    icon: $('instruction-icon'),
-    text: $('instruction-text'),
-    sub: $('instruction-sub'),
-    progress: $('exercise-progress'),
-    timer: $('session-timer'),
-    
-    accuracyValue: $('accuracy-value'),
-    
-    centerInstruction: $('center-instruction'),
-    centerEmoji: $('center-emoji'),
-    centerText: $('center-text'),
-    
-    feedback: $('feedback-message'),
-    bar: $('progress-bar-fill'),
-    
-    skipToast: $('skip-toast'),
-    
-    streak: $('stat-streak'),
-    done: $('stat-completed'),
-    
-    readyCountdown: $('ready-countdown'),
-    readyIcon: $('ready-icon'),
-    readyName: $('ready-name'),
-    readyDesc: $('ready-desc'),
-    
-    restTimer: $('rest-timer'),
-    btnContinuePain: $('btn-continue-pain'),
-    
-    sumDone: $('sum-done'),
-    sumTime: $('sum-time'),
-    sumStreak: $('sum-streak'),
-    sumAccuracy: $('sum-accuracy'),
-    sumGrade: $('sum-grade'),
-    
-    loadMsg: $('loading-msg'),
-    disclaimerCheck: $('disclaimer-check'),
-    btnStart: $('btn-start'),
-    
-    modal: $('modal-confirm'),
+    welcome: $('overlay-welcome'), loading: $('overlay-loading'), pain: $('overlay-pain'),
+    rest: $('overlay-rest'), complete: $('overlay-complete'),
+    videoBg: $('video-bg'), video: $('video-clean'), canvas: $('output-canvas'),
+    frame: $('portal-frame'), view: $('portal-view'),
+    btnQuit: $('btn-quit'), btnAudio: $('btn-audio'), btnSkip: $('btn-skip'),
+    icon: $('instruction-icon'), text: $('instruction-text'), sub: $('instruction-sub'),
+    progress: $('exercise-progress'), timer: $('session-timer'),
+    streak: $('stat-streak'), done: $('stat-completed'), streakCard: $('streak-card'),
+    holdTimer: $('hold-timer'), feedback: $('feedback-message'), bar: $('progress-bar-fill'),
+    restTimer: $('rest-timer'), painAdvice: $('pain-advice'), btnContinue: $('btn-continue'),
+    sumDone: $('sum-done'), sumTime: $('sum-time'), sumStreak: $('sum-streak'), sumGrade: $('sum-grade'),
+    loadMsg: $('loading-msg'), disclaimerCheck: $('disclaimer-check'), btnStart: $('btn-start')
 };
-
 const ctx = el.canvas.getContext('2d');
 let audioCtx = null;
-
-// ============================================
-// THEME & SETTINGS
-// ============================================
-function toggleTheme() {
-    const isDark = document.body.getAttribute('data-theme') === 'dark';
-    document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-    localStorage.setItem('handhero_theme', isDark ? 'light' : 'dark');
-}
-
-function toggleAudio() {
-    settings.sounds = !settings.sounds;
-    settings.voice = !settings.voice;
-    el.btnAudio.classList.toggle('off', !settings.sounds);
-}
-
-function toggleSetting(key) {
-    settings[key] = !settings[key];
-    const toggle = $('toggle-' + key.toLowerCase().replace('advance', 'autoadvance'));
-    if (toggle) toggle.classList.toggle('on', settings[key]);
-    
-    if (key === 'sounds' || key === 'voice') {
-        el.btnAudio.classList.toggle('off', !settings.sounds && !settings.voice);
-    }
-}
-
-function toggleSettings() {
-    state.settingsOpen = !state.settingsOpen;
-    el.settingsPanel.classList.toggle('show', state.settingsOpen);
-}
-
-// Load saved theme
-const savedTheme = localStorage.getItem('handhero_theme');
-if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
 
 // ============================================
 // ONBOARDING
 // ============================================
 function nextStep() {
     state.step++;
-    updateStepUI();
+    document.querySelectorAll('.onboarding-step').forEach((s,i) => s.classList.toggle('active', i+1===state.step));
+    document.querySelectorAll('.onboarding-dot').forEach((d,i) => d.classList.toggle('active', i+1===state.step));
 }
-
 function prevStep() {
     state.step--;
-    updateStepUI();
+    document.querySelectorAll('.onboarding-step').forEach((s,i) => s.classList.toggle('active', i+1===state.step));
+    document.querySelectorAll('.onboarding-dot').forEach((d,i) => d.classList.toggle('active', i+1===state.step));
 }
-
-function updateStepUI() {
-    document.querySelectorAll('.onboarding-step').forEach((s, i) => s.classList.toggle('active', i + 1 === state.step));
-    document.querySelectorAll('.onboarding-dot').forEach((d, i) => d.classList.toggle('active', i + 1 === state.step));
-}
-
 el.disclaimerCheck.addEventListener('change', e => el.btnStart.disabled = !e.target.checked);
 
-// ============================================
-// INITIALIZATION
-// ============================================
 async function startApp() {
     if (!el.disclaimerCheck.checked) return;
-    
     el.welcome.classList.add('hidden');
     el.loading.classList.remove('hidden');
-    
     try {
         el.loadMsg.textContent = 'Loading AI model...';
-        
         const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js");
-        const fs = await vision.FilesetResolver.forVisionTasks(
-            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
-        );
-        
+        const fs = await vision.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
         state.handLandmarker = await vision.HandLandmarker.createFromOptions(fs, {
-            baseOptions: {
-                modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
-                delegate: 'GPU'
-            },
-            runningMode: 'VIDEO',
-            numHands: 1
+            baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate: 'GPU' },
+            runningMode: 'VIDEO', numHands: 1
         });
-        
         el.loadMsg.textContent = 'Starting camera...';
-        
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 1280, height: 720, facingMode: 'user' }
-        });
-        
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width:1280, height:720, facingMode:'user' } });
         el.videoBg.srcObject = stream;
         el.video.srcObject = stream;
-        
-        await new Promise(resolve => { el.video.onloadeddata = resolve; });
-        
-        state.webcamRunning = true;
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        el.loading.classList.add('hidden');
-        el.controlBar.style.display = 'flex';
-        beginSession();
-        
-    } catch (e) {
-        console.error('Init error:', e);
+        el.video.addEventListener('loadeddata', () => {
+            state.webcamRunning = true;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            el.loading.classList.add('hidden');
+            showControls();
+            beginSession();
+        });
+    } catch(e) {
         el.loadMsg.textContent = 'Error: ' + e.message;
     }
 }
 
+function showControls() { el.btnQuit.classList.remove('hidden'); el.btnAudio.classList.remove('hidden'); el.btnSkip.classList.remove('hidden'); }
+function hideControls() { el.btnQuit.classList.add('hidden'); el.btnAudio.classList.add('hidden'); el.btnSkip.classList.add('hidden'); }
+
 // ============================================
 // SESSION MANAGEMENT
 // ============================================
+function selectExercises() {
+    const shuffle = a => a.sort(() => Math.random() - 0.5);
+    const easy = ALL_EXERCISES.filter(e => e.difficulty === 1);
+    const med = ALL_EXERCISES.filter(e => e.difficulty === 2);
+    const hard = ALL_EXERCISES.filter(e => e.difficulty >= 3);
+    return [...shuffle(easy).slice(0,2), ...shuffle(med).slice(0,2), ...shuffle(hard).slice(0,2)];
+}
+
 function beginSession() {
+    state.screen = 'SESSION';
     state.exercises = selectExercises();
     state.exIdx = 0;
     state.completed = 0;
@@ -1236,322 +445,308 @@ function beginSession() {
     state.startTime = Date.now();
     state.log = [];
     state.painLevels = [];
-    
-    showReadyScreen(0);
+    loadExercise(0);
+    gameLoop();
 }
 
-function showReadyScreen(idx) {
-    state.screen = 'READY';
+function loadExercise(idx) {
     state.exIdx = idx;
-    
     const ex = state.exercises[idx];
-    el.readyIcon.textContent = ex.icon;
-    el.readyName.textContent = ex.name;
-    el.readyDesc.textContent = ex.desc;
-    
-    el.ready.classList.remove('hidden');
-    
-    let count = settings.countdownTime;
-    el.readyCountdown.textContent = count;
-    
-    const interval = setInterval(() => {
-        count--;
-        el.readyCountdown.textContent = count;
-        
-        if (count <= 0) {
-            clearInterval(interval);
-            el.ready.classList.add('hidden');
-            startExercise(idx);
-        }
-    }, 1000);
-    
-    if (settings.voice) speak(`Next: ${ex.name}. ${ex.desc}`);
-}
-
-function startExercise(idx) {
-    state.screen = 'SESSION';
-    state.exIdx = idx;
-    
-    const ex = state.exercises[idx];
-    
-    // Always start with fist/reset phase
-    state.phase = 'RESET';
-    state.resetProgress = 0;
+    el.icon.textContent = ex.icon;
+    el.text.textContent = ex.name;
+    el.sub.textContent = ex.desc;
+    el.progress.textContent = `${idx+1} of ${state.exercises.length}`;
+    state.holding = false;
+    state.holdBreakStart = 0;
     state.progress = 0;
     state.currentAcc = 0;
     state.peakAcc = 0;
-    state.exerciseStartTime = Date.now();
-    state.skipToastShown = false;
-    
-    // Show fist instruction
-    el.icon.textContent = '✊';
-    el.text.textContent = 'Make a Fist';
-    el.sub.textContent = 'Close all fingers to begin';
-    el.progress.textContent = `${idx + 1} / ${state.exercises.length}`;
-    
-    el.centerEmoji.textContent = '✊';
-    el.centerText.textContent = 'Make a fist to begin';
-    el.centerInstruction.classList.add('show');
-    
+    state.attemptStart = Date.now();
+    state.hasAttempted = false;
+    state.skipPrompted = false;
     el.bar.style.width = '0%';
-    el.frame.className = '';
-    
-    if (!state.animationFrameId) gameLoop();
+    speak(ex.name + '. ' + ex.desc);
 }
 
-// ============================================
-// GAME LOOP
-// ============================================
 function gameLoop() {
-    if (!state.webcamRunning) return;
-    
-    if (state.screen === 'SESSION') {
-        try {
-            const results = state.handLandmarker.detectForVideo(el.video, performance.now());
-            
-            resizeCanvas();
-            ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
-            
-            if (results.landmarks && results.landmarks.length > 0) {
-                state.landmarks = results.landmarks[0];
-                
-                // Calculate boundary-based accuracy
-                calculateBoundaryAccuracy();
-                
-                if (state.phase === 'RESET') {
-                    updateResetPhase();
-                } else {
-                    updateExecutePhase();
-                }
-                
-                // Render visuals
-                renderVisuals();
-            } else {
-                state.landmarks = null;
-                // Slow decay, don't reset
-                state.progress = Math.max(0, state.progress - CONFIG.PROGRESS_DECAY_RATE);
-                el.bar.style.width = (state.progress * 100) + '%';
-            }
-        } catch (e) {}
-    }
-    
+    if (!state.webcamRunning || state.screen !== 'SESSION') return;
+    state.animTime = Date.now() / 1000;
+    try {
+        const results = state.handLandmarker.detectForVideo(el.video, performance.now());
+        resizeCanvas();
+        ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+        if (results.landmarks && results.landmarks.length > 0) {
+            const lm = results.landmarks[0];
+            analyzeHand(lm);
+            updateGame();
+            renderSkeleton(lm);
+        } else {
+            state.holding = false;
+            state.progress = Math.max(0, state.progress - 0.03);
+            el.bar.style.width = (state.progress * 100) + '%';
+            el.frame.className = '';
+        }
+    } catch(e) {}
     updateTimer();
-    state.animationFrameId = requestAnimationFrame(gameLoop);
+    requestAnimationFrame(gameLoop);
 }
 
 function updateTimer() {
-    if (state.startTime) {
-        const s = Math.floor((Date.now() - state.startTime) / 1000);
-        el.timer.textContent = `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-    }
+    const s = Math.floor((Date.now() - state.startTime) / 1000);
+    el.timer.textContent = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
 }
 
 // ============================================
-// BOUNDARY-BASED ACCURACY CALCULATION
+// HAND ANALYSIS
 // ============================================
-function calculateBoundaryAccuracy() {
-    const lm = state.landmarks;
-    if (!lm) return;
+function analyzeHand(lm) {
+    const curl = (b, m, t) => {
+        const v1 = { x: lm[m].x - lm[b].x, y: lm[m].y - lm[b].y };
+        const v2 = { x: lm[t].x - lm[m].x, y: lm[t].y - lm[m].y };
+        const dot = v1.x * v2.x + v1.y * v2.y;
+        const mag = Math.hypot(v1.x, v1.y) * Math.hypot(v2.x, v2.y);
+        return Math.max(0, Math.min(1, 1 - (dot / mag)));
+    };
+    state.curls = [curl(1,2,4), curl(5,6,8), curl(9,10,12), curl(13,14,16), curl(17,18,20)];
+    state.pinchIndex = Math.hypot(lm[8].x - lm[4].x, lm[8].y - lm[4].y);
+    state.pinchMiddle = Math.hypot(lm[12].x - lm[4].x, lm[12].y - lm[4].y);
+}
+
+// ============================================
+// ACCURACY CALCULATORS
+// ============================================
+const Acc = {
+    starfish: s => s.curls.map(c => c < 0.20 ? 1 : c < 0.35 ? 0.8 : c < 0.50 ? 0.5 : 0.2).reduce((a,b) => a+b, 0) / 5,
+    // Relaxed: "soft fist" should not require a perfect curl from every finger.
+    fist: s => s.curls.map(c => c > 0.65 ? 1 : c > 0.50 ? 0.8 : c > 0.35 ? 0.5 : 0.2).reduce((a,b) => a+b, 0) / 5,
+    thumbs: s => {
+        const t = s.curls[0] < 0.35 ? 1 : s.curls[0] < 0.50 ? 0.7 : 0.3;
+        const o = [s.curls[1],s.curls[2],s.curls[3],s.curls[4]].map(c => c > 0.60 ? 1 : c > 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 4;
+        return t * 0.4 + o * 0.6;
+    },
+    pointer: s => {
+        const i = s.curls[1] < 0.30 ? 1 : s.curls[1] < 0.45 ? 0.7 : 0.3;
+        const o = [s.curls[2],s.curls[3],s.curls[4]].map(c => c > 0.60 ? 1 : c > 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 3;
+        return i * 0.5 + o * 0.5;
+    },
+    ok: s => s.pinchIndex < 0.05 ? 1 : s.pinchIndex < 0.08 ? 0.85 : s.pinchIndex < 0.12 ? 0.65 : s.pinchIndex < 0.18 ? 0.45 : 0.2,
+    peace: s => {
+        const e = [s.curls[1],s.curls[2]].map(c => c < 0.30 ? 1 : c < 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 2;
+        const c = [s.curls[3],s.curls[4]].map(c => c > 0.60 ? 1 : c > 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 2;
+        return e * 0.5 + c * 0.5;
+    },
+    pinky: s => {
+        const p = s.curls[4] < 0.30 ? 1 : s.curls[4] < 0.45 ? 0.7 : 0.3;
+        const o = [s.curls[1],s.curls[2],s.curls[3]].map(c => c > 0.50 ? 1 : c > 0.35 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 3;
+        return p * 0.5 + o * 0.5;
+    },
+    rock: s => {
+        const e = [s.curls[1],s.curls[4]].map(c => c < 0.30 ? 1 : c < 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 2;
+        const c = [s.curls[2],s.curls[3]].map(c => c > 0.60 ? 1 : c > 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 2;
+        return e * 0.5 + c * 0.5;
+    }
+};
+function getAccuracy() { return Acc[state.exercises[state.exIdx].id]?.(state) || 0.5; }
+
+// ============================================
+// GAME LOGIC
+// ============================================
+function updateGame() {
+    if (state.cooldown) return;
+    const ex = state.exercises[state.exIdx];
+    state.currentAcc = getAccuracy();
+    if (state.currentAcc > state.peakAcc) state.peakAcc = state.currentAcc;
+    if (state.currentAcc > 0.35 && !state.hasAttempted) { state.hasAttempted = true; state.attemptStart = Date.now(); }
+    
+    const elapsed = Date.now() - state.attemptStart;
+    const meetsGood = state.currentAcc >= CONFIG.GOOD_THRESHOLD;
+    const graceOver = state.hasAttempted && elapsed > CONFIG.GRACE_MS;
+    const meetsPartial = state.peakAcc >= CONFIG.PARTIAL_THRESHOLD;
+    const isHolding = state.currentAcc >= CONFIG.PARTIAL_THRESHOLD;
+    
+    // If the user briefly slips (camera jitter), don't hard-reset the hold timer.
+    if (isHolding) {
+        state.holdBreakStart = 0;
+        if (!state.holding) { state.holding = true; state.holdStart = Date.now(); }
+        const mult = 0.6 + state.currentAcc * 0.4;
+        state.progress = Math.min(1, ((Date.now() - state.holdStart) / ex.duration) * mult);
+        if (state.progress >= 1 && meetsGood) success(state.currentAcc, false);
+        else if (graceOver && meetsPartial && state.progress >= 0.5) success(state.peakAcc, true);
+    } else {
+        if (state.holding) {
+            if (!state.holdBreakStart) state.holdBreakStart = Date.now();
+            const breakMs = Date.now() - state.holdBreakStart;
+            if (breakMs >= CONFIG.FAIL_GRACE_MS) {
+                state.holding = false;
+                state.holdBreakStart = 0;
+                state.progress = Math.max(0, state.progress - 0.05);
+            }
+        } else {
+            state.progress = Math.max(0, state.progress - 0.05);
+        }
+    }
+    if (graceOver && meetsPartial && !state.cooldown) success(state.peakAcc, true);
+
+    // If they've been trying for a while and can't get into the acceptable zone, offer to skip.
+    if (state.hasAttempted && !meetsPartial && elapsed > CONFIG.GRACE_MS && !state.skipPrompted && !state.cooldown) {
+        state.skipPrompted = true;
+        modal.show({
+            title: 'Having trouble?',
+            body: 'This one looks hard to register from your angle. Skip it and keep your streak, or keep trying.',
+            okText: 'Skip exercise',
+            cancelText: 'Keep trying',
+            onOk: () => skip(),
+            onCancel: () => { state.skipPrompted = false; }
+        });
+    }
+    
+    el.bar.style.width = (state.progress * 100) + '%';
+    el.frame.className = state.progress >= 1 ? 'success' : state.holding ? 'holding' : state.currentAcc >= CONFIG.PARTIAL_THRESHOLD ? 'holding' : '';
+    if (state.holding && state.progress < 1) {
+        el.holdTimer.textContent = Math.ceil((1 - state.progress) * (state.exercises[state.exIdx].duration / 1000));
+        el.holdTimer.classList.add('show');
+    } else el.holdTimer.classList.remove('show');
+}
+
+function success(acc, graceful) {
+    state.cooldown = true;
+    state.completed++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
     
     const ex = state.exercises[state.exIdx];
-    
-    // Calculate finger extension scores using boundary zones
-    const fingerScores = [];
-    
-    for (let i = 0; i < 5; i++) {
-        const finger = FINGER_ARRAYS[i];
-        const tip = lm[finger[3]];
-        const base = lm[finger[0]];
-        const wrist = lm[0];
-        
-        // Extension: tip distance from wrist relative to base
-        const tipDist = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
-        const baseDist = Math.hypot(base.x - wrist.x, base.y - wrist.y);
-        const extension = tipDist / (baseDist + 0.01);
-        
-        // Normalized score (1 = extended, 0 = curled)
-        // Using boundary approach: scores smoothly transition
-        let score;
-        if (extension > 1.8) score = 1.0;
-        else if (extension > 1.5) score = 0.85;
-        else if (extension > 1.2) score = 0.65;
-        else if (extension > 1.0) score = 0.45;
-        else if (extension > 0.7) score = 0.25;
-        else score = 0.1;
-        
-        fingerScores[i] = score;
-    }
-    
-    state.boundaryResults.fingerZones = fingerScores;
-    
-    // Calculate overall accuracy based on exercise type
-    if (ex.type === 'isolation') {
-        const targets = ex.targetFingers;
-        
-        // Target fingers should be extended (high score)
-        const targetScores = targets.map(i => fingerScores[i]);
-        const targetAvg = avg(targetScores);
-        
-        // Non-target fingers should be curled (low score = good)
-        const nonTargets = [0, 1, 2, 3, 4].filter(i => !targets.includes(i));
-        const nonTargetScores = nonTargets.map(i => 1 - fingerScores[i]); // Invert: curled is good
-        const nonTargetAvg = nonTargets.length > 0 ? avg(nonTargetScores) : 1;
-        
-        // Weighted: target extension matters more, but isolation is required
-        // More forgiving weighting
-        state.currentAcc = targetAvg * 0.65 + nonTargetAvg * 0.35;
-        
-    } else if (ex.type === 'pinch') {
-        const [p1, p2] = ex.pinchPair;
-        const dist = Math.hypot(lm[p1].x - lm[p2].x, lm[p1].y - lm[p2].y);
-        
-        // Boundary-based pinch detection
-        if (dist < 0.04) state.currentAcc = 1.0;
-        else if (dist < 0.06) state.currentAcc = 0.9;
-        else if (dist < 0.09) state.currentAcc = 0.75;
-        else if (dist < 0.13) state.currentAcc = 0.55;
-        else if (dist < 0.18) state.currentAcc = 0.35;
-        else state.currentAcc = 0.15;
-        
-    } else if (ex.type === 'spread') {
-        // All fingers extended + spread apart
-        const allExtended = avg(fingerScores);
-        
-        // Calculate spread between adjacent fingers
-        const gaps = [];
-        for (let i = 0; i < 4; i++) {
-            const t1 = lm[FINGER_TIPS[i]];
-            const t2 = lm[FINGER_TIPS[i + 1]];
-            gaps.push(Math.hypot(t1.x - t2.x, t1.y - t2.y));
-        }
-        const avgGap = avg(gaps);
-        const spreadScore = avgGap > 0.12 ? 1 : avgGap > 0.08 ? 0.75 : avgGap > 0.05 ? 0.5 : 0.25;
-        
-        state.currentAcc = allExtended * 0.5 + spreadScore * 0.5;
-        
-    } else if (ex.type === 'flat') {
-        const allExtended = avg(fingerScores);
-        const gaps = [];
-        for (let i = 0; i < 4; i++) {
-            const t1 = lm[FINGER_TIPS[i]];
-            const t2 = lm[FINGER_TIPS[i + 1]];
-            gaps.push(Math.hypot(t1.x - t2.x, t1.y - t2.y));
-        }
-        const avgGap = avg(gaps);
-        const togetherScore = avgGap < 0.05 ? 1 : avgGap < 0.08 ? 0.75 : 0.5;
-        
-        state.currentAcc = allExtended * 0.6 + togetherScore * 0.4;
-    }
-    
-    // Track peak
-    if (state.currentAcc > state.peakAcc) state.peakAcc = state.currentAcc;
-    
-    state.boundaryResults.overallScore = state.currentAcc;
-}
-
-function avg(arr) { return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; }
-
-// ============================================
-// RESET PHASE
-// ============================================
-function updateResetPhase() {
-    const fingerScores = state.boundaryResults.fingerZones;
-    
-    // Check if all fingers are curled (low extension scores)
-    const allCurled = fingerScores.every(s => s < 0.4);
-    const avgCurl = avg(fingerScores.map(s => 1 - s)); // Inverted: curl score
-    
-    if (allCurled || avgCurl > 0.65) {
-        // Progress toward reset completion
-        state.resetProgress = Math.min(1, state.resetProgress + 0.025);
-    } else {
-        // Slow decay, don't reset to zero
-        state.resetProgress = Math.max(0, state.resetProgress - CONFIG.PROGRESS_DECAY_RATE);
-    }
-    
-    el.bar.style.width = (state.resetProgress * 50) + '%'; // First half of bar
-    updateAccuracyDisplay(avgCurl);
-    
-    // Reset complete!
-    if (state.resetProgress >= 1) {
-        state.phase = 'EXECUTE';
-        state.progress = 0;
-        
-        const ex = state.exercises[state.exIdx];
-        el.icon.textContent = ex.icon;
-        el.text.textContent = ex.name;
-        el.sub.textContent = ex.desc;
-        
-        el.centerEmoji.textContent = ex.icon;
-        el.centerText.textContent = ex.desc;
-        
-        if (settings.voice) {
-            const targets = ex.targetFingers;
-            if (targets) {
-                const names = targets.map(i => FINGER_NAMES[i]).join(' and ');
-                speak(`Good! Now extend your ${names}`);
-            } else {
-                speak(`Good! Now ${ex.desc}`);
-            }
-        }
-    }
-}
-
-// ============================================
-// EXECUTE PHASE
-// ============================================
-function updateExecutePhase() {
-    const acc = state.currentAcc;
-    
-    updateAccuracyDisplay(acc);
-    
-    // Check for struggle (8 seconds in yellow or below)
-    const elapsed = Date.now() - state.exerciseStartTime;
-    if (elapsed > CONFIG.STRUGGLE_TIME_MS && state.peakAcc < CONFIG.ZONE_BLUE && !state.skipToastShown) {
-        state.skipToastShown = true;
-        el.skipToast.classList.add('show');
-    }
-    
-    // Progress based on accuracy (doesn't reset, only decays slowly)
-    if (acc >= CONFIG.ZONE_YELLOW) {
-        // Add progress proportional to accuracy
-        const addRate = 0.015 + acc * 0.02;
-        state.progress = Math.min(1, state.progress + addRate);
-    } else {
-        // Slow decay
-        state.progress = Math.max(0, state.progress - CONFIG.PROGRESS_DECAY_RATE);
-    }
-    
-    el.bar.style.width = (50 + state.progress * 50) + '%'; // Second half
-    
-    // Success conditions
-    if (state.progress >= 1 && acc >= CONFIG.ZONE_BLUE) {
-        exerciseSuccess(acc);
-    }
-    
-    // Frame color
-    if (acc >= CONFIG.ZONE_GREEN) {
-        el.frame.className = 'success';
-    } else if (acc >= CONFIG.ZONE_BLUE) {
-        el.frame.className = 'holding';
-    } else {
-        el.frame.className = '';
-    }
-}
-
-function updateAccuracyDisplay(acc) {
     const pct = Math.round(acc * 100);
-    el.accuracyValue.textContent = pct + '%';
+    let grade = pct >= 90 ? 'A' : pct >= 80 ? 'A-' : pct >= 70 ? 'B' : pct >= 60 ? 'B-' : 'C';
+    state.log.push({ name: ex.name, accuracy: pct, grade, graceful });
+    console.log(`[HandHero] ${ex.name}: ${pct}% (${grade})${graceful ? ' [Graceful]' : ''}`);
     
-    el.accuracyValue.classList.remove('green', 'blue', 'yellow', 'orange');
-    if (acc >= CONFIG.ZONE_GREEN) el.accuracyValue.classList.add('green');
-    else if (acc >= CONFIG.ZONE_BLUE) el.accuracyValue.classList.add('blue');
-    else if (acc >= CONFIG.ZONE_YELLOW) el.accuracyValue.classList.add('yellow');
-    else el.accuracyValue.classList.add('orange');
+    const msgs = acc >= 0.85 ? ['Perfect!','Excellent!','Amazing!'] : acc >= 0.70 ? ['Great!','Nice!','Good job!'] : ['Good effort!','Keep going!'];
+    showFeedback(msgs[Math.floor(Math.random() * msgs.length)]);
+    playSound();
+    spawnParticles();
+    
+    el.done.textContent = state.completed;
+    el.streak.textContent = state.streak;
+    el.streakCard.classList.add('pulse');
+    setTimeout(() => el.streakCard.classList.remove('pulse'), 300);
+    
+    setTimeout(() => {
+        const next = state.exIdx + 1;
+        if (state.completed > 0 && state.completed % CONFIG.PAIN_CHECK_EVERY === 0 && next < state.exercises.length) { showPainCheck(); return; }
+        if (next >= state.exercises.length) endSession();
+        else { loadExercise(next); state.cooldown = false; }
+    }, CONFIG.NEXT_EX_DELAY_MS);
+}
+
+function skip() {
+    if (state.cooldown || state.screen !== 'SESSION') return;
+    const ex = state.exercises[state.exIdx];
+    state.log.push({ name: ex.name, accuracy: Math.round(state.peakAcc * 100), grade: 'SKIP', skipped: true });
+    state.streak = 0;
+    el.streak.textContent = '0';
+    const next = state.exIdx + 1;
+    if (next >= state.exercises.length) endSession();
+    else loadExercise(next);
 }
 
 // ============================================
-// VISUAL RENDERING
+// PAIN CHECK
+// ============================================
+function showPainCheck() {
+    state.screen = 'PAIN';
+    state.selectedPain = null;
+    el.painAdvice.textContent = '';
+    el.btnContinue.disabled = true;
+    document.querySelectorAll('.pain-btn').forEach(b => b.classList.remove('selected'));
+    el.pain.classList.remove('hidden');
+}
+
+function selectPain(lvl) {
+    state.selectedPain = lvl;
+    state.painLevels.push({ time: Date.now(), level: lvl });
+    document.querySelectorAll('.pain-btn').forEach((b, i) => b.classList.toggle('selected', i === lvl));
+    const advice = ["Great! You're doing well.", "Mild discomfort is normal.", "Let's slow down.", "Please stop and rest."];
+    el.painAdvice.textContent = advice[lvl];
+    el.btnContinue.disabled = false;
+    el.btnContinue.textContent = lvl === 3 ? 'End Session' : 'Continue';
+}
+
+function continuePain() {
+    el.pain.classList.add('hidden');
+    if (state.selectedPain === 3) { endSession(); return; }
+    showRest();
+}
+
+// ============================================
+// REST PERIOD
+// ============================================
+let restInterval = null;
+function showRest() {
+    state.screen = 'REST';
+    el.frame.className = 'rest';
+    let remaining = CONFIG.REST_SECONDS;
+    el.restTimer.textContent = remaining;
+    el.rest.classList.remove('hidden');
+    restInterval = setInterval(() => {
+        remaining--;
+        el.restTimer.textContent = remaining;
+        if (remaining <= 0) skipRest();
+    }, 1000);
+}
+
+function skipRest() {
+    if (restInterval) { clearInterval(restInterval); restInterval = null; }
+    el.rest.classList.add('hidden');
+    el.frame.className = '';
+    state.screen = 'SESSION';
+    state.cooldown = false;
+    const next = state.exIdx + 1;
+    if (next >= state.exercises.length) endSession();
+    else loadExercise(next);
+}
+
+// ============================================
+// SESSION END
+// ============================================
+function endSession() {
+    state.screen = 'COMPLETE';
+    hideControls();
+    const dur = Math.floor((Date.now() - state.startTime) / 1000);
+    const valid = state.log.filter(l => !l.skipped);
+    const avg = valid.length > 0 ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length : 0;
+    let grade, cls;
+    if (avg >= 85) { grade = 'A'; cls = 'grade-a'; }
+    else if (avg >= 70) { grade = 'B+'; cls = 'grade-a'; }
+    else if (avg >= 55) { grade = 'B'; cls = 'grade-b'; }
+    else { grade = 'C'; cls = 'grade-c'; }
+    
+    el.sumDone.textContent = state.completed;
+    el.sumTime.textContent = `${Math.floor(dur/60)}:${(dur%60).toString().padStart(2,'0')}`;
+    el.sumStreak.textContent = state.bestStreak + ' 🔥';
+    el.sumGrade.textContent = grade;
+    el.sumGrade.className = 'grade-badge ' + cls;
+    el.complete.classList.remove('hidden');
+    
+    console.log('\n===== HANDHERO SESSION =====');
+    console.table(state.log);
+    console.log('Avg:', Math.round(avg) + '%');
+    console.log('============================\n');
+}
+
+function restart() { el.complete.classList.add('hidden'); showControls(); beginSession(); }
+
+function exportReport() {
+    const dur = Math.floor((Date.now() - state.startTime) / 1000);
+    const txt = `HANDHERO SESSION REPORT\n${new Date().toLocaleString()}\n\nExercises: ${state.completed}\nDuration: ${Math.floor(dur/60)}:${(dur%60).toString().padStart(2,'0')}\nBest Streak: ${state.bestStreak}\n\nDETAILS:\n${state.log.map(l => `${l.name}: ${l.accuracy}% (${l.grade})`).join('\n')}\n\nPain Levels: ${state.painLevels.map(p => p.level).join(', ') || 'None'}\n\n---\nGenerated by HandHero`;
+    const blob = new Blob([txt], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `handhero-${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+}
+
+// ============================================
+// RENDERING
 // ============================================
 function resizeCanvas() {
     if (el.canvas.width !== el.view.clientWidth) {
@@ -1567,473 +762,242 @@ function project(pt) {
     return { x: (w - sw) / 2 + (1 - pt.x) * sw, y: (h - sh) / 2 + pt.y * sh };
 }
 
-function renderVisuals() {
-    const lm = state.landmarks;
-    if (!lm) return;
-    
+function renderSkeleton(lm) {
     const ex = state.exercises[state.exIdx];
-    const acc = state.phase === 'RESET' ? avg(state.boundaryResults.fingerZones.map(s => 1 - s)) : state.currentAcc;
-    
-    // Get zone color
-    const zoneColor = getZoneColor(acc);
-    const zoneSolid = getZoneSolidColor(acc);
-    
-    // Draw shaded zone based on exercise
-    if (state.phase === 'EXECUTE') {
-        if (ex.type === 'isolation' && ex.targetFingers) {
-            drawIsolationZone(lm, ex.targetFingers, zoneColor, acc);
-        } else if (ex.type === 'pinch' && ex.pinchPair) {
-            drawPinchZone(lm, ex.pinchPair, zoneColor, acc);
-        } else if (ex.type === 'spread' || ex.type === 'flat') {
-            drawSpreadZone(lm, zoneColor, acc);
+    if (ex.skeleton === 'tips') renderTips(lm);
+    else if (ex.skeleton === 'curl') renderCurl(lm);
+    else if (ex.skeleton === 'single') renderSingle(lm, ex.finger);
+    else if (ex.skeleton === 'two') renderTwo(lm, ex.fingers);
+    else if (ex.skeleton === 'pinch') renderPinch(lm, ex.targets);
+    else renderMinimal(lm);
+}
+
+function renderTips(lm) {
+    const tips = [0, 4, 8, 12, 16, 20];
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    tips.slice(1).forEach(t => {
+        const w = project(lm[0]), p = project(lm[t]);
+        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    });
+    tips.forEach((idx, i) => {
+        const p = project(lm[idx]);
+        const fIdx = Math.floor((idx - 1) / 4);
+        const good = idx === 0 || state.curls[fIdx] < 0.30;
+        const pulse = 1 + Math.sin(state.animTime * 4 + i) * 0.15;
+        const size = (idx === 0 ? 14 : 12) * pulse;
+        const color = good ? '#68b37a' : 'rgba(255,255,255,0.7)';
+        ctx.fillStyle = color + '30'; ctx.beginPath(); ctx.arc(p.x, p.y, size + 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, size * 0.35, 0, Math.PI * 2); ctx.fill();
+    });
+}
+
+function renderCurl(lm) {
+    const fingers = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
+    fingers.forEach((f, i) => {
+        const curl = state.curls[i];
+        const r = 255 - curl * 187, g = 255 - curl * 33, b = 255 - curl * 127;
+        const color = `rgb(${r},${g},${b})`;
+        ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        const w = project(lm[0]), start = project(lm[f[0]]);
+        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(start.x, start.y); ctx.stroke();
+        for (let j = 0; j < f.length - 1; j++) {
+            const a = project(lm[f[j]]), b = project(lm[f[j+1]]);
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
         }
-    } else {
-        // Reset phase - show zone around fist area
-        drawFistZone(lm, zoneColor, acc);
-    }
-    
-    // Draw skeleton (consistent color, no red/green flashing)
-    drawSkeleton(lm);
+        const pulse = 1 + Math.sin(state.animTime * (2 + curl * 5) + i) * 0.25;
+        f.forEach(idx => {
+            const p = project(lm[idx]);
+            ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, 6 * pulse, 0, Math.PI * 2); ctx.fill();
+        });
+    });
+    const w = project(lm[0]);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(w.x, w.y, 10, 0, Math.PI * 2); ctx.fill();
 }
 
-function drawIsolationZone(lm, targets, color, acc) {
-    const wrist = project(lm[0]);
-    const tips = targets.map(i => project(lm[FINGER_TIPS[i]]));
+function renderSingle(lm, fingerName) {
+    const map = { thumb: FINGER.THUMB, index: FINGER.INDEX, middle: FINGER.MIDDLE, ring: FINGER.RING, pinky: FINGER.PINKY };
+    const curlMap = { thumb: 0, index: 1, middle: 2, ring: 3, pinky: 4 };
+    const indices = [0, ...map[fingerName]];
+    const good = state.curls[curlMap[fingerName]] < 0.30;
+    const color = good ? '#68b37a' : '#d4a574';
     
-    if (tips.length === 1) {
-        // Single finger - draw wedge from wrist to finger
-        const tip = tips[0];
-        const finger = FINGER_ARRAYS[targets[0]];
-        const base = project(lm[finger[0]]);
-        
-        // Create a wedge shape
-        ctx.beginPath();
-        ctx.moveTo(wrist.x, wrist.y);
-        ctx.lineTo(base.x - 30, base.y);
-        ctx.lineTo(tip.x - 20, tip.y);
-        ctx.lineTo(tip.x + 20, tip.y);
-        ctx.lineTo(base.x + 30, base.y);
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
-    } else {
-        // Multiple fingers - polygon
-        ctx.beginPath();
-        ctx.moveTo(wrist.x, wrist.y);
-        tips.forEach(t => ctx.lineTo(t.x, t.y));
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+    BONES.forEach(([s, e]) => {
+        if (!indices.includes(s) || !indices.includes(e)) {
+            const a = project(lm[s]), b = project(lm[e]);
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+    });
+    
+    ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.shadowColor = color; ctx.shadowBlur = 12;
+    const f = map[fingerName];
+    const w = project(lm[0]), start = project(lm[f[0]]);
+    ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(start.x, start.y); ctx.stroke();
+    for (let i = 0; i < f.length - 1; i++) {
+        const a = project(lm[f[i]]), b = project(lm[f[i+1]]);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
+    ctx.shadowBlur = 0;
     
-    // Draw accuracy percentage
-    const centerX = tips.reduce((s, t) => s + t.x, wrist.x) / (tips.length + 1);
-    const centerY = tips.reduce((s, t) => s + t.y, wrist.y) / (tips.length + 1) - 40;
-    
-    ctx.font = 'bold 32px Nunito';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 4;
-    ctx.strokeText(Math.round(acc * 100) + '%', centerX, centerY);
-    ctx.fillText(Math.round(acc * 100) + '%', centerX, centerY);
+    const pulse = 1 + Math.sin(state.animTime * 5) * 0.2;
+    indices.forEach(idx => {
+        const p = project(lm[idx]);
+        const size = (idx === 0 ? 12 : 10) * pulse;
+        ctx.fillStyle = color + '40'; ctx.beginPath(); ctx.arc(p.x, p.y, size + 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, size * 0.35, 0, Math.PI * 2); ctx.fill();
+    });
 }
 
-function drawPinchZone(lm, pair, color, acc) {
-    const [p1, p2] = pair;
-    const pt1 = project(lm[p1]);
-    const pt2 = project(lm[p2]);
-    const wrist = project(lm[0]);
+function renderTwo(lm, fingerNames) {
+    const map = { thumb: FINGER.THUMB, index: FINGER.INDEX, middle: FINGER.MIDDLE, ring: FINGER.RING, pinky: FINGER.PINKY };
+    const curlMap = { thumb: 0, index: 1, middle: 2, ring: 3, pinky: 4 };
+    let indices = [0];
+    fingerNames.forEach(n => indices.push(...map[n]));
+    const good = fingerNames.every(n => state.curls[curlMap[n]] < 0.30);
+    const color = good ? '#68b37a' : '#87a878';
     
-    // Triangle between fingertips and wrist
-    ctx.beginPath();
-    ctx.moveTo(pt1.x, pt1.y);
-    ctx.lineTo(pt2.x, pt2.y);
-    ctx.lineTo(wrist.x, wrist.y);
-    ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    BONES.forEach(([s, e]) => {
+        if (!indices.includes(s) && !indices.includes(e)) {
+            const a = project(lm[s]), b = project(lm[e]);
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+    });
     
-    // Dotted line between tips
-    ctx.setLineDash([8, 8]);
-    ctx.strokeStyle = getZoneSolidColor(acc);
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(pt1.x, pt1.y);
-    ctx.lineTo(pt2.x, pt2.y);
-    ctx.stroke();
+    ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.shadowColor = color; ctx.shadowBlur = 10;
+    fingerNames.forEach(name => {
+        const f = map[name];
+        const w = project(lm[0]), start = project(lm[f[0]]);
+        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(start.x, start.y); ctx.stroke();
+        for (let i = 0; i < f.length - 1; i++) {
+            const a = project(lm[f[i]]), b = project(lm[f[i+1]]);
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+    });
+    ctx.shadowBlur = 0;
+    
+    const pulse = 1 + Math.sin(state.animTime * 4) * 0.18;
+    indices.forEach(idx => {
+        const p = project(lm[idx]);
+        const size = (idx === 0 ? 11 : 9) * pulse;
+        ctx.fillStyle = color + '40'; ctx.beginPath(); ctx.arc(p.x, p.y, size + 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, size * 0.35, 0, Math.PI * 2); ctx.fill();
+    });
+}
+
+function renderPinch(lm, targets) {
+    const [t1, t2] = targets;
+    const f1 = t1 === 4 ? FINGER.THUMB : FINGER.INDEX;
+    const f2 = t2 === 8 ? FINGER.INDEX : FINGER.MIDDLE;
+    const indices = [0, ...f1, ...f2];
+    const p1 = project(lm[t1]), p2 = project(lm[t2]);
+    const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+    const touching = dist < 50;
+    const color = touching ? '#68b37a' : '#87a878';
+    
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    BONES.forEach(([s, e]) => {
+        if (!indices.includes(s) && !indices.includes(e)) {
+            const a = project(lm[s]), b = project(lm[e]);
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+    });
+    
+    ctx.strokeStyle = color; ctx.lineWidth = 3;
+    [f1, f2].forEach(f => {
+        const w = project(lm[0]), start = project(lm[f[0]]);
+        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(start.x, start.y); ctx.stroke();
+        for (let i = 0; i < f.length - 1; i++) {
+            const a = project(lm[f[i]]), b = project(lm[f[i+1]]);
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+    });
+    
+    ctx.strokeStyle = touching ? '#68b37a' : 'rgba(135,168,120,0.5)';
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
     ctx.setLineDash([]);
     
-    // Percentage
-    const midX = (pt1.x + pt2.x) / 2;
-    const midY = (pt1.y + pt2.y) / 2 - 25;
-    ctx.font = 'bold 28px Nunito';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 4;
-    ctx.strokeText(Math.round(acc * 100) + '%', midX, midY);
-    ctx.fillText(Math.round(acc * 100) + '%', midX, midY);
-    
-    // Target circles
-    [pt1, pt2].forEach(p => {
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 35, 0, Math.PI * 2);
-        ctx.fill();
+    [t1, t2].forEach((tip, i) => {
+        const p = project(lm[tip]);
+        const pulse = 1 + Math.sin(state.animTime * 6 + i * Math.PI) * 0.25;
+        const size = 14 * pulse;
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 2);
+        grad.addColorStop(0, color + '60'); grad.addColorStop(1, color + '00');
+        ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, size * 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, size * 0.4, 0, Math.PI * 2); ctx.fill();
     });
 }
 
-function drawSpreadZone(lm, color, acc) {
-    const wrist = project(lm[0]);
-    const tips = FINGER_TIPS.map(i => project(lm[i]));
-    
-    // Draw zones between each adjacent finger
-    for (let i = 0; i < tips.length - 1; i++) {
-        ctx.beginPath();
-        ctx.moveTo(tips[i].x, tips[i].y);
-        ctx.lineTo(tips[i + 1].x, tips[i + 1].y);
-        ctx.lineTo(wrist.x, wrist.y);
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
-    }
-    
-    // Center percentage
-    ctx.font = 'bold 28px Nunito';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 4;
-    ctx.strokeText(Math.round(acc * 100) + '%', wrist.x, wrist.y - 50);
-    ctx.fillText(Math.round(acc * 100) + '%', wrist.x, wrist.y - 50);
-}
-
-function drawFistZone(lm, color, acc) {
-    const wrist = project(lm[0]);
-    const tips = FINGER_TIPS.map(i => project(lm[i]));
-    const center = {
-        x: tips.reduce((s, t) => s + t.x, 0) / tips.length,
-        y: tips.reduce((s, t) => s + t.y, 0) / tips.length
-    };
-    
-    // Circular zone around fist area
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, 80, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-    
-    // Percentage
-    ctx.font = 'bold 28px Nunito';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.fillText(Math.round(acc * 100) + '%', center.x, center.y);
-}
-
-function drawSkeleton(lm) {
-    // CONSISTENT color - no red/green flashing
-    const color = 'rgba(120, 220, 180, 0.9)';
-    const glowColor = 'rgba(120, 220, 180, 0.4)';
-    
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = 8;
-    
-    // Draw all bones
-    FINGER_ARRAYS.forEach(finger => {
-        const wrist = project(lm[0]);
-        const base = project(lm[finger[0]]);
-        
-        ctx.beginPath();
-        ctx.moveTo(wrist.x, wrist.y);
-        ctx.lineTo(base.x, base.y);
-        ctx.stroke();
-        
-        for (let i = 0; i < finger.length - 1; i++) {
-            const a = project(lm[finger[i]]);
-            const b = project(lm[finger[i + 1]]);
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-        }
+function renderMinimal(lm) {
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    lm.forEach(pt => {
+        const p = project(pt);
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
     });
-    
-    // Palm connections
-    [[5, 9], [9, 13], [13, 17]].forEach(([a, b]) => {
-        const pa = project(lm[a]);
-        const pb = project(lm[b]);
-        ctx.beginPath();
-        ctx.moveTo(pa.x, pa.y);
-        ctx.lineTo(pb.x, pb.y);
-        ctx.stroke();
-    });
-    
-    // Joints
-    ctx.shadowBlur = 0;
-    for (let i = 0; i <= 20; i++) {
-        const p = project(lm[i]);
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
-function getZoneColor(acc) {
-    if (acc >= CONFIG.ZONE_GREEN) return 'rgba(104, 200, 150, 0.55)';
-    if (acc >= CONFIG.ZONE_BLUE) return 'rgba(100, 180, 230, 0.50)';
-    if (acc >= CONFIG.ZONE_YELLOW) return 'rgba(240, 200, 100, 0.50)';
-    return 'rgba(240, 160, 100, 0.45)';
-}
-
-function getZoneSolidColor(acc) {
-    if (acc >= CONFIG.ZONE_GREEN) return '#68c896';
-    if (acc >= CONFIG.ZONE_BLUE) return '#64b4e6';
-    if (acc >= CONFIG.ZONE_YELLOW) return '#f0c864';
-    return '#f0a064';
 }
 
 // ============================================
-// EXERCISE SUCCESS
+// FEEDBACK & AUDIO
 // ============================================
-function exerciseSuccess(acc) {
-    state.completed++;
-    state.streak++;
-    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
-    
-    const ex = state.exercises[state.exIdx];
-    const pct = Math.round(acc * 100);
-    const grade = pct >= 90 ? 'A' : pct >= 80 ? 'A-' : pct >= 70 ? 'B+' : pct >= 60 ? 'B' : 'B-';
-    
-    state.log.push({ id: ex.id, name: ex.name, accuracy: pct, grade });
-    
-    showFeedback(acc >= 0.85 ? 'Perfect! 🌟' : acc >= 0.70 ? 'Great job!' : 'Good effort!');
-    if (settings.sounds) playSound();
-    spawnParticles();
-    
-    el.done.textContent = state.completed;
-    el.streak.textContent = state.streak;
-    el.centerInstruction.classList.remove('show');
-    el.skipToast.classList.remove('show');
-    
-    setTimeout(() => {
-        const nextIdx = state.exIdx + 1;
-        
-        if (state.completed > 0 && state.completed % CONFIG.PAIN_CHECK_EVERY === 0 && nextIdx < state.exercises.length) {
-            showPainCheck();
-            return;
-        }
-        
-        if (nextIdx >= state.exercises.length) {
-            endSession();
-            return;
-        }
-        
-        if (settings.autoAdvance) {
-            showReadyScreen(nextIdx);
-        } else {
-            // Manual advance - show button
-            el.centerText.textContent = 'Tap Skip to continue';
-            el.centerEmoji.textContent = '👉';
-            el.centerInstruction.classList.add('show');
-        }
-    }, 1500);
-}
-
-// ============================================
-// SKIP HANDLING
-// ============================================
-function skipExercise() {
-    if (state.screen !== 'SESSION') return;
-    
-    const ex = state.exercises[state.exIdx];
-    state.log.push({ id: ex.id, name: ex.name, accuracy: Math.round(state.peakAcc * 100), grade: 'SKIP', skipped: true });
-    state.streak = 0;
-    el.streak.textContent = '0';
-    el.skipToast.classList.remove('show');
-    
-    const nextIdx = state.exIdx + 1;
-    if (nextIdx >= state.exercises.length) {
-        endSession();
-    } else {
-        showReadyScreen(nextIdx);
-    }
-}
-
-function acceptSkip() {
-    skipExercise();
-}
-
-function dismissSkip() {
-    el.skipToast.classList.remove('show');
-    state.exerciseStartTime = Date.now(); // Reset timer
-}
-
-// ============================================
-// PAIN CHECK & REST
-// ============================================
-function showPainCheck() {
-    state.screen = 'PAIN';
-    state.selectedPain = null;
-    el.btnContinuePain.disabled = true;
-    document.querySelectorAll('.pain-btn').forEach(b => b.classList.remove('selected'));
-    el.pain.classList.remove('hidden');
-}
-
-function selectPain(level) {
-    state.selectedPain = level;
-    state.painLevels.push({ time: Date.now(), level });
-    document.querySelectorAll('.pain-btn').forEach((b, i) => b.classList.toggle('selected', i === level));
-    el.btnContinuePain.disabled = false;
-    el.btnContinuePain.textContent = level === 3 ? 'End Session' : 'Continue';
-}
-
-function continuePain() {
-    el.pain.classList.add('hidden');
-    if (state.selectedPain === 3) { endSession(); return; }
-    showRest();
-}
-
-let restInterval = null;
-function showRest() {
-    state.screen = 'REST';
-    let remaining = CONFIG.REST_SECONDS;
-    el.restTimer.textContent = remaining;
-    el.rest.classList.remove('hidden');
-    restInterval = setInterval(() => {
-        remaining--;
-        el.restTimer.textContent = remaining;
-        if (remaining <= 0) skipRest();
-    }, 1000);
-}
-
-function skipRest() {
-    if (restInterval) { clearInterval(restInterval); restInterval = null; }
-    el.rest.classList.add('hidden');
-    const nextIdx = state.exIdx + 1;
-    if (nextIdx >= state.exercises.length) endSession();
-    else showReadyScreen(nextIdx);
-}
-
-// ============================================
-// SESSION END
-// ============================================
-function endSession() {
-    state.screen = 'COMPLETE';
-    
-    if (state.animationFrameId) {
-        cancelAnimationFrame(state.animationFrameId);
-        state.animationFrameId = null;
-    }
-    
-    const duration = Math.floor((Date.now() - state.startTime) / 1000);
-    const valid = state.log.filter(l => !l.skipped);
-    const avgAcc = valid.length > 0 ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length : 0;
-    
-    let grade, gradeClass;
-    if (avgAcc >= 85) { grade = 'A'; gradeClass = 'grade-a'; }
-    else if (avgAcc >= 70) { grade = 'B+'; gradeClass = 'grade-b'; }
-    else if (avgAcc >= 55) { grade = 'B'; gradeClass = 'grade-b'; }
-    else { grade = 'C+'; gradeClass = 'grade-c'; }
-    
-    el.sumDone.textContent = state.completed;
-    el.sumTime.textContent = `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`;
-    el.sumStreak.textContent = state.bestStreak + ' 🔥';
-    el.sumAccuracy.textContent = Math.round(avgAcc) + '%';
-    el.sumGrade.textContent = grade;
-    el.sumGrade.className = 'grade-badge ' + gradeClass;
-    
-    el.complete.classList.remove('hidden');
-    
-    // Save silently (NO ALERTS)
-    try {
-        const result = {
-            completed: state.completed,
-            duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`,
-            grade,
-            avgAccuracy: Math.round(avgAcc),
-            bestStreak: state.bestStreak,
-            exercises: state.log,
-            date: new Date().toISOString()
-        };
-        localStorage.setItem('handhero_lastSessionResult', JSON.stringify(result));
-    } catch (e) {}
-}
-
-function goHome() {
-    window.location.href = 'handhero_dashboard.html';
-}
-
-function newSession() {
-    el.complete.classList.add('hidden');
-    beginSession();
-}
-
-// ============================================
-// MODAL
-// ============================================
-function showEndModal() {
-    el.modal.classList.add('show');
-}
-
-function closeModal() {
-    el.modal.classList.remove('show');
-}
-
-function confirmEndSession() {
-    closeModal();
-    endSession();
-}
-
-// ============================================
-// AUDIO & FEEDBACK
-// ============================================
-function showFeedback(text) {
-    el.feedback.textContent = text;
+function showFeedback(txt) {
+    el.feedback.textContent = txt;
     el.feedback.classList.add('show');
-    setTimeout(() => el.feedback.classList.remove('show'), 1200);
+    setTimeout(() => el.feedback.classList.remove('show'), 1000);
 }
 
 function spawnParticles() {
-    const colors = ['#68c896', '#64b4e6', '#f0c864', '#a8c99b'];
-    for (let i = 0; i < 15; i++) {
+    const colors = ['#68b37a', '#d4a574', '#e8998d', '#a8c99b', '#87a878'];
+    for (let i = 0; i < 20; i++) {
         const p = document.createElement('div');
         p.className = 'particle';
         p.style.left = (30 + Math.random() * 40) + '%';
         p.style.top = (30 + Math.random() * 20) + '%';
         p.style.width = p.style.height = (6 + Math.random() * 10) + 'px';
         p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.animationDelay = (Math.random() * 0.3) + 's';
         el.view.appendChild(p);
         setTimeout(() => p.remove(), 2000);
     }
 }
 
 function playSound() {
-    if (!audioCtx || !settings.sounds) return;
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
+    if (!audioCtx) return;
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
     o.connect(g); g.connect(audioCtx.destination);
     o.type = 'sine';
     o.frequency.setValueAtTime(523, audioCtx.currentTime);
     o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
     o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
-    g.gain.setValueAtTime(0.08, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-    o.start(); o.stop(audioCtx.currentTime + 0.4);
+    g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    o.start(); o.stop(audioCtx.currentTime + 0.5);
 }
 
-function speak(text) {
-    if (!settings.voice || !window.speechSynthesis) return;
+const coach = {
+    enabled: true,
+    syncUi() {
+        el.btnAudio.textContent = this.enabled ? '🔊' : '🔇';
+        el.btnAudio.classList.toggle('is-on', this.enabled);
+        el.btnAudio.classList.toggle('is-off', !this.enabled);
+    },
+    toggle() {
+        this.enabled = !this.enabled;
+        this.syncUi();
+    }
+};
+coach.syncUi();
+function speak(txt) {
+    if (!coach.enabled || !window.speechSynthesis) return;
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    const u = new SpeechSynthesisUtterance(txt);
     u.rate = 0.95;
     speechSynthesis.speak(u);
 }
@@ -2041,32 +1005,121 @@ function speak(text) {
 // ============================================
 // EVENT LISTENERS
 // ============================================
-el.btnEnd.addEventListener('click', showEndModal);
-el.btnSkip.addEventListener('click', skipExercise);
-el.btnAudio.addEventListener('click', toggleAudio);
-el.btnTheme.addEventListener('click', toggleTheme);
-el.btnSettings.addEventListener('click', toggleSettings);
-
-$('countdown-select').addEventListener('change', (e) => {
-    settings.countdownTime = parseInt(e.target.value);
-});
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') showEndModal();
-    if (e.key === 's' && state.screen === 'SESSION') skipExercise();
-});
-
-document.addEventListener('click', (e) => {
-    if (state.settingsOpen && !el.settingsPanel.contains(e.target) && e.target !== el.btnSettings) {
-        toggleSettings();
+// --- Modal utilities (replace browser alert/confirm) ---
+const modal = {
+    backdrop: document.getElementById('modal-backdrop'),
+    title: document.getElementById('modal-title'),
+    body: document.getElementById('modal-body'),
+    ok: document.getElementById('modal-ok'),
+    cancel: document.getElementById('modal-cancel'),
+    onOk: null,
+    onCancel: null,
+    show({ title = 'Confirm', body = 'Are you sure?', okText = 'OK', cancelText = 'Cancel', onOk = null, onCancel = null } = {}) {
+        this.title.textContent = title;
+        this.body.textContent = body;
+        this.ok.textContent = okText;
+        this.cancel.textContent = cancelText;
+        this.onOk = onOk;
+        this.onCancel = onCancel;
+        this.backdrop.classList.remove('hidden');
+        this.backdrop.setAttribute('aria-hidden', 'false');
+        // focus the safest default
+        this.ok.focus();
+    },
+    hide() {
+        this.backdrop.classList.add('hidden');
+        this.backdrop.setAttribute('aria-hidden', 'true');
+        this.onOk = null;
+        this.onCancel = null;
     }
+};
+
+modal.ok.addEventListener('click', () => { const fn = modal.onOk; modal.hide(); fn && fn(); });
+modal.cancel.addEventListener('click', () => { const fn = modal.onCancel; modal.hide(); fn && fn(); });
+modal.backdrop.addEventListener('click', (e) => { if (e.target === modal.backdrop) modal.cancel.click(); });
+
+function confirmEndSession() {
+    modal.show({
+        title: 'End session?',
+        body: 'You can come back anytime. Do you want to end this session now?',
+        okText: 'End session',
+        cancelText: 'Keep going',
+        onOk: () => endSession()
+    });
+}
+
+el.btnQuit.addEventListener('click', confirmEndSession);
+el.btnAudio.addEventListener('click', () => coach.toggle());
+el.btnSkip.addEventListener('click', skip);
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && state.screen === 'SESSION') confirmEndSession();
+    if (e.key === 's' && state.screen === 'SESSION') skip();
 });
 
-// Hide control bar initially
-el.controlBar.style.display = 'none';
+console.log('%c🌱 HandHero v3.0', 'font-size:20px;font-weight:bold;color:#68b37a');
 
-console.log('%c🌱 HandHero v6.0', 'font-size: 24px; font-weight: bold; color: #68c896;');
-console.log('%cBoundary-based detection + Clean UI', 'font-size: 14px; color: #64b4e6;');
+// ============================================
+// DASHBOARD INTEGRATION
+// ============================================
+function saveSessionToDashboard() {
+    const duration = Math.floor((Date.now() - state.startTime) / 1000);
+    const mins = Math.floor(duration / 60);
+    const secs = duration % 60;
+    
+    const valid = state.log.filter(l => !l.skipped);
+    const avg = valid.length > 0 ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length : 0;
+    
+    let grade;
+    if (avg >= 85) grade = 'A';
+    else if (avg >= 70) grade = 'B+';
+    else if (avg >= 55) grade = 'B';
+    else grade = 'C';
+    
+    const sessionResult = {
+        completed: state.completed,
+        duration: `${mins}:${secs.toString().padStart(2, '0')}`,
+        grade: grade,
+        avgAccuracy: Math.round(avg),
+        exercises: state.log.map(l => ({
+            id: state.exercises.find(e => e.name === l.name)?.id || l.name.toLowerCase(),
+            name: l.name,
+            accuracy: l.accuracy,
+            grade: l.grade
+        }))
+    };
+    
+    try {
+        localStorage.setItem('handhero_lastSessionResult', JSON.stringify(sessionResult));
+    } catch(e) {
+        console.error('Could not save session:', e);
+    }
+}
+
+// Override endSession to also save to dashboard
+const originalEndSession = endSession;
+endSession = function() {
+    saveSessionToDashboard();
+    originalEndSession();
+    
+    // Add "Back to Dashboard" button
+    const completeOverlay = document.getElementById('overlay-complete');
+    if (completeOverlay && !document.getElementById('btn-dashboard')) {
+        const btn = document.createElement('button');
+        btn.id = 'btn-dashboard';
+        btn.className = 'btn-secondary';
+        btn.style.marginTop = '12px';
+        btn.textContent = '← Back to Dashboard';
+        btn.onclick = () => window.location.href = 'handhero_dashboard.html';
+        completeOverlay.querySelector('.overlay-content').appendChild(btn);
+    }
+};
+
+// Check if we came from dashboard
+const returnUrl = localStorage.getItem('handhero_returnUrl');
+if (returnUrl) {
+    localStorage.removeItem('handhero_returnUrl');
+}
 </script>
 </body>
 </html>
