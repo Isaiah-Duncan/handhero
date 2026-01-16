@@ -18,13 +18,15 @@
             --color-slate: #4a5568;
             --color-slate-light: #718096;
             --color-success: #68b37a;
-            /* Accuracy zone colors */
-            --zone-green: rgba(104, 179, 122, 0.6);
-            --zone-green-solid: #68b37a;
-            --zone-yellow: rgba(232, 180, 77, 0.5);
-            --zone-yellow-solid: #e8b44d;
-            --zone-purple: rgba(168, 130, 199, 0.4);
-            --zone-purple-solid: #a882c7;
+            /* Accuracy zone colors - matching the reference image */
+            --zone-green: rgba(104, 200, 150, 0.5);
+            --zone-green-solid: #68c896;
+            --zone-blue: rgba(100, 180, 230, 0.5);
+            --zone-blue-solid: #64b4e6;
+            --zone-yellow: rgba(240, 200, 100, 0.5);
+            --zone-yellow-solid: #f0c864;
+            --zone-red: rgba(230, 130, 130, 0.4);
+            --zone-red-solid: #e68282;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
@@ -36,7 +38,6 @@
         }
         *:focus-visible { outline: 3px solid var(--color-sage); outline-offset: 2px; }
         
-        /* App Container */
         #app-container { 
             position: relative; 
             width: 100vw; 
@@ -57,7 +58,6 @@
             z-index: 0;
         }
         
-        /* Portal */
         #portal-wrapper { 
             position: relative; 
             width: 92vw; 
@@ -79,22 +79,12 @@
             transition: all 0.4s ease;
         }
         
-        #portal-frame.holding { 
-            background: linear-gradient(135deg, var(--color-gold), #e8c9a8); 
-            box-shadow: 0 0 50px rgba(212, 165, 116, 0.5); 
-        }
-        #portal-frame.success { 
-            background: linear-gradient(135deg, var(--color-success), var(--color-sage-light)); 
-            box-shadow: 0 0 60px rgba(104, 179, 122, 0.6); 
-        }
-        #portal-frame.ready { 
-            background: linear-gradient(135deg, #a8c99b, #c9dfc0); 
-        }
+        #portal-frame.holding { background: linear-gradient(135deg, var(--color-gold), #e8c9a8); box-shadow: 0 0 50px rgba(212, 165, 116, 0.5); }
+        #portal-frame.success { background: linear-gradient(135deg, var(--color-success), var(--color-sage-light)); box-shadow: 0 0 60px rgba(104, 179, 122, 0.6); }
+        #portal-frame.ready { background: linear-gradient(135deg, #a8c99b, #c9dfc0); }
+        #portal-frame.reset { background: linear-gradient(135deg, #b8a8c9, #c9c0df); }
         
-        @keyframes gradient-flow { 
-            0%, 100% { background-position: 0% 50%; } 
-            50% { background-position: 100% 50%; } 
-        }
+        @keyframes gradient-flow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         
         #portal-view { 
             width: 100%; 
@@ -134,12 +124,7 @@
             padding: 20px; 
         }
         
-        .top-row { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            gap: 12px; 
-        }
+        .top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
         
         .glass-pill {
             background: rgba(255, 255, 255, 0.95);
@@ -149,56 +134,64 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         }
         
-        .instruction-banner { 
-            padding: 12px 24px; 
-            display: flex; 
-            align-items: center; 
-            gap: 14px; 
-            max-width: 420px; 
+        .instruction-banner { padding: 14px 28px; display: flex; align-items: center; gap: 16px; max-width: 480px; }
+        .instruction-icon { font-size: 1.8rem; }
+        .instruction-text { font-size: 1.2rem; font-weight: 700; color: var(--color-slate); }
+        .instruction-sub { font-size: 0.9rem; color: var(--color-slate-light); font-weight: 500; margin-top: 2px; }
+        
+        /* Phase indicator */
+        .phase-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
         }
-        .instruction-icon { font-size: 1.6rem; }
-        .instruction-text { font-size: 1.15rem; font-weight: 700; color: var(--color-slate); }
-        .instruction-sub { font-size: 0.85rem; color: var(--color-slate-light); font-weight: 500; }
+        .phase-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            transition: all 0.3s;
+        }
+        .phase-dot.active { background: var(--color-sage); transform: scale(1.2); }
+        .phase-dot.complete { background: var(--color-success); }
+        .phase-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--color-sage);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
         
         .progress-pill { padding: 10px 16px; font-size: 0.8rem; font-weight: 600; color: var(--color-slate-light); }
         
         .stats-bar { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-        .stat-card { 
-            padding: 10px 18px; 
-            border-radius: 16px; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-        }
+        .stat-card { padding: 10px 18px; border-radius: 16px; display: flex; align-items: center; gap: 10px; }
         .stat-val { font-size: 1.2rem; font-weight: 700; color: var(--color-slate); }
         .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-slate-light); font-weight: 700; }
         
-        /* Accuracy Meter */
-        .accuracy-meter {
+        /* Accuracy Display */
+        .accuracy-display {
             padding: 12px 20px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 4px;
         }
-        .accuracy-bar-bg {
-            width: 120px;
-            height: 10px;
-            background: #e8e4df;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .accuracy-bar-fill {
-            height: 100%;
-            border-radius: 5px;
-            transition: width 0.15s ease, background 0.3s ease;
-        }
-        .accuracy-bar-fill.green { background: var(--zone-green-solid); }
-        .accuracy-bar-fill.yellow { background: var(--zone-yellow-solid); }
-        .accuracy-bar-fill.purple { background: var(--zone-purple-solid); }
-        .accuracy-percent {
-            font-size: 1rem;
+        .accuracy-value {
+            font-size: 1.8rem;
             font-weight: 800;
-            min-width: 45px;
+            transition: color 0.3s;
+        }
+        .accuracy-value.green { color: var(--zone-green-solid); }
+        .accuracy-value.blue { color: var(--zone-blue-solid); }
+        .accuracy-value.yellow { color: var(--zone-yellow-solid); }
+        .accuracy-value.red { color: var(--zone-red-solid); }
+        .accuracy-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--color-slate-light);
         }
         
         /* Floating Buttons */
@@ -272,17 +265,57 @@
         }
         #feedback-message.show { opacity: 1; transform: scale(1); }
         
+        /* Reset Instruction Overlay */
+        #reset-instruction {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #reset-instruction.show { opacity: 1; }
+        .reset-icon { font-size: 4rem; margin-bottom: 16px; }
+        .reset-text { 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            color: white; 
+            text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.3);
+            padding: 16px 32px;
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+        }
+        
         /* Particles */
-        .particle { 
-            position: absolute; 
-            pointer-events: none; 
-            border-radius: 50%; 
-            animation: particle-fall 1.5s ease-out forwards; 
+        .particle { position: absolute; pointer-events: none; border-radius: 50%; animation: particle-fall 1.5s ease-out forwards; }
+        @keyframes particle-fall { 0% { opacity: 1; transform: translateY(0) rotate(0deg); } 100% { opacity: 0; transform: translateY(200px) rotate(720deg); } }
+        
+        /* Toast Notification (replaces alert) */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: white;
+            padding: 16px 28px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 300;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @keyframes particle-fall { 
-            0% { opacity: 1; transform: translateY(0) rotate(0deg); } 
-            100% { opacity: 0; transform: translateY(200px) rotate(720deg); } 
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
         }
+        .toast-icon { font-size: 1.5rem; }
+        .toast-message { font-weight: 600; color: var(--color-slate); }
         
         /* Overlays */
         .overlay-screen {
@@ -322,17 +355,9 @@
         }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -4px rgba(135, 168, 120, 0.5); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-secondary {
-            background: white;
-            color: var(--color-slate);
-            border: 2px solid #e8e4df;
-        }
+        .btn-secondary { background: white; color: var(--color-slate); border: 2px solid #e8e4df; }
         .btn-secondary:hover { background: var(--color-warm-white); border-color: var(--color-sage); }
-        .btn-ghost {
-            background: transparent;
-            color: var(--color-slate-light);
-            padding: 12px 20px;
-        }
+        .btn-ghost { background: transparent; color: var(--color-slate-light); padding: 12px 20px; }
         .btn-ghost:hover { color: var(--color-slate); background: rgba(0,0,0,0.03); }
         
         /* Onboarding */
@@ -346,16 +371,7 @@
         .onboarding-dot.active { background: var(--color-sage); width: 28px; border-radius: 5px; }
         
         /* Disclaimer */
-        .disclaimer-box { 
-            background: white; 
-            border: 1px solid #e8e4df; 
-            border-radius: 16px; 
-            padding: 20px; 
-            text-align: left; 
-            margin-bottom: 24px; 
-            max-height: 180px; 
-            overflow-y: auto; 
-        }
+        .disclaimer-box { background: white; border: 1px solid #e8e4df; border-radius: 16px; padding: 20px; text-align: left; margin-bottom: 24px; max-height: 180px; overflow-y: auto; }
         .disclaimer-box h4 { font-weight: 700; color: var(--color-slate); margin-bottom: 8px; }
         .disclaimer-box p, .disclaimer-box ul { font-size: 0.85rem; color: var(--color-slate-light); line-height: 1.5; margin-bottom: 8px; }
         .disclaimer-box ul { padding-left: 20px; }
@@ -365,44 +381,16 @@
         
         /* Ready Screen */
         .ready-overlay { background: rgba(168, 201, 155, 0.97); }
-        .ready-countdown { 
-            font-size: 8rem; 
-            font-weight: 800; 
-            color: white; 
-            text-shadow: 0 8px 40px rgba(0,0,0,0.15); 
-            animation: pulse-scale 1s ease infinite;
-        }
-        @keyframes pulse-scale {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        .ready-exercise-preview {
-            background: rgba(255,255,255,0.95);
-            border-radius: 20px;
-            padding: 24px 40px;
-            margin-top: 32px;
-            display: inline-flex;
-            align-items: center;
-            gap: 16px;
-        }
+        .ready-countdown { font-size: 8rem; font-weight: 800; color: white; text-shadow: 0 8px 40px rgba(0,0,0,0.15); animation: pulse-scale 1s ease infinite; }
+        @keyframes pulse-scale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .ready-exercise-preview { background: rgba(255,255,255,0.95); border-radius: 20px; padding: 24px 40px; margin-top: 32px; display: inline-flex; align-items: center; gap: 16px; }
         .ready-exercise-icon { font-size: 2.5rem; }
         .ready-exercise-name { font-size: 1.4rem; font-weight: 700; color: var(--color-slate); }
         .ready-exercise-desc { font-size: 0.9rem; color: var(--color-slate-light); }
         
         /* Pain Check */
         .pain-scale { display: flex; justify-content: space-between; gap: 10px; margin: 24px 0; }
-        .pain-btn { 
-            flex: 1; 
-            padding: 18px 10px; 
-            border-radius: 14px; 
-            border: 3px solid transparent; 
-            cursor: pointer; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 6px;
-            transition: all 0.2s;
-        }
+        .pain-btn { flex: 1; padding: 18px 10px; border-radius: 14px; border: 3px solid transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
         .pain-btn:hover { transform: translateY(-3px); }
         .pain-btn.green { background: #e8f5e9; }
         .pain-btn.green:hover, .pain-btn.green.selected { border-color: #68b37a; background: #d4edda; }
@@ -430,13 +418,7 @@
         .grade-a { background: #d4edda; color: #155724; }
         .grade-b { background: #fff3cd; color: #856404; }
         .grade-c { background: #ffe0b2; color: #e65100; }
-        
-        .complete-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 24px;
-        }
+        .complete-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
         
         /* Zone Legend */
         .zone-legend {
@@ -447,6 +429,17 @@
             flex-direction: column;
             gap: 6px;
             pointer-events: auto;
+            background: rgba(255,255,255,0.9);
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .zone-legend-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--color-slate-light);
+            margin-bottom: 4px;
         }
         .zone-legend-item {
             display: flex;
@@ -454,24 +447,16 @@
             gap: 8px;
             font-size: 0.75rem;
             font-weight: 600;
-            color: white;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            color: var(--color-slate);
         }
         .zone-legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
         }
-        .zone-legend-dot.green { background: var(--zone-green-solid); }
-        .zone-legend-dot.yellow { background: var(--zone-yellow-solid); }
-        .zone-legend-dot.purple { background: var(--zone-purple-solid); }
-        
-        /* Reduced Motion */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-        }
+        .zone-legend-dot.green { background: var(--zone-green); border: 2px solid var(--zone-green-solid); }
+        .zone-legend-dot.blue { background: var(--zone-blue); border: 2px solid var(--zone-blue-solid); }
+        .zone-legend-dot.yellow { background: var(--zone-yellow); border: 2px solid var(--zone-yellow-solid); }
         
         /* Modal */
         .modal-overlay {
@@ -487,17 +472,14 @@
             transition: all 0.3s;
         }
         .modal-overlay.show { opacity: 1; visibility: visible; }
-        .modal-content {
-            background: white;
-            border-radius: 24px;
-            padding: 32px;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-        }
+        .modal-content { background: white; border-radius: 24px; padding: 32px; max-width: 400px; width: 90%; text-align: center; }
         .modal-title { font-size: 1.3rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
         .modal-desc { color: var(--color-slate-light); margin-bottom: 24px; }
         .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+        
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
     </style>
 </head>
 <body>
@@ -505,6 +487,12 @@
     <button id="btn-home" class="float-btn hidden" aria-label="Go home" title="Go Home">🏠</button>
     <button id="btn-audio" class="float-btn hidden" aria-label="Toggle audio" title="Toggle Audio">🔊</button>
     <button id="btn-skip" class="float-btn hidden" aria-label="Skip exercise" title="Skip">⏭️</button>
+
+    <!-- Toast Notification (replaces browser alert) -->
+    <div id="toast" class="toast">
+        <span class="toast-icon">✅</span>
+        <span class="toast-message" id="toast-message">Session saved!</span>
+    </div>
 
     <!-- Main Container -->
     <div id="app-container">
@@ -525,19 +513,28 @@
                                 <div>
                                     <div class="instruction-text" id="instruction-text">Get Ready</div>
                                     <div class="instruction-sub" id="instruction-sub">Position hand in frame</div>
+                                    <div class="phase-indicator" id="phase-indicator">
+                                        <div class="phase-dot" id="phase-dot-1"></div>
+                                        <div class="phase-dot" id="phase-dot-2"></div>
+                                        <span class="phase-label" id="phase-label">Step 1: Reset</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="glass-pill accuracy-meter">
-                                <div class="accuracy-bar-bg">
-                                    <div class="accuracy-bar-fill green" id="accuracy-bar" style="width: 0%"></div>
-                                </div>
-                                <span class="accuracy-percent" id="accuracy-percent">0%</span>
+                            <div class="glass-pill accuracy-display">
+                                <span class="accuracy-value green" id="accuracy-value">0%</span>
+                                <span class="accuracy-label">Accuracy</span>
                             </div>
                         </div>
 
                         <div class="center-feedback">
                             <div id="hold-timer">3</div>
                             <div id="feedback-message">Nice!</div>
+                        </div>
+                        
+                        <!-- Reset instruction overlay -->
+                        <div id="reset-instruction">
+                            <div class="reset-icon">✊</div>
+                            <div class="reset-text" id="reset-text">Make a fist to begin</div>
                         </div>
 
                         <div class="stats-bar">
@@ -556,9 +553,10 @@
                         
                         <!-- Zone Legend -->
                         <div class="zone-legend" id="zone-legend">
-                            <div class="zone-legend-item"><div class="zone-legend-dot green"></div> Target Zone</div>
-                            <div class="zone-legend-item"><div class="zone-legend-dot yellow"></div> Close</div>
-                            <div class="zone-legend-item"><div class="zone-legend-dot purple"></div> Keep Trying</div>
+                            <div class="zone-legend-title">Accuracy Zones</div>
+                            <div class="zone-legend-item"><div class="zone-legend-dot green"></div> 85%+ Perfect</div>
+                            <div class="zone-legend-item"><div class="zone-legend-dot blue"></div> 65%+ Good</div>
+                            <div class="zone-legend-item"><div class="zone-legend-dot yellow"></div> 40%+ Keep trying</div>
                         </div>
                     </div>
 
@@ -584,23 +582,24 @@
                 <div class="onboarding-image">🎯</div>
                 <h2 class="onboarding-title">Visual Accuracy Zones</h2>
                 <p class="onboarding-desc">
-                    <strong style="color: var(--zone-green-solid);">Green zones</strong> show your target position.<br>
-                    <strong style="color: var(--zone-yellow-solid);">Yellow zones</strong> mean you're close.<br>
-                    <strong style="color: var(--zone-purple-solid);">Purple zones</strong> show your current range.<br><br>
-                    Work within YOUR comfortable range – no need for perfection!
+                    Watch the <strong>shaded zone</strong> between your fingers:<br><br>
+                    <span style="color: var(--zone-green-solid);">🟢 Green</span> = Perfect! You're in the target zone<br>
+                    <span style="color: var(--zone-blue-solid);">🔵 Blue</span> = Good! Almost there<br>
+                    <span style="color: var(--zone-yellow-solid);">🟡 Yellow</span> = Keep adjusting<br><br>
+                    Work at YOUR comfortable pace!
                 </p>
                 <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot active"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div></div>
                 <button class="btn btn-primary" onclick="nextStep()">Next</button>
                 <button class="btn btn-ghost" onclick="prevStep()">Back</button>
             </div>
             <div class="onboarding-step" data-step="3">
-                <div class="onboarding-image">💡</div>
-                <h2 class="onboarding-title">Tips for Success</h2>
+                <div class="onboarding-image">✊</div>
+                <h2 class="onboarding-title">Two-Step Exercises</h2>
                 <p class="onboarding-desc">
-                    • Good lighting helps tracking accuracy<br>
-                    • Keep hand 12-18 inches from camera<br>
-                    • Move slowly and deliberately<br>
-                    • <strong>Stop immediately if you feel pain</strong>
+                    Each exercise has two steps:<br><br>
+                    <strong>Step 1:</strong> Make a fist to reset<br>
+                    <strong>Step 2:</strong> Extend ONLY the required finger(s)<br><br>
+                    This ensures proper isolation and form.
                 </p>
                 <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot active"></div><div class="onboarding-dot"></div></div>
                 <button class="btn btn-primary" onclick="nextStep()">Next</button>
@@ -642,7 +641,7 @@
                     <div class="ready-exercise-desc" id="ready-desc">Spread all fingers wide</div>
                 </div>
             </div>
-            <p style="color: white; font-size: 0.9rem; margin-top: 24px; opacity: 0.7;">Position your hand now...</p>
+            <p style="color: white; font-size: 0.9rem; margin-top: 24px; opacity: 0.7;">Get ready to make a fist first...</p>
         </div>
     </div>
 
@@ -722,19 +721,26 @@ const CONFIG = {
     EXERCISES_PER_SESSION: 8,
     REST_SECONDS: 8,
     PAIN_CHECK_EVERY: 4,
-    READY_COUNTDOWN_SECONDS: 3,
+    READY_COUNTDOWN_SECONDS: 4,
     
-    // Accuracy thresholds
-    ZONE_GREEN: 0.75,   // 75%+ = green zone
-    ZONE_YELLOW: 0.50,  // 50-75% = yellow zone
-    ZONE_PURPLE: 0.25,  // 25-50% = purple zone
+    // Accuracy thresholds for zones
+    ZONE_GREEN: 0.85,   // 85%+ = green (perfect)
+    ZONE_BLUE: 0.65,    // 65-85% = blue (good)
+    ZONE_YELLOW: 0.40,  // 40-65% = yellow (keep trying)
     
-    HOLD_DURATION_BASE: 1800, // Slightly longer for proper form
-    GRACE_TIMEOUT_MS: 12000,  // More time to attempt
+    // Hold duration
+    HOLD_DURATION_MS: 2500,
+    
+    // Reset detection
+    RESET_CURL_THRESHOLD: 0.60,  // All fingers must be this curled for reset
+    RESET_HOLD_MS: 800,          // Must hold fist for this long
+    
+    // Isolation strictness
+    NON_TARGET_MAX_EXTENSION: 0.40,  // Non-target fingers must be curled this much
 };
 
 // ============================================
-// FINGER INDICES & BONES
+// FINGER CONSTANTS
 // ============================================
 const FINGER = {
     THUMB: [1, 2, 3, 4],
@@ -743,237 +749,182 @@ const FINGER = {
     RING: [13, 14, 15, 16],
     PINKY: [17, 18, 19, 20]
 };
-
-const FINGER_NAMES = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+const FINGER_ARRAYS = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
+const FINGER_NAMES = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'];
 const FINGER_TIPS = [4, 8, 12, 16, 20];
-const FINGER_BASES = [1, 5, 9, 13, 17];
-
-const BONES = [
-    [0,1],[1,2],[2,3],[3,4],
-    [0,5],[5,6],[6,7],[7,8],
-    [0,9],[9,10],[10,11],[11,12],
-    [0,13],[13,14],[14,15],[15,16],
-    [0,17],[17,18],[18,19],[19,20],
-    [5,9],[9,13],[13,17]
-];
 
 // ============================================
-// EXPANDED EXERCISE LIBRARY
+// EXERCISE LIBRARY
 // ============================================
 const ALL_EXERCISES = [
-    // === BASIC STRETCHES ===
+    // === ISOLATION EXERCISES (Single Finger) ===
     {
-        id: 'starfish', name: 'Starfish Spread', icon: '🖐️', category: 'Stretch',
-        desc: 'Spread all fingers as wide as possible',
-        difficulty: 1, duration: 2000,
-        targetType: 'spread', // Visual zone type
-        check: (s) => {
-            // All fingers extended (low curl) and spread apart
-            const extended = s.curls.every(c => c < 0.35);
-            const spread = s.fingerSpread > 0.15;
-            return extended ? (spread ? 1 : 0.7) : Math.max(0.2, 1 - avg(s.curls));
-        }
+        id: 'thumbs_up',
+        name: 'Thumbs Up',
+        icon: '👍',
+        category: 'Isolation',
+        desc: 'Extend only your thumb',
+        difficulty: 2,
+        type: 'isolation',
+        targetFingers: [0], // Only thumb should be up
+        showZone: true,     // Show shaded zone
     },
     {
-        id: 'fist', name: 'Gentle Fist', icon: '✊', category: 'Strength',
-        desc: 'Curl all fingers into a relaxed fist',
-        difficulty: 1, duration: 1800,
-        targetType: 'curl',
-        check: (s) => {
-            const curled = s.curls.map(c => c > 0.65 ? 1 : c > 0.45 ? 0.7 : 0.3);
-            return avg(curled);
-        }
+        id: 'pointer',
+        name: 'Pointer Finger',
+        icon: '☝️',
+        category: 'Isolation',
+        desc: 'Extend only your index finger',
+        difficulty: 2,
+        type: 'isolation',
+        targetFingers: [1],
+        showZone: true,
     },
     {
-        id: 'flat', name: 'Flat Hand', icon: '🤚', category: 'Stretch',
-        desc: 'Press fingers together, fully extended',
-        difficulty: 1, duration: 1800,
-        targetType: 'flat',
-        check: (s) => {
-            const extended = s.curls.every(c => c < 0.25);
-            const together = s.fingerSpread < 0.08;
-            if (extended && together) return 1;
-            if (extended) return 0.75;
-            return Math.max(0.2, 1 - avg(s.curls));
-        }
-    },
-    
-    // === THUMB EXERCISES ===
-    {
-        id: 'thumbs_up', name: 'Thumbs Up', icon: '👍', category: 'Isolation',
-        desc: 'Extend thumb upward, curl other fingers',
-        difficulty: 2, duration: 2000,
-        targetType: 'single', targetFinger: 0,
-        check: (s) => {
-            const thumbOut = s.curls[0] < 0.35 ? 1 : s.curls[0] < 0.5 ? 0.7 : 0.3;
-            const othersCurled = s.curls.slice(1).map(c => c > 0.55 ? 1 : c > 0.35 ? 0.7 : 0.3);
-            return thumbOut * 0.4 + avg(othersCurled) * 0.6;
-        }
+        id: 'middle_finger_lift',
+        name: 'Middle Finger Lift',
+        icon: '🖕',
+        category: 'Isolation',
+        desc: 'Extend only your middle finger',
+        difficulty: 3,
+        type: 'isolation',
+        targetFingers: [2],
+        showZone: true,
     },
     {
-        id: 'thumb_to_pinky', name: 'Thumb to Pinky', icon: '🤙', category: 'Precision',
-        desc: 'Touch thumb tip to pinky tip',
-        difficulty: 3, duration: 2200,
-        targetType: 'pinch', targetPair: [4, 20],
-        check: (s) => {
-            const dist = s.pinchDistances[4]; // thumb to pinky
-            if (dist < 0.04) return 1;
-            if (dist < 0.07) return 0.85;
-            if (dist < 0.12) return 0.65;
-            if (dist < 0.18) return 0.45;
-            return 0.2;
-        }
-    },
-    
-    // === INDEX FINGER ===
-    {
-        id: 'pointer', name: 'Pointer', icon: '☝️', category: 'Isolation',
-        desc: 'Point with index finger only',
-        difficulty: 2, duration: 2000,
-        targetType: 'single', targetFinger: 1,
-        check: (s) => {
-            const indexOut = s.curls[1] < 0.30 ? 1 : s.curls[1] < 0.45 ? 0.7 : 0.3;
-            const othersCurled = [s.curls[2], s.curls[3], s.curls[4]].map(c => c > 0.55 ? 1 : c > 0.35 ? 0.7 : 0.3);
-            return indexOut * 0.5 + avg(othersCurled) * 0.5;
-        }
+        id: 'ring_finger_lift',
+        name: 'Ring Finger Lift',
+        icon: '💍',
+        category: 'Advanced',
+        desc: 'Extend only your ring finger (hardest!)',
+        difficulty: 4,
+        type: 'isolation',
+        targetFingers: [3],
+        showZone: true,
     },
     {
-        id: 'ok_sign', name: 'OK Sign', icon: '👌', category: 'Precision',
-        desc: 'Touch thumb tip to index tip',
-        difficulty: 2, duration: 2000,
-        targetType: 'pinch', targetPair: [4, 8],
-        check: (s) => {
-            const dist = s.pinchDistances[0]; // thumb to index
-            if (dist < 0.045) return 1;
-            if (dist < 0.07) return 0.85;
-            if (dist < 0.11) return 0.65;
-            if (dist < 0.16) return 0.45;
-            return 0.2;
-        }
+        id: 'pinky_out',
+        name: 'Pinky Extension',
+        icon: '🤙',
+        category: 'Isolation',
+        desc: 'Extend only your pinky finger',
+        difficulty: 3,
+        type: 'isolation',
+        targetFingers: [4],
+        showZone: true,
     },
     
     // === TWO FINGER COMBINATIONS ===
     {
-        id: 'peace', name: 'Peace Sign', icon: '✌️', category: 'Coordination',
-        desc: 'Extend index and middle, curl others',
-        difficulty: 3, duration: 2200,
-        targetType: 'double', targetFingers: [1, 2],
-        check: (s) => {
-            const extended = [s.curls[1], s.curls[2]].map(c => c < 0.30 ? 1 : c < 0.45 ? 0.7 : 0.3);
-            const curled = [s.curls[3], s.curls[4]].map(c => c > 0.55 ? 1 : c > 0.35 ? 0.7 : 0.3);
-            return avg(extended) * 0.5 + avg(curled) * 0.5;
-        }
+        id: 'peace',
+        name: 'Peace Sign',
+        icon: '✌️',
+        category: 'Coordination',
+        desc: 'Extend index and middle fingers only',
+        difficulty: 2,
+        type: 'isolation',
+        targetFingers: [1, 2],
+        showZone: true,
     },
     {
-        id: 'rock_on', name: 'Rock On', icon: '🤘', category: 'Advanced',
-        desc: 'Extend index and pinky, curl middle and ring',
-        difficulty: 4, duration: 2500,
-        targetType: 'double', targetFingers: [1, 4],
-        check: (s) => {
-            const extended = [s.curls[1], s.curls[4]].map(c => c < 0.30 ? 1 : c < 0.45 ? 0.7 : 0.3);
-            const curled = [s.curls[2], s.curls[3]].map(c => c > 0.55 ? 1 : c > 0.35 ? 0.7 : 0.3);
-            return avg(extended) * 0.5 + avg(curled) * 0.5;
-        }
-    },
-    {
-        id: 'scout', name: 'Scout Salute', icon: '🖖', category: 'Coordination',
-        desc: 'Spread between middle and ring finger',
-        difficulty: 3, duration: 2200,
-        targetType: 'vulcan',
-        check: (s) => {
-            const allExtended = s.curls.every(c => c < 0.35);
-            // Check for gap between middle and ring
-            const hasGap = s.fingerGaps && s.fingerGaps[2] > 0.06; // gap between middle-ring
-            if (allExtended && hasGap) return 1;
-            if (allExtended) return 0.7;
-            return Math.max(0.2, 1 - avg(s.curls));
-        }
+        id: 'rock_on',
+        name: 'Rock On',
+        icon: '🤘',
+        category: 'Advanced',
+        desc: 'Extend index and pinky only',
+        difficulty: 4,
+        type: 'isolation',
+        targetFingers: [1, 4],
+        showZone: true,
     },
     
-    // === PINKY EXERCISES ===
+    // === PINCH EXERCISES (Shaded zone between two points) ===
     {
-        id: 'pinky_out', name: 'Pinky Extension', icon: '🫰', category: 'Isolation',
-        desc: 'Extend only the pinky finger',
-        difficulty: 3, duration: 2200,
-        targetType: 'single', targetFinger: 4,
-        check: (s) => {
-            const pinkyOut = s.curls[4] < 0.30 ? 1 : s.curls[4] < 0.45 ? 0.7 : 0.3;
-            const othersCurled = [s.curls[1], s.curls[2], s.curls[3]].map(c => c > 0.50 ? 1 : c > 0.30 ? 0.7 : 0.3);
-            return pinkyOut * 0.5 + avg(othersCurled) * 0.5;
-        }
+        id: 'ok_sign',
+        name: 'OK Sign',
+        icon: '👌',
+        category: 'Precision',
+        desc: 'Touch thumb tip to index tip',
+        difficulty: 2,
+        type: 'pinch',
+        pinchPair: [4, 8], // Thumb tip to index tip
+        showZone: true,
     },
-    
-    // === OPPOSITION EXERCISES ===
     {
-        id: 'thumb_to_middle', name: 'Thumb to Middle', icon: '🤌', category: 'Precision',
+        id: 'thumb_to_middle',
+        name: 'Thumb to Middle',
+        icon: '🤌',
+        category: 'Precision',
         desc: 'Touch thumb tip to middle fingertip',
-        difficulty: 2, duration: 2000,
-        targetType: 'pinch', targetPair: [4, 12],
-        check: (s) => {
-            const dist = s.pinchDistances[1]; // thumb to middle
-            if (dist < 0.045) return 1;
-            if (dist < 0.07) return 0.85;
-            if (dist < 0.11) return 0.65;
-            if (dist < 0.16) return 0.45;
-            return 0.2;
-        }
+        difficulty: 2,
+        type: 'pinch',
+        pinchPair: [4, 12],
+        showZone: true,
     },
     {
-        id: 'thumb_to_ring', name: 'Thumb to Ring', icon: '🤏', category: 'Precision',
+        id: 'thumb_to_ring',
+        name: 'Thumb to Ring',
+        icon: '🤏',
+        category: 'Precision',
         desc: 'Touch thumb tip to ring fingertip',
-        difficulty: 3, duration: 2200,
-        targetType: 'pinch', targetPair: [4, 16],
-        check: (s) => {
-            const dist = s.pinchDistances[2]; // thumb to ring
-            if (dist < 0.045) return 1;
-            if (dist < 0.07) return 0.85;
-            if (dist < 0.11) return 0.65;
-            if (dist < 0.16) return 0.45;
-            return 0.2;
-        }
+        difficulty: 3,
+        type: 'pinch',
+        pinchPair: [4, 16],
+        showZone: true,
+    },
+    {
+        id: 'thumb_to_pinky',
+        name: 'Thumb to Pinky',
+        icon: '🤙',
+        category: 'Precision',
+        desc: 'Touch thumb tip to pinky tip',
+        difficulty: 3,
+        type: 'pinch',
+        pinchPair: [4, 20],
+        showZone: true,
     },
     
-    // === RING FINGER (hardest to isolate) ===
+    // === SPREAD EXERCISES (Zone between adjacent fingers) ===
     {
-        id: 'ring_lift', name: 'Ring Finger Lift', icon: '💍', category: 'Advanced',
-        desc: 'Lift ring finger while others stay down',
-        difficulty: 4, duration: 2500,
-        targetType: 'single', targetFinger: 3,
-        check: (s) => {
-            const ringOut = s.curls[3] < 0.35 ? 1 : s.curls[3] < 0.50 ? 0.7 : 0.3;
-            const othersCurled = [s.curls[1], s.curls[2], s.curls[4]].map(c => c > 0.45 ? 1 : c > 0.25 ? 0.7 : 0.3);
-            return ringOut * 0.5 + avg(othersCurled) * 0.5;
-        }
+        id: 'starfish',
+        name: 'Starfish Spread',
+        icon: '🖐️',
+        category: 'Stretch',
+        desc: 'Spread all fingers as wide as possible',
+        difficulty: 1,
+        type: 'spread',
+        showZone: true,
+    },
+    {
+        id: 'flat_hand',
+        name: 'Flat Hand',
+        icon: '🤚',
+        category: 'Stretch',
+        desc: 'Fingers together, fully extended',
+        difficulty: 1,
+        type: 'flat',
+        showZone: false,
     },
     
-    // === SEQUENTIAL/WAVE ===
+    // === FULL HAND ===
     {
-        id: 'claw', name: 'Claw Grip', icon: '🦖', category: 'Strength',
-        desc: 'Curl fingertips while keeping knuckles straight',
-        difficulty: 3, duration: 2200,
-        targetType: 'claw',
-        check: (s) => {
-            // For claw, we want PIP/DIP flexed but MCP extended
-            // Simplified: moderate curl values (not fully curled, not fully extended)
-            const clawScore = s.curls.map(c => {
-                if (c > 0.35 && c < 0.70) return 1; // sweet spot
-                if (c > 0.25 && c < 0.80) return 0.7;
-                return 0.3;
-            });
-            return avg(clawScore);
-        }
+        id: 'fist',
+        name: 'Gentle Fist',
+        icon: '✊',
+        category: 'Strength',
+        desc: 'Curl all fingers into a fist',
+        difficulty: 1,
+        type: 'fist',
+        showZone: false,
     },
 ];
 
-// Helper
-function avg(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
-
-// Select exercises for session (balanced)
+// Select exercises for session
 function selectExercises() {
     const shuffle = a => [...a].sort(() => Math.random() - 0.5);
-    const byDiff = (d) => ALL_EXERCISES.filter(e => e.difficulty === d);
+    const byDiff = d => ALL_EXERCISES.filter(e => e.difficulty === d);
     
-    // 2 easy, 3 medium, 2 hard, 1 advanced
+    // Balanced selection: 2 easy, 3 medium, 2 hard, 1 advanced
     const selected = [
         ...shuffle(byDiff(1)).slice(0, 2),
         ...shuffle(byDiff(2)).slice(0, 3),
@@ -989,7 +940,7 @@ function selectExercises() {
 // ============================================
 const state = {
     step: 1,
-    screen: 'WELCOME', // WELCOME, LOADING, READY, SESSION, REST, PAIN, COMPLETE
+    screen: 'WELCOME',
     handLandmarker: null,
     webcamRunning: false,
     animationFrameId: null,
@@ -1002,22 +953,25 @@ const state = {
     bestStreak: 0,
     startTime: 0,
     
-    // Current exercise
+    // Exercise phases
+    phase: 'RESET',  // 'RESET' -> 'EXECUTE'
+    resetStartTime: 0,
+    resetComplete: false,
+    
+    // Current exercise tracking
     holding: false,
     holdStart: 0,
     progress: 0,
     cooldown: false,
     currentAcc: 0,
     peakAcc: 0,
-    attemptStart: 0,
-    hasAttempted: false,
     
     // Hand analysis
     landmarks: null,
     curls: [0, 0, 0, 0, 0],
     fingerSpread: 0,
-    fingerGaps: [0, 0, 0, 0], // gaps between adjacent fingers
-    pinchDistances: [0, 0, 0, 0], // thumb to each finger
+    fingerGaps: [0, 0, 0, 0],
+    pinchDistances: {},
     
     // Tracking
     painLevels: [],
@@ -1059,8 +1013,12 @@ const el = {
     progress: $('exercise-progress'),
     timer: $('session-timer'),
     
-    accuracyBar: $('accuracy-bar'),
-    accuracyPercent: $('accuracy-percent'),
+    accuracyValue: $('accuracy-value'),
+    
+    phaseDot1: $('phase-dot-1'),
+    phaseDot2: $('phase-dot-2'),
+    phaseLabel: $('phase-label'),
+    phaseIndicator: $('phase-indicator'),
     
     streak: $('stat-streak'),
     done: $('stat-completed'),
@@ -1069,6 +1027,9 @@ const el = {
     holdTimer: $('hold-timer'),
     feedback: $('feedback-message'),
     bar: $('progress-bar-fill'),
+    
+    resetInstruction: $('reset-instruction'),
+    resetText: $('reset-text'),
     
     readyCountdown: $('ready-countdown'),
     readyIcon: $('ready-icon'),
@@ -1089,16 +1050,28 @@ const el = {
     disclaimerCheck: $('disclaimer-check'),
     btnStart: $('btn-start'),
     
+    toast: $('toast'),
+    toastMessage: $('toast-message'),
+    
     modal: $('modal-confirm'),
     modalTitle: $('modal-title'),
     modalDesc: $('modal-desc'),
-    modalConfirmBtn: $('modal-confirm-btn'),
     
     zoneLegend: $('zone-legend'),
 };
 
 const ctx = el.canvas.getContext('2d');
 let audioCtx = null;
+
+// ============================================
+// TOAST NOTIFICATION (replaces alert)
+// ============================================
+function showToast(message, icon = '✅') {
+    el.toastMessage.textContent = message;
+    el.toast.querySelector('.toast-icon').textContent = icon;
+    el.toast.classList.add('show');
+    setTimeout(() => el.toast.classList.remove('show'), 3000);
+}
 
 // ============================================
 // ONBOARDING
@@ -1159,9 +1132,7 @@ async function startApp() {
         el.videoBg.srcObject = stream;
         el.video.srcObject = stream;
         
-        await new Promise(resolve => {
-            el.video.onloadeddata = resolve;
-        });
+        await new Promise(resolve => { el.video.onloadeddata = resolve; });
         
         state.webcamRunning = true;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1201,7 +1172,6 @@ function beginSession() {
     state.log = [];
     state.painLevels = [];
     
-    // Show ready screen for first exercise
     showReadyScreen(0);
 }
 
@@ -1217,7 +1187,6 @@ function showReadyScreen(exerciseIndex) {
     el.frame.className = 'ready';
     el.ready.classList.remove('hidden');
     
-    // Countdown
     let count = CONFIG.READY_COUNTDOWN_SECONDS;
     el.readyCountdown.textContent = count;
     
@@ -1232,8 +1201,7 @@ function showReadyScreen(exerciseIndex) {
         }
     }, 1000);
     
-    // Speak the exercise
-    speak(`Next: ${ex.name}. ${ex.desc}`);
+    speak(`Next: ${ex.name}. ${ex.desc}. Make a fist to begin.`);
 }
 
 function startExercise(index) {
@@ -1247,31 +1215,62 @@ function startExercise(index) {
     el.sub.textContent = ex.desc;
     el.progress.textContent = `${index + 1} of ${state.exercises.length}`;
     
-    // Reset exercise state
+    // Start in RESET phase
+    state.phase = 'RESET';
+    state.resetComplete = false;
+    state.resetStartTime = 0;
+    
     state.holding = false;
     state.holdStart = 0;
     state.progress = 0;
     state.cooldown = false;
     state.currentAcc = 0;
     state.peakAcc = 0;
-    state.attemptStart = Date.now();
-    state.hasAttempted = false;
+    
+    updatePhaseUI();
     
     el.bar.style.width = '0%';
-    el.frame.className = '';
+    el.frame.className = 'reset';
     
-    // Start game loop if not running
+    // Show reset instruction
+    el.resetInstruction.classList.add('show');
+    el.resetText.textContent = 'Make a fist to begin';
+    
     if (!state.animationFrameId) {
         gameLoop();
     }
 }
 
+function updatePhaseUI() {
+    if (state.phase === 'RESET') {
+        el.phaseDot1.classList.add('active');
+        el.phaseDot1.classList.remove('complete');
+        el.phaseDot2.classList.remove('active', 'complete');
+        el.phaseLabel.textContent = 'Step 1: Make a fist';
+    } else {
+        el.phaseDot1.classList.remove('active');
+        el.phaseDot1.classList.add('complete');
+        el.phaseDot2.classList.add('active');
+        el.phaseDot2.classList.remove('complete');
+        
+        const ex = state.exercises[state.exIdx];
+        if (ex.targetFingers) {
+            const names = ex.targetFingers.map(i => FINGER_NAMES[i]).join(' & ');
+            el.phaseLabel.textContent = `Step 2: Extend ${names}`;
+        } else {
+            el.phaseLabel.textContent = 'Step 2: ' + ex.desc;
+        }
+    }
+}
+
+// ============================================
+// GAME LOOP
+// ============================================
 function gameLoop() {
     if (!state.webcamRunning) return;
     
     state.animTime = Date.now() / 1000;
     
-    // Only process if in SESSION mode
     if (state.screen === 'SESSION') {
         try {
             const results = state.handLandmarker.detectForVideo(el.video, performance.now());
@@ -1282,19 +1281,24 @@ function gameLoop() {
             if (results.landmarks && results.landmarks.length > 0) {
                 state.landmarks = results.landmarks[0];
                 analyzeHand(state.landmarks);
-                updateGame();
-                renderVisualFeedback(state.landmarks);
+                
+                if (state.phase === 'RESET') {
+                    checkResetPhase();
+                } else {
+                    updateExecutePhase();
+                }
+                
+                renderVisuals(state.landmarks);
             } else {
                 state.landmarks = null;
-                state.holding = false;
-                state.progress = Math.max(0, state.progress - 0.02);
-                el.bar.style.width = (state.progress * 100) + '%';
-                el.frame.className = '';
-                updateAccuracyMeter(0);
+                if (state.phase === 'EXECUTE') {
+                    state.holding = false;
+                    state.progress = Math.max(0, state.progress - 0.02);
+                    el.bar.style.width = (state.progress * 100) + '%';
+                }
+                updateAccuracyDisplay(0);
             }
-        } catch (e) {
-            // Continue silently
-        }
+        } catch (e) {}
     }
     
     updateTimer();
@@ -1309,7 +1313,7 @@ function updateTimer() {
 }
 
 // ============================================
-// HAND ANALYSIS (Enhanced)
+// HAND ANALYSIS
 // ============================================
 function analyzeHand(lm) {
     // Calculate curl for each finger
@@ -1322,97 +1326,180 @@ function analyzeHand(lm) {
     };
     
     state.curls = [
-        getCurl(1, 2, 4),   // thumb
-        getCurl(5, 6, 8),   // index
-        getCurl(9, 10, 12), // middle
-        getCurl(13, 14, 16), // ring
-        getCurl(17, 18, 20)  // pinky
+        getCurl(1, 2, 4),
+        getCurl(5, 6, 8),
+        getCurl(9, 10, 12),
+        getCurl(13, 14, 16),
+        getCurl(17, 18, 20)
     ];
     
-    // Calculate finger spread (average distance between adjacent fingertips)
-    const tips = [4, 8, 12, 16, 20];
-    let totalSpread = 0;
+    // Calculate finger gaps
+    const tips = FINGER_TIPS;
     state.fingerGaps = [];
-    
     for (let i = 0; i < tips.length - 1; i++) {
-        const gap = Math.hypot(
+        state.fingerGaps.push(Math.hypot(
             lm[tips[i]].x - lm[tips[i + 1]].x,
             lm[tips[i]].y - lm[tips[i + 1]].y
-        );
-        state.fingerGaps.push(gap);
-        totalSpread += gap;
+        ));
     }
-    state.fingerSpread = totalSpread / 4;
+    state.fingerSpread = state.fingerGaps.reduce((a, b) => a + b, 0) / 4;
     
-    // Calculate pinch distances (thumb to each fingertip)
-    state.pinchDistances = [
-        Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y),   // thumb-index
-        Math.hypot(lm[4].x - lm[12].x, lm[4].y - lm[12].y), // thumb-middle
-        Math.hypot(lm[4].x - lm[16].x, lm[4].y - lm[16].y), // thumb-ring
-        Math.hypot(lm[4].x - lm[20].x, lm[4].y - lm[20].y), // thumb-pinky
-    ];
+    // Calculate pinch distances
+    state.pinchDistances = {
+        '4-8': Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y),
+        '4-12': Math.hypot(lm[4].x - lm[12].x, lm[4].y - lm[12].y),
+        '4-16': Math.hypot(lm[4].x - lm[16].x, lm[4].y - lm[16].y),
+        '4-20': Math.hypot(lm[4].x - lm[20].x, lm[4].y - lm[20].y),
+    };
 }
 
 // ============================================
-// GAME LOGIC
+// RESET PHASE
 // ============================================
-function updateGame() {
+function checkResetPhase() {
+    // Check if all fingers are curled (fist)
+    const allCurled = state.curls.every(c => c >= CONFIG.RESET_CURL_THRESHOLD);
+    
+    if (allCurled) {
+        if (state.resetStartTime === 0) {
+            state.resetStartTime = Date.now();
+        }
+        
+        const elapsed = Date.now() - state.resetStartTime;
+        const progress = Math.min(1, elapsed / CONFIG.RESET_HOLD_MS);
+        
+        el.resetText.textContent = `Hold fist... ${Math.ceil((CONFIG.RESET_HOLD_MS - elapsed) / 1000)}`;
+        el.bar.style.width = (progress * 50) + '%'; // First half of bar
+        
+        if (elapsed >= CONFIG.RESET_HOLD_MS) {
+            // Reset complete!
+            state.phase = 'EXECUTE';
+            state.resetComplete = true;
+            el.resetInstruction.classList.remove('show');
+            el.frame.className = '';
+            updatePhaseUI();
+            
+            const ex = state.exercises[state.exIdx];
+            if (ex.targetFingers) {
+                const names = ex.targetFingers.map(i => FINGER_NAMES[i]).join(' and ');
+                speak(`Good! Now extend your ${names} only.`);
+            } else {
+                speak(`Good! Now ${ex.desc}`);
+            }
+        }
+    } else {
+        state.resetStartTime = 0;
+        el.resetText.textContent = 'Make a fist to begin';
+        el.bar.style.width = '0%';
+    }
+    
+    updateAccuracyDisplay(allCurled ? 0.5 : 0);
+}
+
+// ============================================
+// EXECUTE PHASE
+// ============================================
+function updateExecutePhase() {
     if (state.cooldown) return;
     
     const ex = state.exercises[state.exIdx];
     
-    // Get accuracy from exercise's check function
-    state.currentAcc = ex.check(state);
+    // Calculate accuracy based on exercise type
+    let accuracy = 0;
+    let isolationValid = true;
     
-    // Track peak
-    if (state.currentAcc > state.peakAcc) {
-        state.peakAcc = state.currentAcc;
+    if (ex.type === 'isolation') {
+        // Check target fingers are extended AND non-targets are curled
+        const targetExtended = ex.targetFingers.every(i => state.curls[i] < 0.35);
+        const nonTargetsCurled = state.curls.every((curl, i) => {
+            if (ex.targetFingers.includes(i)) return true; // Skip targets
+            return curl >= CONFIG.NON_TARGET_MAX_EXTENSION;
+        });
+        
+        if (!nonTargetsCurled) {
+            isolationValid = false;
+            accuracy = 0.2; // Penalty for non-isolated movement
+        } else if (targetExtended) {
+            // Calculate how well the target fingers are extended
+            const targetScore = ex.targetFingers.map(i => {
+                const curl = state.curls[i];
+                if (curl < 0.15) return 1;
+                if (curl < 0.25) return 0.9;
+                if (curl < 0.35) return 0.75;
+                return 0.5;
+            });
+            accuracy = targetScore.reduce((a, b) => a + b, 0) / targetScore.length;
+        } else {
+            // Partial extension
+            const targetScore = ex.targetFingers.map(i => Math.max(0, 1 - state.curls[i] * 1.5));
+            accuracy = targetScore.reduce((a, b) => a + b, 0) / targetScore.length * 0.6;
+        }
+        
+    } else if (ex.type === 'pinch') {
+        const [p1, p2] = ex.pinchPair;
+        const key = `${p1}-${p2}`;
+        const dist = state.pinchDistances[key] || 1;
+        
+        if (dist < 0.03) accuracy = 1;
+        else if (dist < 0.05) accuracy = 0.9;
+        else if (dist < 0.08) accuracy = 0.75;
+        else if (dist < 0.12) accuracy = 0.55;
+        else if (dist < 0.18) accuracy = 0.35;
+        else accuracy = 0.15;
+        
+    } else if (ex.type === 'spread') {
+        const avgSpread = state.fingerSpread;
+        const extended = state.curls.every(c => c < 0.30);
+        
+        if (extended && avgSpread > 0.14) accuracy = 1;
+        else if (extended && avgSpread > 0.10) accuracy = 0.85;
+        else if (extended && avgSpread > 0.07) accuracy = 0.65;
+        else if (extended) accuracy = 0.45;
+        else accuracy = Math.max(0.2, 1 - avg(state.curls));
+        
+    } else if (ex.type === 'flat') {
+        const extended = state.curls.every(c => c < 0.20);
+        const together = state.fingerSpread < 0.06;
+        
+        if (extended && together) accuracy = 1;
+        else if (extended) accuracy = 0.7;
+        else accuracy = Math.max(0.2, 1 - avg(state.curls));
+        
+    } else if (ex.type === 'fist') {
+        const curled = state.curls.every(c => c > 0.65);
+        if (curled) accuracy = 1;
+        else accuracy = avg(state.curls);
     }
     
-    // Mark attempt started
-    if (state.currentAcc > 0.3 && !state.hasAttempted) {
-        state.hasAttempted = true;
-        state.attemptStart = Date.now();
-    }
+    state.currentAcc = accuracy;
+    if (accuracy > state.peakAcc) state.peakAcc = accuracy;
     
-    // Update accuracy meter
-    updateAccuracyMeter(state.currentAcc);
+    updateAccuracyDisplay(accuracy);
     
-    // Check if holding threshold
-    const elapsed = Date.now() - state.attemptStart;
-    const meetsGood = state.currentAcc >= CONFIG.ZONE_GREEN;
-    const meetsYellow = state.currentAcc >= CONFIG.ZONE_YELLOW;
-    const graceExpired = state.hasAttempted && elapsed > CONFIG.GRACE_TIMEOUT_MS;
+    // Hold logic
+    const meetsThreshold = accuracy >= CONFIG.ZONE_YELLOW && isolationValid;
     
-    if (meetsYellow) {
+    if (meetsThreshold) {
         if (!state.holding) {
             state.holding = true;
             state.holdStart = Date.now();
         }
         
-        // Progress faster with better accuracy
-        const multiplier = 0.5 + state.currentAcc * 0.5;
+        const multiplier = 0.5 + accuracy * 0.5;
         const holdTime = Date.now() - state.holdStart;
-        state.progress = Math.min(1, (holdTime / ex.duration) * multiplier);
+        state.progress = Math.min(1, (holdTime / CONFIG.HOLD_DURATION_MS) * multiplier);
         
-        // Success conditions
-        if (state.progress >= 1 && meetsGood) {
-            exerciseSuccess(state.currentAcc, false);
-        } else if (graceExpired && state.peakAcc >= CONFIG.ZONE_YELLOW && state.progress >= 0.6) {
-            exerciseSuccess(state.peakAcc, true);
+        // Success!
+        if (state.progress >= 1 && accuracy >= CONFIG.ZONE_BLUE) {
+            exerciseSuccess(accuracy);
         }
     } else {
         state.holding = false;
-        state.progress = Math.max(0, state.progress - 0.03);
-    }
-    
-    // Grace period success
-    if (graceExpired && state.peakAcc >= CONFIG.ZONE_YELLOW && !state.cooldown) {
-        exerciseSuccess(state.peakAcc, true);
+        state.progress = Math.max(0, state.progress - 0.025);
     }
     
     // Update UI
-    el.bar.style.width = (state.progress * 100) + '%';
+    el.bar.style.width = (50 + state.progress * 50) + '%'; // Second half of bar
     
     if (state.progress >= 1) {
         el.frame.className = 'success';
@@ -1422,10 +1509,9 @@ function updateGame() {
         el.frame.className = '';
     }
     
-    // Hold timer
+    // Hold timer display
     if (state.holding && state.progress < 1) {
-        const ex = state.exercises[state.exIdx];
-        const remaining = Math.ceil((1 - state.progress) * (ex.duration / 1000));
+        const remaining = Math.ceil((1 - state.progress) * (CONFIG.HOLD_DURATION_MS / 1000));
         el.holdTimer.textContent = remaining;
         el.holdTimer.classList.add('show');
     } else {
@@ -1433,47 +1519,34 @@ function updateGame() {
     }
 }
 
-function updateAccuracyMeter(acc) {
+function updateAccuracyDisplay(acc) {
     const pct = Math.round(acc * 100);
-    el.accuracyPercent.textContent = pct + '%';
-    el.accuracyBar.style.width = pct + '%';
+    el.accuracyValue.textContent = pct + '%';
     
-    // Color based on zone
-    el.accuracyBar.classList.remove('green', 'yellow', 'purple');
-    if (acc >= CONFIG.ZONE_GREEN) {
-        el.accuracyBar.classList.add('green');
-        el.accuracyPercent.style.color = 'var(--zone-green-solid)';
-    } else if (acc >= CONFIG.ZONE_YELLOW) {
-        el.accuracyBar.classList.add('yellow');
-        el.accuracyPercent.style.color = 'var(--zone-yellow-solid)';
-    } else {
-        el.accuracyBar.classList.add('purple');
-        el.accuracyPercent.style.color = 'var(--zone-purple-solid)';
-    }
+    el.accuracyValue.classList.remove('green', 'blue', 'yellow', 'red');
+    if (acc >= CONFIG.ZONE_GREEN) el.accuracyValue.classList.add('green');
+    else if (acc >= CONFIG.ZONE_BLUE) el.accuracyValue.classList.add('blue');
+    else if (acc >= CONFIG.ZONE_YELLOW) el.accuracyValue.classList.add('yellow');
+    else el.accuracyValue.classList.add('red');
 }
 
-function exerciseSuccess(acc, graceful) {
+function avg(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+
+// ============================================
+// EXERCISE SUCCESS
+// ============================================
+function exerciseSuccess(acc) {
     state.cooldown = true;
     state.completed++;
     state.streak++;
     if (state.streak > state.bestStreak) state.bestStreak = state.streak;
     
-    // Log
     const ex = state.exercises[state.exIdx];
     const pct = Math.round(acc * 100);
     let grade = pct >= 90 ? 'A' : pct >= 80 ? 'A-' : pct >= 70 ? 'B+' : pct >= 60 ? 'B' : 'B-';
     
-    state.log.push({
-        id: ex.id,
-        name: ex.name,
-        accuracy: pct,
-        grade,
-        graceful
-    });
+    state.log.push({ id: ex.id, name: ex.name, accuracy: pct, grade });
     
-    console.log(`[HandHero] ${ex.name}: ${pct}% (${grade})${graceful ? ' [Graceful]' : ''}`);
-    
-    // Feedback
     const msgs = acc >= 0.85 
         ? ['Perfect! 🌟', 'Excellent!', 'Amazing!'] 
         : acc >= 0.70 
@@ -1484,47 +1557,32 @@ function exerciseSuccess(acc, graceful) {
     playSound();
     spawnParticles();
     
-    // Update stats display
     el.done.textContent = state.completed;
     el.streak.textContent = state.streak;
-    el.streakCard.classList.add('pulse');
-    setTimeout(() => el.streakCard.classList.remove('pulse'), 300);
     
-    // Next step after delay
     setTimeout(() => {
         const nextIdx = state.exIdx + 1;
         
-        // Pain check every N exercises
         if (state.completed > 0 && state.completed % CONFIG.PAIN_CHECK_EVERY === 0 && nextIdx < state.exercises.length) {
             showPainCheck();
             return;
         }
         
-        // Session complete?
         if (nextIdx >= state.exercises.length) {
             endSession();
             return;
         }
         
-        // Show ready screen for next exercise
         showReadyScreen(nextIdx);
         state.cooldown = false;
-        
-    }, 1500);
+    }, 1800);
 }
 
 function skipExercise() {
     if (state.cooldown || state.screen !== 'SESSION') return;
     
     const ex = state.exercises[state.exIdx];
-    state.log.push({
-        id: ex.id,
-        name: ex.name,
-        accuracy: Math.round(state.peakAcc * 100),
-        grade: 'SKIP',
-        skipped: true
-    });
-    
+    state.log.push({ id: ex.id, name: ex.name, accuracy: Math.round(state.peakAcc * 100), grade: 'SKIP', skipped: true });
     state.streak = 0;
     el.streak.textContent = '0';
     
@@ -1537,15 +1595,433 @@ function skipExercise() {
 }
 
 // ============================================
-// PAIN CHECK
+// VISUAL RENDERING
+// ============================================
+function resizeCanvas() {
+    if (el.canvas.width !== el.view.clientWidth) {
+        el.canvas.width = el.view.clientWidth;
+        el.canvas.height = el.view.clientHeight;
+    }
+}
+
+function project(pt) {
+    const w = el.canvas.width, h = el.canvas.height;
+    const scale = Math.max(w / 1280, h / 720);
+    const sw = 1280 * scale, sh = 720 * scale;
+    return { x: (w - sw) / 2 + (1 - pt.x) * sw, y: (h - sh) / 2 + pt.y * sh };
+}
+
+function renderVisuals(lm) {
+    const ex = state.exercises[state.exIdx];
+    
+    if (state.phase === 'RESET') {
+        renderResetVisuals(lm);
+    } else {
+        // Render based on exercise type with shaded zones
+        if (ex.showZone) {
+            if (ex.type === 'isolation') {
+                renderIsolationZone(lm, ex);
+            } else if (ex.type === 'pinch') {
+                renderPinchZone(lm, ex);
+            } else if (ex.type === 'spread') {
+                renderSpreadZone(lm, ex);
+            } else {
+                renderBasicSkeleton(lm);
+            }
+        } else {
+            renderBasicSkeleton(lm);
+        }
+    }
+}
+
+function renderResetVisuals(lm) {
+    // Show all fingers with curl progress
+    FINGER_ARRAYS.forEach((finger, fIdx) => {
+        const curl = state.curls[fIdx];
+        const isCurled = curl >= CONFIG.RESET_CURL_THRESHOLD;
+        const color = isCurled ? '#68c896' : '#e8b44d';
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        
+        // Draw finger
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
+        ctx.beginPath();
+        ctx.moveTo(wrist.x, wrist.y);
+        ctx.lineTo(base.x, base.y);
+        ctx.stroke();
+        
+        for (let i = 0; i < finger.length - 1; i++) {
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        }
+        
+        // Draw joints
+        finger.forEach(idx => {
+            const p = project(lm[idx]);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    });
+    
+    // Wrist
+    const wrist = project(lm[0]);
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function renderIsolationZone(lm, ex) {
+    const targets = ex.targetFingers;
+    
+    // Draw shaded zone between target fingers (if multiple)
+    if (targets.length >= 2) {
+        const tips = targets.map(i => project(lm[FINGER_TIPS[i]]));
+        const wrist = project(lm[0]);
+        
+        // Create polygon from tips to wrist
+        ctx.beginPath();
+        ctx.moveTo(tips[0].x, tips[0].y);
+        for (let i = 1; i < tips.length; i++) {
+            ctx.lineTo(tips[i].x, tips[i].y);
+        }
+        ctx.closePath();
+        
+        // Color based on accuracy
+        const color = getZoneColor(state.currentAcc);
+        ctx.fillStyle = color;
+        ctx.fill();
+        
+        // Draw percentage in zone
+        const centerX = tips.reduce((s, p) => s + p.x, 0) / tips.length;
+        const centerY = tips.reduce((s, p) => s + p.y, 0) / tips.length;
+        
+        ctx.font = 'bold 24px Nunito';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(Math.round(state.currentAcc * 100) + '%', centerX, centerY - 30);
+    }
+    
+    // Draw all fingers
+    FINGER_ARRAYS.forEach((finger, fIdx) => {
+        const isTarget = targets.includes(fIdx);
+        const curl = state.curls[fIdx];
+        
+        let color;
+        if (isTarget) {
+            // Target finger - should be extended
+            if (curl < 0.25) color = '#68c896';
+            else if (curl < 0.40) color = '#64b4e6';
+            else color = '#f0c864';
+        } else {
+            // Non-target - should be curled
+            if (curl >= CONFIG.NON_TARGET_MAX_EXTENSION) color = '#68c896';
+            else color = '#e68282'; // Red if not curled enough
+        }
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isTarget ? 4 : 2;
+        ctx.lineCap = 'round';
+        
+        // Draw finger bones
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
+        ctx.beginPath();
+        ctx.moveTo(wrist.x, wrist.y);
+        ctx.lineTo(base.x, base.y);
+        ctx.stroke();
+        
+        for (let i = 0; i < finger.length - 1; i++) {
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        }
+        
+        // Draw joints with glow for targets
+        if (isTarget) {
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 15;
+        }
+        
+        finger.forEach((idx, jIdx) => {
+            const p = project(lm[idx]);
+            const size = (isTarget ? 8 : 5) * (1 + Math.sin(state.animTime * 4 + fIdx) * 0.15);
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            if (isTarget) {
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, size * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+        
+        ctx.shadowBlur = 0;
+    });
+    
+    // Wrist
+    const wrist = project(lm[0]);
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function renderPinchZone(lm, ex) {
+    const [p1Idx, p2Idx] = ex.pinchPair;
+    const p1 = project(lm[p1Idx]);
+    const p2 = project(lm[p2Idx]);
+    
+    const key = `${p1Idx}-${p2Idx}`;
+    const dist = state.pinchDistances[key] || 1;
+    
+    // Draw shaded triangle between thumb and target finger
+    const wrist = project(lm[0]);
+    
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.lineTo(wrist.x, wrist.y);
+    ctx.closePath();
+    
+    const color = getZoneColor(state.currentAcc);
+    ctx.fillStyle = color;
+    ctx.fill();
+    
+    // Draw dashed line between fingertips
+    ctx.setLineDash([8, 8]);
+    ctx.strokeStyle = getZoneSolidColor(state.currentAcc);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Percentage label
+    const midX = (p1.x + p2.x) / 2;
+    const midY = (p1.y + p2.y) / 2 - 20;
+    
+    ctx.font = 'bold 28px Nunito';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 4;
+    ctx.strokeText(Math.round(state.currentAcc * 100) + '%', midX, midY);
+    ctx.fillText(Math.round(state.currentAcc * 100) + '%', midX, midY);
+    
+    // Draw target circles around fingertips
+    [p1, p2].forEach(p => {
+        // Outer zone
+        ctx.fillStyle = 'rgba(240, 200, 100, 0.15)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 50, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Middle zone
+        ctx.fillStyle = 'rgba(100, 180, 230, 0.2)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 35, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner zone
+        ctx.fillStyle = 'rgba(104, 200, 150, 0.25)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Fingertip dot
+        ctx.fillStyle = getZoneSolidColor(state.currentAcc);
+        ctx.shadowColor = getZoneSolidColor(state.currentAcc);
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    });
+    
+    // Subdued skeleton
+    renderSubduedSkeleton(lm, [p1Idx, p2Idx]);
+}
+
+function renderSpreadZone(lm, ex) {
+    const tips = FINGER_TIPS.map(i => project(lm[i]));
+    const wrist = project(lm[0]);
+    
+    // Draw shaded zones between each pair of adjacent fingers
+    for (let i = 0; i < tips.length - 1; i++) {
+        const gap = state.fingerGaps[i];
+        let zoneAcc;
+        if (gap > 0.12) zoneAcc = 1;
+        else if (gap > 0.08) zoneAcc = 0.75;
+        else if (gap > 0.05) zoneAcc = 0.5;
+        else zoneAcc = 0.25;
+        
+        // Triangle between two fingertips and wrist
+        ctx.beginPath();
+        ctx.moveTo(tips[i].x, tips[i].y);
+        ctx.lineTo(tips[i + 1].x, tips[i + 1].y);
+        ctx.lineTo(wrist.x, wrist.y);
+        ctx.closePath();
+        
+        ctx.fillStyle = getZoneColor(zoneAcc);
+        ctx.fill();
+    }
+    
+    // Draw skeleton
+    FINGER_ARRAYS.forEach((finger, fIdx) => {
+        const curl = state.curls[fIdx];
+        const color = curl < 0.25 ? '#68c896' : curl < 0.40 ? '#64b4e6' : '#f0c864';
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
+        ctx.beginPath();
+        ctx.moveTo(wrist.x, wrist.y);
+        ctx.lineTo(base.x, base.y);
+        ctx.stroke();
+        
+        for (let i = 0; i < finger.length - 1; i++) {
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        }
+        
+        finger.forEach(idx => {
+            const p = project(lm[idx]);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    });
+    
+    // Overall accuracy label
+    ctx.font = 'bold 24px Nunito';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText(Math.round(state.currentAcc * 100) + '%', wrist.x, wrist.y - 40);
+    
+    // Wrist
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function renderBasicSkeleton(lm) {
+    FINGER_ARRAYS.forEach((finger, fIdx) => {
+        const curl = state.curls[fIdx];
+        const color = curl < 0.30 ? '#68c896' : curl < 0.50 ? '#64b4e6' : '#f0c864';
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
+        ctx.beginPath();
+        ctx.moveTo(wrist.x, wrist.y);
+        ctx.lineTo(base.x, base.y);
+        ctx.stroke();
+        
+        for (let i = 0; i < finger.length - 1; i++) {
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        }
+        
+        finger.forEach(idx => {
+            const p = project(lm[idx]);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    });
+    
+    const wrist = project(lm[0]);
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function renderSubduedSkeleton(lm, excludePoints) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    
+    FINGER_ARRAYS.forEach(finger => {
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
+        
+        if (!excludePoints.includes(finger[0])) {
+            ctx.beginPath();
+            ctx.moveTo(wrist.x, wrist.y);
+            ctx.lineTo(base.x, base.y);
+            ctx.stroke();
+        }
+        
+        for (let i = 0; i < finger.length - 1; i++) {
+            if (excludePoints.includes(finger[i]) || excludePoints.includes(finger[i + 1])) continue;
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        }
+    });
+}
+
+function getZoneColor(acc) {
+    if (acc >= CONFIG.ZONE_GREEN) return 'rgba(104, 200, 150, 0.5)';
+    if (acc >= CONFIG.ZONE_BLUE) return 'rgba(100, 180, 230, 0.5)';
+    if (acc >= CONFIG.ZONE_YELLOW) return 'rgba(240, 200, 100, 0.5)';
+    return 'rgba(230, 130, 130, 0.4)';
+}
+
+function getZoneSolidColor(acc) {
+    if (acc >= CONFIG.ZONE_GREEN) return '#68c896';
+    if (acc >= CONFIG.ZONE_BLUE) return '#64b4e6';
+    if (acc >= CONFIG.ZONE_YELLOW) return '#f0c864';
+    return '#e68282';
+}
+
+// ============================================
+// PAIN CHECK & REST
 // ============================================
 function showPainCheck() {
     state.screen = 'PAIN';
     state.selectedPain = null;
     el.painAdvice.textContent = '';
     el.btnContinuePain.disabled = true;
-    el.btnContinuePain.textContent = 'Continue';
-    
     document.querySelectorAll('.pain-btn').forEach(b => b.classList.remove('selected'));
     el.pain.classList.remove('hidden');
 }
@@ -1553,76 +2029,43 @@ function showPainCheck() {
 function selectPain(level) {
     state.selectedPain = level;
     state.painLevels.push({ time: Date.now(), level });
-    
-    document.querySelectorAll('.pain-btn').forEach((b, i) => 
-        b.classList.toggle('selected', i === level));
-    
+    document.querySelectorAll('.pain-btn').forEach((b, i) => b.classList.toggle('selected', i === level));
     const advice = [
-        "Excellent! You're doing great. Let's keep going!",
-        "Some mild discomfort is normal. We'll take it easy.",
-        "Let's slow down a bit. Take your time.",
-        "It's important to stop. Please rest and consult your healthcare provider."
+        "Excellent! You're doing great.",
+        "Some mild discomfort is normal.",
+        "Let's take it slower.",
+        "Please stop and rest."
     ];
-    
     el.painAdvice.textContent = advice[level];
     el.btnContinuePain.disabled = false;
-    
-    if (level === 3) {
-        el.btnContinuePain.textContent = 'End Session Safely';
-    }
+    el.btnContinuePain.textContent = level === 3 ? 'End Session' : 'Continue';
 }
 
 function continuePain() {
     el.pain.classList.add('hidden');
-    
-    if (state.selectedPain === 3) {
-        endSession();
-        return;
-    }
-    
-    // Quick rest then continue
+    if (state.selectedPain === 3) { endSession(); return; }
     showRest();
 }
 
-// ============================================
-// REST PERIOD (Shorter!)
-// ============================================
 let restInterval = null;
-
 function showRest() {
     state.screen = 'REST';
-    el.frame.className = 'ready';
-    
     let remaining = CONFIG.REST_SECONDS;
     el.restTimer.textContent = remaining;
     el.rest.classList.remove('hidden');
-    
     restInterval = setInterval(() => {
         remaining--;
         el.restTimer.textContent = remaining;
-        
-        if (remaining <= 0) {
-            skipRest();
-        }
+        if (remaining <= 0) skipRest();
     }, 1000);
 }
 
 function skipRest() {
-    if (restInterval) {
-        clearInterval(restInterval);
-        restInterval = null;
-    }
-    
+    if (restInterval) { clearInterval(restInterval); restInterval = null; }
     el.rest.classList.add('hidden');
-    el.frame.className = '';
-    
     const nextIdx = state.exIdx + 1;
-    if (nextIdx >= state.exercises.length) {
-        endSession();
-    } else {
-        showReadyScreen(nextIdx);
-        state.cooldown = false;
-    }
+    if (nextIdx >= state.exercises.length) endSession();
+    else { showReadyScreen(nextIdx); state.cooldown = false; }
 }
 
 // ============================================
@@ -1632,7 +2075,6 @@ function endSession() {
     state.screen = 'COMPLETE';
     hideControls();
     
-    // Stop game loop
     if (state.animationFrameId) {
         cancelAnimationFrame(state.animationFrameId);
         state.animationFrameId = null;
@@ -1640,14 +2082,11 @@ function endSession() {
     
     const duration = Math.floor((Date.now() - state.startTime) / 1000);
     const valid = state.log.filter(l => !l.skipped);
-    const avgAcc = valid.length > 0 
-        ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length 
-        : 0;
+    const avgAcc = valid.length > 0 ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length : 0;
     
     let grade, gradeClass;
     if (avgAcc >= 85) { grade = 'A'; gradeClass = 'grade-a'; }
-    else if (avgAcc >= 75) { grade = 'A-'; gradeClass = 'grade-a'; }
-    else if (avgAcc >= 65) { grade = 'B+'; gradeClass = 'grade-b'; }
+    else if (avgAcc >= 70) { grade = 'B+'; gradeClass = 'grade-b'; }
     else if (avgAcc >= 55) { grade = 'B'; gradeClass = 'grade-b'; }
     else { grade = 'C+'; gradeClass = 'grade-c'; }
     
@@ -1660,13 +2099,8 @@ function endSession() {
     
     el.complete.classList.remove('hidden');
     
-    // Save to localStorage for dashboard
+    // Save silently (no alert!)
     saveSessionResult(avgAcc, grade, duration);
-    
-    console.log('\n===== HANDHERO SESSION =====');
-    console.table(state.log);
-    console.log('Average:', Math.round(avgAcc) + '%');
-    console.log('============================\n');
 }
 
 function saveSessionResult(avgAcc, grade, duration) {
@@ -1677,14 +2111,15 @@ function saveSessionResult(avgAcc, grade, duration) {
         avgAccuracy: Math.round(avgAcc),
         bestStreak: state.bestStreak,
         exercises: state.log,
-        painLevels: state.painLevels,
         date: new Date().toISOString()
     };
     
     try {
         localStorage.setItem('handhero_lastSessionResult', JSON.stringify(result));
+        // Show toast instead of alert
+        showToast(`Session saved! ${state.completed} exercises, ${grade} grade`, '✅');
     } catch (e) {
-        console.error('Could not save session:', e);
+        console.error('Save error:', e);
     }
 }
 
@@ -1696,16 +2131,12 @@ function goHome() {
 }
 
 function confirmRestart() {
-    showModal(
-        'Start New Session?',
-        'Your current progress has been saved. Ready for another round?',
-        () => {
-            closeModal();
-            el.complete.classList.add('hidden');
-            showControls();
-            beginSession();
-        }
-    );
+    showModal('Start New Session?', 'Ready for another round?', () => {
+        closeModal();
+        el.complete.classList.add('hidden');
+        showControls();
+        beginSession();
+    });
 }
 
 function showModal(title, desc, onConfirm) {
@@ -1721,25 +2152,18 @@ function closeModal() {
 }
 
 function confirmModalAction() {
-    if (state.modalAction) {
-        state.modalAction();
-    }
+    if (state.modalAction) state.modalAction();
 }
 
 function handleHomeClick() {
     if (state.screen === 'SESSION' && state.completed > 0) {
-        showModal(
-            'Leave Session?',
-            'Your progress will be saved. Are you sure?',
-            () => {
-                saveSessionResult(
-                    state.log.length > 0 ? avg(state.log.filter(l => !l.skipped).map(l => l.accuracy)) : 0,
-                    'Incomplete',
-                    Math.floor((Date.now() - state.startTime) / 1000)
-                );
-                goHome();
-            }
-        );
+        showModal('Leave Session?', 'Your progress will be saved.', () => {
+            const duration = Math.floor((Date.now() - state.startTime) / 1000);
+            const valid = state.log.filter(l => !l.skipped);
+            const avgAcc = valid.length > 0 ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length : 0;
+            saveSessionResult(avgAcc, 'Incomplete', duration);
+            goHome();
+        });
     } else {
         goHome();
     }
@@ -1747,450 +2171,12 @@ function handleHomeClick() {
 
 function exportReport() {
     const duration = Math.floor((Date.now() - state.startTime) / 1000);
-    const txt = `HANDHERO SESSION REPORT
-========================
-Date: ${new Date().toLocaleString()}
-
-SUMMARY
--------
-Exercises Completed: ${state.completed}
-Duration: ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}
-Best Streak: ${state.bestStreak}
-
-EXERCISE DETAILS
-----------------
-${state.log.map(l => `${l.name}: ${l.accuracy}% (${l.grade})${l.skipped ? ' - Skipped' : ''}${l.graceful ? ' - Graceful' : ''}`).join('\n')}
-
-PAIN CHECK-INS
---------------
-${state.painLevels.length > 0 ? state.painLevels.map((p, i) => `Check ${i + 1}: Level ${p.level}/3`).join('\n') : 'None recorded'}
-
----
-Generated by HandHero
-This is a wellness tool, not medical advice.
-`;
-    
+    const txt = `HANDHERO SESSION REPORT\n${'='.repeat(40)}\nDate: ${new Date().toLocaleString()}\n\nSUMMARY\n${'-'.repeat(20)}\nExercises: ${state.completed}\nDuration: ${Math.floor(duration/60)}:${(duration%60).toString().padStart(2,'0')}\nBest Streak: ${state.bestStreak}\n\nDETAILS\n${'-'.repeat(20)}\n${state.log.map(l => `${l.name}: ${l.accuracy}% (${l.grade})`).join('\n')}\n\n---\nGenerated by HandHero`;
     const blob = new Blob([txt], { type: 'text/plain' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `handhero-${new Date().toISOString().split('T')[0]}.txt`;
     a.click();
-}
-
-// ============================================
-// VISUAL FEEDBACK RENDERING
-// ============================================
-function resizeCanvas() {
-    if (el.canvas.width !== el.view.clientWidth) {
-        el.canvas.width = el.view.clientWidth;
-        el.canvas.height = el.view.clientHeight;
-    }
-}
-
-function project(pt) {
-    const w = el.canvas.width, h = el.canvas.height;
-    const scale = Math.max(w / 1280, h / 720);
-    const sw = 1280 * scale, sh = 720 * scale;
-    return {
-        x: (w - sw) / 2 + (1 - pt.x) * sw,
-        y: (h - sh) / 2 + pt.y * sh
-    };
-}
-
-function renderVisualFeedback(lm) {
-    const ex = state.exercises[state.exIdx];
-    
-    // Render accuracy zones based on exercise type
-    switch (ex.targetType) {
-        case 'spread':
-            renderSpreadZones(lm, ex);
-            break;
-        case 'curl':
-            renderCurlFeedback(lm, ex);
-            break;
-        case 'flat':
-            renderFlatFeedback(lm, ex);
-            break;
-        case 'single':
-            renderSingleFingerZones(lm, ex);
-            break;
-        case 'double':
-            renderDoubleFingerZones(lm, ex);
-            break;
-        case 'pinch':
-            renderPinchZones(lm, ex);
-            break;
-        case 'vulcan':
-            renderVulcanZones(lm, ex);
-            break;
-        case 'claw':
-            renderClawFeedback(lm, ex);
-            break;
-        default:
-            renderDefaultSkeleton(lm);
-    }
-}
-
-// === SPREAD ZONES (Starfish) ===
-function renderSpreadZones(lm, ex) {
-    const wrist = project(lm[0]);
-    const tips = FINGER_TIPS.map(i => project(lm[i]));
-    
-    // Draw target spread zones (dotted arcs between fingers)
-    ctx.setLineDash([8, 8]);
-    ctx.lineWidth = 2;
-    
-    for (let i = 0; i < tips.length - 1; i++) {
-        const gap = state.fingerGaps[i];
-        let color;
-        
-        if (gap > 0.12) {
-            color = 'var(--zone-green-solid)';
-            ctx.strokeStyle = '#68b37a';
-        } else if (gap > 0.07) {
-            color = 'var(--zone-yellow-solid)';
-            ctx.strokeStyle = '#e8b44d';
-        } else {
-            color = 'var(--zone-purple-solid)';
-            ctx.strokeStyle = '#a882c7';
-        }
-        
-        // Draw arc between fingertips
-        ctx.beginPath();
-        ctx.moveTo(tips[i].x, tips[i].y);
-        ctx.lineTo(tips[i + 1].x, tips[i + 1].y);
-        ctx.stroke();
-    }
-    ctx.setLineDash([]);
-    
-    // Draw skeleton with color-coded joints
-    renderColorCodedSkeleton(lm, (fingerIdx) => {
-        const curl = state.curls[fingerIdx];
-        if (curl < 0.25) return '#68b37a';
-        if (curl < 0.40) return '#e8b44d';
-        return '#a882c7';
-    });
-}
-
-// === CURL FEEDBACK (Fist) ===
-function renderCurlFeedback(lm, ex) {
-    renderColorCodedSkeleton(lm, (fingerIdx) => {
-        const curl = state.curls[fingerIdx];
-        if (curl > 0.65) return '#68b37a';
-        if (curl > 0.45) return '#e8b44d';
-        return '#a882c7';
-    });
-    
-    // Draw curl indicators
-    const bases = FINGER_BASES.map(i => project(lm[i]));
-    const tips = FINGER_TIPS.map(i => project(lm[i]));
-    
-    for (let i = 0; i < 5; i++) {
-        const curl = state.curls[i];
-        const color = curl > 0.65 ? '#68b37a' : curl > 0.45 ? '#e8b44d' : '#a882c7';
-        
-        // Draw curl arc indicator
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(bases[i].x, bases[i].y, 25, 0, Math.PI * 2 * curl);
-        ctx.stroke();
-    }
-}
-
-// === SINGLE FINGER ISOLATION ===
-function renderSingleFingerZones(lm, ex) {
-    const targetIdx = ex.targetFinger;
-    
-    renderColorCodedSkeleton(lm, (fingerIdx) => {
-        if (fingerIdx === targetIdx) {
-            // Target finger should be extended
-            const curl = state.curls[fingerIdx];
-            if (curl < 0.30) return '#68b37a';
-            if (curl < 0.45) return '#e8b44d';
-            return '#a882c7';
-        } else {
-            // Other fingers should be curled
-            const curl = state.curls[fingerIdx];
-            if (curl > 0.55) return '#68b37a';
-            if (curl > 0.35) return '#e8b44d';
-            return '#a882c7';
-        }
-    }, targetIdx);
-    
-    // Highlight target finger with glow
-    const fingerIndices = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY][targetIdx];
-    const isGood = state.curls[targetIdx] < 0.30;
-    
-    ctx.shadowColor = isGood ? '#68b37a' : '#e8b44d';
-    ctx.shadowBlur = 20;
-    ctx.strokeStyle = isGood ? '#68b37a' : '#e8b44d';
-    ctx.lineWidth = 4;
-    
-    for (let i = 0; i < fingerIndices.length - 1; i++) {
-        const a = project(lm[fingerIndices[i]]);
-        const b = project(lm[fingerIndices[i + 1]]);
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.stroke();
-    }
-    ctx.shadowBlur = 0;
-}
-
-// === DOUBLE FINGER (Peace, Rock) ===
-function renderDoubleFingerZones(lm, ex) {
-    const targetFingers = ex.targetFingers; // [1, 2] for peace, [1, 4] for rock
-    
-    renderColorCodedSkeleton(lm, (fingerIdx) => {
-        if (targetFingers.includes(fingerIdx)) {
-            const curl = state.curls[fingerIdx];
-            if (curl < 0.30) return '#68b37a';
-            if (curl < 0.45) return '#e8b44d';
-            return '#a882c7';
-        } else {
-            const curl = state.curls[fingerIdx];
-            if (curl > 0.55) return '#68b37a';
-            if (curl > 0.35) return '#e8b44d';
-            return '#a882c7';
-        }
-    }, targetFingers[0]);
-    
-    // Highlight both target fingers
-    targetFingers.forEach(targetIdx => {
-        const fingerArrays = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
-        const fingerIndices = fingerArrays[targetIdx];
-        const isGood = state.curls[targetIdx] < 0.30;
-        
-        ctx.shadowColor = isGood ? '#68b37a' : '#e8b44d';
-        ctx.shadowBlur = 15;
-        ctx.strokeStyle = isGood ? '#68b37a' : '#e8b44d';
-        ctx.lineWidth = 4;
-        
-        for (let i = 0; i < fingerIndices.length - 1; i++) {
-            const a = project(lm[fingerIndices[i]]);
-            const b = project(lm[fingerIndices[i + 1]]);
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-        }
-    });
-    ctx.shadowBlur = 0;
-}
-
-// === PINCH ZONES ===
-function renderPinchZones(lm, ex) {
-    const [tip1, tip2] = ex.targetPair;
-    const p1 = project(lm[tip1]);
-    const p2 = project(lm[tip2]);
-    
-    const dist = Math.hypot(lm[tip1].x - lm[tip2].x, lm[tip1].y - lm[tip2].y);
-    
-    // Determine zone color
-    let zoneColor, glowColor;
-    if (dist < 0.05) {
-        zoneColor = 'rgba(104, 179, 122, 0.3)';
-        glowColor = '#68b37a';
-    } else if (dist < 0.10) {
-        zoneColor = 'rgba(232, 180, 77, 0.3)';
-        glowColor = '#e8b44d';
-    } else {
-        zoneColor = 'rgba(168, 130, 199, 0.3)';
-        glowColor = '#a882c7';
-    }
-    
-    // Draw connection line with color
-    ctx.strokeStyle = glowColor;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([10, 10]);
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    
-    // Draw target zones around fingertips
-    const targetRadius = 35;
-    
-    [p1, p2].forEach((p, i) => {
-        // Outer zone (purple)
-        ctx.fillStyle = 'rgba(168, 130, 199, 0.15)';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, targetRadius * 2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Middle zone (yellow)
-        ctx.fillStyle = 'rgba(232, 180, 77, 0.2)';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, targetRadius * 1.3, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Inner zone (green)
-        ctx.fillStyle = 'rgba(104, 179, 122, 0.25)';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, targetRadius * 0.7, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Fingertip
-        ctx.fillStyle = glowColor;
-        ctx.shadowColor = glowColor;
-        ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    });
-    
-    // Draw rest of skeleton subdued
-    renderSubduedSkeleton(lm, [tip1, tip2]);
-}
-
-// === HELPER: Color-coded skeleton ===
-function renderColorCodedSkeleton(lm, getColor, highlightFinger = -1) {
-    const fingerArrays = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
-    
-    // Draw wrist
-    const wrist = project(lm[0]);
-    ctx.fillStyle = 'white';
-    ctx.beginPath();
-    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Draw each finger
-    fingerArrays.forEach((finger, fIdx) => {
-        const color = getColor(fIdx);
-        const isHighlight = fIdx === highlightFinger || (Array.isArray(highlightFinger) && highlightFinger.includes(fIdx));
-        
-        ctx.strokeStyle = color;
-        ctx.lineWidth = isHighlight ? 4 : 2.5;
-        ctx.lineCap = 'round';
-        
-        // Wrist to base
-        const base = project(lm[finger[0]]);
-        ctx.beginPath();
-        ctx.moveTo(wrist.x, wrist.y);
-        ctx.lineTo(base.x, base.y);
-        ctx.stroke();
-        
-        // Finger segments
-        for (let i = 0; i < finger.length - 1; i++) {
-            const a = project(lm[finger[i]]);
-            const b = project(lm[finger[i + 1]]);
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-        }
-        
-        // Joints
-        const pulse = 1 + Math.sin(state.animTime * 4 + fIdx) * 0.15;
-        finger.forEach(idx => {
-            const p = project(lm[idx]);
-            const size = 6 * pulse;
-            
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, size * 0.4, 0, Math.PI * 2);
-            ctx.fill();
-        });
-    });
-    
-    // Palm connections
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = 1;
-    [[5,9], [9,13], [13,17]].forEach(([a, b]) => {
-        const pa = project(lm[a]);
-        const pb = project(lm[b]);
-        ctx.beginPath();
-        ctx.moveTo(pa.x, pa.y);
-        ctx.lineTo(pb.x, pb.y);
-        ctx.stroke();
-    });
-}
-
-// === HELPER: Subdued skeleton (for pinch focus) ===
-function renderSubduedSkeleton(lm, excludePoints = []) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.lineWidth = 1;
-    
-    BONES.forEach(([a, b]) => {
-        if (excludePoints.includes(a) || excludePoints.includes(b)) return;
-        const pa = project(lm[a]);
-        const pb = project(lm[b]);
-        ctx.beginPath();
-        ctx.moveTo(pa.x, pa.y);
-        ctx.lineTo(pb.x, pb.y);
-        ctx.stroke();
-    });
-    
-    lm.forEach((pt, i) => {
-        if (excludePoints.includes(i)) return;
-        const p = project(pt);
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-        ctx.fill();
-    });
-}
-
-// === FLAT & VULCAN ===
-function renderFlatFeedback(lm, ex) {
-    renderColorCodedSkeleton(lm, (fingerIdx) => {
-        const curl = state.curls[fingerIdx];
-        if (curl < 0.20) return '#68b37a';
-        if (curl < 0.35) return '#e8b44d';
-        return '#a882c7';
-    });
-}
-
-function renderVulcanZones(lm, ex) {
-    renderSpreadZones(lm, ex);
-    
-    // Highlight the gap between middle and ring
-    if (state.fingerGaps && state.fingerGaps[2]) {
-        const middle = project(lm[12]);
-        const ring = project(lm[16]);
-        
-        const gap = state.fingerGaps[2];
-        const color = gap > 0.08 ? '#68b37a' : gap > 0.05 ? '#e8b44d' : '#a882c7';
-        
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 4;
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.moveTo(middle.x, middle.y);
-        ctx.lineTo(ring.x, ring.y);
-        ctx.stroke();
-        
-        // Draw "V" indicator
-        const midX = (middle.x + ring.x) / 2;
-        const midY = (middle.y + ring.y) / 2 - 30;
-        
-        ctx.fillStyle = color;
-        ctx.font = 'bold 24px Nunito';
-        ctx.textAlign = 'center';
-        ctx.fillText('🖖', midX, midY);
-    }
-}
-
-function renderClawFeedback(lm, ex) {
-    renderColorCodedSkeleton(lm, (fingerIdx) => {
-        const curl = state.curls[fingerIdx];
-        // Claw wants moderate curl (0.35-0.70)
-        if (curl > 0.35 && curl < 0.70) return '#68b37a';
-        if (curl > 0.25 && curl < 0.80) return '#e8b44d';
-        return '#a882c7';
-    });
-}
-
-function renderDefaultSkeleton(lm) {
-    renderColorCodedSkeleton(lm, () => '#87a878');
 }
 
 // ============================================
@@ -2203,16 +2189,14 @@ function showFeedback(text) {
 }
 
 function spawnParticles() {
-    const colors = ['#68b37a', '#d4a574', '#e8998d', '#a8c99b', '#87a878'];
-    
-    for (let i = 0; i < 25; i++) {
+    const colors = ['#68c896', '#64b4e6', '#f0c864', '#a8c99b'];
+    for (let i = 0; i < 20; i++) {
         const p = document.createElement('div');
         p.className = 'particle';
         p.style.left = (25 + Math.random() * 50) + '%';
         p.style.top = (25 + Math.random() * 30) + '%';
-        p.style.width = p.style.height = (6 + Math.random() * 12) + 'px';
+        p.style.width = p.style.height = (6 + Math.random() * 10) + 'px';
         p.style.background = colors[Math.floor(Math.random() * colors.length)];
-        p.style.animationDelay = (Math.random() * 0.4) + 's';
         el.view.appendChild(p);
         setTimeout(() => p.remove(), 2000);
     }
@@ -2220,20 +2204,16 @@ function spawnParticles() {
 
 function playSound() {
     if (!audioCtx) return;
-    
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    
+    o.connect(g); g.connect(audioCtx.destination);
     o.type = 'sine';
     o.frequency.setValueAtTime(523, audioCtx.currentTime);
     o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
     o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
     g.gain.setValueAtTime(0.1, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-    o.start();
-    o.stop(audioCtx.currentTime + 0.5);
+    o.start(); o.stop(audioCtx.currentTime + 0.5);
 }
 
 const coach = {
@@ -2249,7 +2229,6 @@ function speak(text) {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.rate = 0.9;
-    u.pitch = 1.0;
     speechSynthesis.speak(u);
 }
 
@@ -2265,7 +2244,6 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 's' && state.screen === 'SESSION') skipExercise();
 });
 
-// Close modal on overlay click
 el.modal.addEventListener('click', (e) => {
     if (e.target === el.modal) closeModal();
 });
@@ -2273,8 +2251,8 @@ el.modal.addEventListener('click', (e) => {
 // ============================================
 // INIT
 // ============================================
-console.log('%c🌱 HandHero v4.0', 'font-size: 24px; font-weight: bold; color: #68b37a;');
-console.log('%cVisual Accuracy Zones Edition', 'font-size: 14px; color: #87a878;');
+console.log('%c🌱 HandHero v5.0', 'font-size: 24px; font-weight: bold; color: #68c896;');
+console.log('%cShaded Accuracy Zones + Multi-Step Exercises', 'font-size: 14px; color: #64b4e6;');
 </script>
 </body>
 </html>
