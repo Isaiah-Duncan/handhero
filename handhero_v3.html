@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HandHero | Hand Therapy Companion</title>
-    <meta name="description" content="Guided hand therapy exercises with real-time tracking">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -12,122 +11,399 @@
             --color-cream: #fdfbf7;
             --color-warm-white: #faf8f5;
             --color-sage: #87a878;
+            --color-sage-dark: #6b9960;
             --color-sage-light: #a8c99b;
             --color-coral: #e8998d;
             --color-gold: #d4a574;
             --color-slate: #4a5568;
             --color-slate-light: #718096;
             --color-success: #68b37a;
+            /* Accuracy zone colors */
+            --zone-green: rgba(104, 179, 122, 0.6);
+            --zone-green-solid: #68b37a;
+            --zone-yellow: rgba(232, 180, 77, 0.5);
+            --zone-yellow-solid: #e8b44d;
+            --zone-purple: rgba(168, 130, 199, 0.4);
+            --zone-purple-solid: #a882c7;
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
             font-family: 'Nunito', sans-serif; 
-            background-color: var(--color-cream); 
+            background: var(--color-cream); 
             color: var(--color-slate); 
             overflow: hidden; 
             user-select: none;
         }
         *:focus-visible { outline: 3px solid var(--color-sage); outline-offset: 2px; }
-        .skip-link {
-            position: absolute; top: -40px; left: 0;
-            background: var(--color-sage); color: white;
-            padding: 8px 16px; z-index: 1000;
-        }
-        .skip-link:focus { top: 0; }
+        
+        /* App Container */
         #app-container { 
-            position: relative; width: 100vw; height: 100vh; 
-            display: flex; align-items: center; justify-content: center; 
+            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
         }
+        
         #video-bg { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: cover; transform: scaleX(-1); 
-            filter: blur(30px) opacity(0.4) saturate(0.9) sepia(0.1); z-index: 0;
+            position: absolute; 
+            inset: 0; 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transform: scaleX(-1); 
+            filter: blur(30px) opacity(0.4) sepia(0.1); 
+            z-index: 0;
         }
-        #portal-wrapper { position: relative; width: 90vw; height: 85vh; max-width: 1100px; z-index: 10; }
+        
+        /* Portal */
+        #portal-wrapper { 
+            position: relative; 
+            width: 92vw; 
+            height: 88vh; 
+            max-width: 1200px; 
+            z-index: 10; 
+        }
+        
         #portal-frame {
-            position: relative; width: 100%; height: 100%; border-radius: 32px; padding: 4px; 
+            position: relative;
+            width: 100%; 
+            height: 100%;
+            border-radius: 32px;
+            padding: 4px;
             background: linear-gradient(135deg, var(--color-sage), var(--color-gold), var(--color-coral));
-            background-size: 200% 200%; animation: gradient-flow 10s ease infinite;
-            box-shadow: 0 20px 60px -10px rgba(135, 168, 120, 0.25); transition: all 0.4s ease;
+            background-size: 200% 200%;
+            animation: gradient-flow 10s ease infinite;
+            box-shadow: 0 20px 60px -10px rgba(135, 168, 120, 0.25);
+            transition: all 0.4s ease;
         }
-        #portal-frame.holding { background: linear-gradient(135deg, var(--color-gold), #e8c9a8); box-shadow: 0 0 40px rgba(212, 165, 116, 0.5); }
-        #portal-frame.success { background: linear-gradient(135deg, var(--color-success), var(--color-sage-light)); box-shadow: 0 0 60px rgba(104, 179, 122, 0.6); transform: scale(1.005); }
-        #portal-frame.rest { background: linear-gradient(135deg, #a8c99b, #c9dfc0); }
-        @keyframes gradient-flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        #portal-view { width: 100%; height: 100%; background: var(--color-warm-white); border-radius: 28px; overflow: hidden; position: relative; }
-        #video-clean { position: absolute; top: 50%; left: 50%; width: 100vw; height: 100vh; object-fit: cover; transform: translate(-50%, -50%) scaleX(-1); }
-        #output-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-        #hud-layer { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
-        .top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        
+        #portal-frame.holding { 
+            background: linear-gradient(135deg, var(--color-gold), #e8c9a8); 
+            box-shadow: 0 0 50px rgba(212, 165, 116, 0.5); 
+        }
+        #portal-frame.success { 
+            background: linear-gradient(135deg, var(--color-success), var(--color-sage-light)); 
+            box-shadow: 0 0 60px rgba(104, 179, 122, 0.6); 
+        }
+        #portal-frame.ready { 
+            background: linear-gradient(135deg, #a8c99b, #c9dfc0); 
+        }
+        
+        @keyframes gradient-flow { 
+            0%, 100% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+        }
+        
+        #portal-view { 
+            width: 100%; 
+            height: 100%; 
+            background: var(--color-warm-white); 
+            border-radius: 28px; 
+            overflow: hidden; 
+            position: relative; 
+        }
+        
+        #video-clean { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            width: 100vw; 
+            height: 100vh; 
+            object-fit: cover; 
+            transform: translate(-50%, -50%) scaleX(-1); 
+        }
+        
+        #output-canvas { 
+            position: absolute; 
+            inset: 0; 
+            width: 100%; 
+            height: 100%; 
+            pointer-events: none; 
+        }
+        
+        /* HUD */
+        #hud-layer { 
+            position: absolute; 
+            inset: 0; 
+            pointer-events: none; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            padding: 20px; 
+        }
+        
+        .top-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            gap: 12px; 
+        }
+        
         .glass-pill {
-            background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         }
-        .instruction-banner { padding: 10px 24px; display: flex; align-items: center; gap: 12px; max-width: 400px; }
-        .instruction-icon { font-size: 1.5rem; }
-        .instruction-text { font-size: 1.1rem; font-weight: 700; color: var(--color-slate); }
-        .instruction-sub { font-size: 0.8rem; color: var(--color-slate-light); font-weight: 500; }
-        .progress-pill { padding: 8px 14px; font-size: 0.75rem; font-weight: 600; color: var(--color-slate-light); }
+        
+        .instruction-banner { 
+            padding: 12px 24px; 
+            display: flex; 
+            align-items: center; 
+            gap: 14px; 
+            max-width: 420px; 
+        }
+        .instruction-icon { font-size: 1.6rem; }
+        .instruction-text { font-size: 1.15rem; font-weight: 700; color: var(--color-slate); }
+        .instruction-sub { font-size: 0.85rem; color: var(--color-slate-light); font-weight: 500; }
+        
+        .progress-pill { padding: 10px 16px; font-size: 0.8rem; font-weight: 600; color: var(--color-slate-light); }
+        
         .stats-bar { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-        .stat-card { padding: 8px 16px; border-radius: 16px; display: flex; align-items: center; gap: 8px; transition: transform 0.2s; }
-        .stat-card.pulse { transform: scale(1.1); background: rgba(104, 179, 122, 0.15); }
-        .stat-val { font-size: 1.1rem; font-weight: 700; color: var(--color-slate); }
-        .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-slate-light); font-weight: 700; }
+        .stat-card { 
+            padding: 10px 18px; 
+            border-radius: 16px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        .stat-val { font-size: 1.2rem; font-weight: 700; color: var(--color-slate); }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-slate-light); font-weight: 700; }
+        
+        /* Accuracy Meter */
+        .accuracy-meter {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .accuracy-bar-bg {
+            width: 120px;
+            height: 10px;
+            background: #e8e4df;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .accuracy-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.15s ease, background 0.3s ease;
+        }
+        .accuracy-bar-fill.green { background: var(--zone-green-solid); }
+        .accuracy-bar-fill.yellow { background: var(--zone-yellow-solid); }
+        .accuracy-bar-fill.purple { background: var(--zone-purple-solid); }
+        .accuracy-percent {
+            font-size: 1rem;
+            font-weight: 800;
+            min-width: 45px;
+        }
+        
+        /* Floating Buttons */
         .float-btn {
-            position: fixed; z-index: 50; background: white; color: var(--color-slate); 
-            border: 1px solid #e8e4df; box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            border-radius: 14px; padding: 12px; cursor: pointer;
-            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            position: fixed;
+            z-index: 50;
+            background: white;
+            color: var(--color-slate);
+            border: 1px solid #e8e4df;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-radius: 14px;
+            padding: 12px;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: all 0.2s;
         }
         .float-btn:hover { background: var(--color-warm-white); transform: translateY(-2px); }
-        #btn-quit { top: 20px; left: 20px; }
-        #btn-audio { top: 20px; right: 76px; }
+        #btn-home { top: 20px; left: 20px; }
+        #btn-audio { top: 20px; left: 80px; }
         #btn-skip { top: 20px; right: 20px; background: #fef7ed; border-color: var(--color-gold); }
-        #progress-bar-container { position: absolute; bottom: 0; left: 0; right: 0; height: 6px; background: rgba(0,0,0,0.05); border-radius: 0 0 28px 28px; overflow: hidden; }
-        #progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--color-sage), var(--color-success)); transition: width 0.15s ease; }
-        .center-feedback { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
-        #hold-timer { font-size: 4.5rem; font-weight: 800; color: white; text-shadow: 0 4px 30px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s; }
+        
+        /* Progress Bar */
+        #progress-bar-container { 
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            height: 8px; 
+            background: rgba(0,0,0,0.05); 
+            border-radius: 0 0 28px 28px; 
+            overflow: hidden; 
+        }
+        #progress-bar-fill { 
+            height: 100%; 
+            width: 0%; 
+            background: linear-gradient(90deg, var(--color-sage), var(--color-success)); 
+            transition: width 0.1s ease; 
+        }
+        
+        /* Center Feedback */
+        .center-feedback { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            text-align: center; 
+            pointer-events: none; 
+        }
+        #hold-timer { 
+            font-size: 5rem; 
+            font-weight: 800; 
+            color: white; 
+            text-shadow: 0 4px 30px rgba(0,0,0,0.3); 
+            opacity: 0; 
+            transition: opacity 0.2s; 
+        }
         #hold-timer.show { opacity: 1; }
-        #feedback-message { font-size: 2.5rem; font-weight: 800; color: var(--color-success); text-shadow: 0 4px 20px rgba(104, 179, 122, 0.4); opacity: 0; transform: scale(0.5); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #feedback-message { 
+            font-size: 2.8rem; 
+            font-weight: 800; 
+            color: var(--color-success); 
+            text-shadow: 0 4px 20px rgba(104, 179, 122, 0.4); 
+            opacity: 0; 
+            transform: scale(0.5); 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
         #feedback-message.show { opacity: 1; transform: scale(1); }
-        .particle { position: absolute; pointer-events: none; border-radius: 50%; animation: particle-fall 1.5s ease-out forwards; }
-        @keyframes particle-fall { 0% { opacity: 1; transform: translateY(0) rotate(0deg); } 100% { opacity: 0; transform: translateY(200px) rotate(720deg); } }
+        
+        /* Particles */
+        .particle { 
+            position: absolute; 
+            pointer-events: none; 
+            border-radius: 50%; 
+            animation: particle-fall 1.5s ease-out forwards; 
+        }
+        @keyframes particle-fall { 
+            0% { opacity: 1; transform: translateY(0) rotate(0deg); } 
+            100% { opacity: 0; transform: translateY(200px) rotate(720deg); } 
+        }
+        
+        /* Overlays */
         .overlay-screen {
-            position: fixed; inset: 0; z-index: 100; background: rgba(253, 251, 247, 0.98);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.4s, visibility 0.4s; padding: 24px;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(253, 251, 247, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            transition: opacity 0.3s, visibility 0.3s;
         }
         .overlay-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        .overlay-content { max-width: 480px; width: 100%; text-align: center; }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--color-sage) 0%, #6b9960 100%);
-            padding: 16px 40px; border-radius: 20px; font-size: 1.1rem; font-weight: 700;
-            color: white; box-shadow: 0 8px 24px -4px rgba(135, 168, 120, 0.4);
-            border: none; cursor: pointer; min-width: 200px;
+        .overlay-content { max-width: 500px; width: 100%; text-align: center; }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
         }
-        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+            color: white;
+            box-shadow: 0 8px 24px -4px rgba(135, 168, 120, 0.4);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -4px rgba(135, 168, 120, 0.5); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-secondary { background: white; border: 2px solid #e8e4df; padding: 12px 28px; border-radius: 16px; font-size: 1rem; font-weight: 600; color: var(--color-slate); cursor: pointer; }
+        .btn-secondary {
+            background: white;
+            color: var(--color-slate);
+            border: 2px solid #e8e4df;
+        }
         .btn-secondary:hover { background: var(--color-warm-white); border-color: var(--color-sage); }
+        .btn-ghost {
+            background: transparent;
+            color: var(--color-slate-light);
+            padding: 12px 20px;
+        }
+        .btn-ghost:hover { color: var(--color-slate); background: rgba(0,0,0,0.03); }
+        
+        /* Onboarding */
         .onboarding-step { display: none; }
         .onboarding-step.active { display: block; }
         .onboarding-image { font-size: 5rem; margin-bottom: 24px; }
-        .onboarding-title { font-size: 1.8rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
+        .onboarding-title { font-size: 1.9rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
         .onboarding-desc { font-size: 1.05rem; color: var(--color-slate-light); line-height: 1.6; margin-bottom: 32px; }
         .onboarding-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
         .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: #e8e4df; transition: all 0.3s; }
-        .onboarding-dot.active { background: var(--color-sage); width: 24px; border-radius: 5px; }
-        .disclaimer-box { background: white; border: 1px solid #e8e4df; border-radius: 16px; padding: 20px; text-align: left; margin-bottom: 24px; max-height: 200px; overflow-y: auto; }
+        .onboarding-dot.active { background: var(--color-sage); width: 28px; border-radius: 5px; }
+        
+        /* Disclaimer */
+        .disclaimer-box { 
+            background: white; 
+            border: 1px solid #e8e4df; 
+            border-radius: 16px; 
+            padding: 20px; 
+            text-align: left; 
+            margin-bottom: 24px; 
+            max-height: 180px; 
+            overflow-y: auto; 
+        }
         .disclaimer-box h4 { font-weight: 700; color: var(--color-slate); margin-bottom: 8px; }
         .disclaimer-box p, .disclaimer-box ul { font-size: 0.85rem; color: var(--color-slate-light); line-height: 1.5; margin-bottom: 8px; }
         .disclaimer-box ul { padding-left: 20px; }
         .checkbox-row { display: flex; align-items: flex-start; gap: 12px; text-align: left; margin-bottom: 20px; }
-        .checkbox-row input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--color-sage); }
+        .checkbox-row input[type="checkbox"] { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--color-sage); }
         .checkbox-row label { font-size: 0.9rem; color: var(--color-slate); line-height: 1.4; }
-        .pain-scale { display: flex; justify-content: space-between; gap: 8px; margin: 24px 0; }
-        .pain-btn { flex: 1; padding: 16px 8px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .pain-btn:hover { transform: translateY(-2px); }
+        
+        /* Ready Screen */
+        .ready-overlay { background: rgba(168, 201, 155, 0.97); }
+        .ready-countdown { 
+            font-size: 8rem; 
+            font-weight: 800; 
+            color: white; 
+            text-shadow: 0 8px 40px rgba(0,0,0,0.15); 
+            animation: pulse-scale 1s ease infinite;
+        }
+        @keyframes pulse-scale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .ready-exercise-preview {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 24px 40px;
+            margin-top: 32px;
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .ready-exercise-icon { font-size: 2.5rem; }
+        .ready-exercise-name { font-size: 1.4rem; font-weight: 700; color: var(--color-slate); }
+        .ready-exercise-desc { font-size: 0.9rem; color: var(--color-slate-light); }
+        
+        /* Pain Check */
+        .pain-scale { display: flex; justify-content: space-between; gap: 10px; margin: 24px 0; }
+        .pain-btn { 
+            flex: 1; 
+            padding: 18px 10px; 
+            border-radius: 14px; 
+            border: 3px solid transparent; 
+            cursor: pointer; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .pain-btn:hover { transform: translateY(-3px); }
         .pain-btn.green { background: #e8f5e9; }
         .pain-btn.green:hover, .pain-btn.green.selected { border-color: #68b37a; background: #d4edda; }
         .pain-btn.yellow { background: #fff8e1; }
@@ -136,39 +412,114 @@
         .pain-btn.orange:hover, .pain-btn.orange.selected { border-color: #e8998d; background: #ffe0b2; }
         .pain-btn.red { background: #ffebee; }
         .pain-btn.red:hover, .pain-btn.red.selected { border-color: #d97b7b; background: #ffcdd2; }
-        .pain-emoji { font-size: 1.8rem; }
-        .pain-label { font-size: 0.75rem; font-weight: 600; color: var(--color-slate); }
-        .rest-overlay { background: rgba(168, 201, 155, 0.95); }
-        .rest-timer { font-size: 4rem; font-weight: 800; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .rest-message { font-size: 1.3rem; color: white; margin-top: 16px; opacity: 0.9; }
-        .summary-card { background: white; border: 1px solid #e8e4df; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
-        .summary-stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0ece6; }
+        .pain-emoji { font-size: 2rem; }
+        .pain-label { font-size: 0.8rem; font-weight: 700; color: var(--color-slate); }
+        
+        /* Rest Overlay */
+        .rest-overlay { background: linear-gradient(135deg, rgba(168, 201, 155, 0.95), rgba(135, 168, 120, 0.95)); }
+        .rest-timer { font-size: 4.5rem; font-weight: 800; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .rest-message { font-size: 1.2rem; color: white; margin-top: 12px; opacity: 0.9; }
+        
+        /* Complete Overlay */
+        .summary-card { background: white; border: 1px solid #e8e4df; border-radius: 20px; padding: 24px; margin-bottom: 20px; }
+        .summary-stat { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0ece6; }
         .summary-stat:last-child { border-bottom: none; }
         .summary-label { color: var(--color-slate-light); font-weight: 500; }
         .summary-value { color: var(--color-slate); font-weight: 700; }
-        .grade-badge { display: inline-block; padding: 4px 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
+        .grade-badge { display: inline-block; padding: 6px 16px; border-radius: 10px; font-weight: 800; font-size: 1rem; }
         .grade-a { background: #d4edda; color: #155724; }
         .grade-b { background: #fff3cd; color: #856404; }
         .grade-c { background: #ffe0b2; color: #e65100; }
-        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+        
+        .complete-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        /* Zone Legend */
+        .zone-legend {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: auto;
+        }
+        .zone-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .zone-legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .zone-legend-dot.green { background: var(--zone-green-solid); }
+        .zone-legend-dot.yellow { background: var(--zone-yellow-solid); }
+        .zone-legend-dot.purple { background: var(--zone-purple-solid); }
+        
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        .modal-title { font-size: 1.3rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
+        .modal-desc { color: var(--color-slate-light); margin-bottom: 24px; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
     </style>
 </head>
 <body>
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-    <button id="btn-quit" class="float-btn hidden" aria-label="Exit session">✕</button>
-    <button id="btn-audio" class="float-btn hidden" aria-label="Toggle audio">🔊</button>
-    <button id="btn-skip" class="float-btn hidden" aria-label="Skip exercise">⏭️</button>
+    <!-- Floating Controls -->
+    <button id="btn-home" class="float-btn hidden" aria-label="Go home" title="Go Home">🏠</button>
+    <button id="btn-audio" class="float-btn hidden" aria-label="Toggle audio" title="Toggle Audio">🔊</button>
+    <button id="btn-skip" class="float-btn hidden" aria-label="Skip exercise" title="Skip">⏭️</button>
 
-    <div id="app-container" role="main" id="main-content">
-        <video id="video-bg" playsinline muted autoplay aria-hidden="true"></video>
+    <!-- Main Container -->
+    <div id="app-container">
+        <video id="video-bg" playsinline muted autoplay></video>
         <div id="portal-wrapper">
             <div id="portal-frame">
                 <div id="portal-view">
-                    <video id="video-clean" playsinline muted autoplay aria-label="Camera feed"></video>
-                    <canvas id="output-canvas" aria-hidden="true"></canvas>
-                    <div id="hud-layer" aria-live="polite">
+                    <video id="video-clean" playsinline muted autoplay></video>
+                    <canvas id="output-canvas"></canvas>
+                    
+                    <div id="hud-layer">
                         <div class="top-row">
-                            <div class="glass-pill progress-pill"><span id="exercise-progress">1 of 6</span></div>
+                            <div class="glass-pill progress-pill">
+                                <span id="exercise-progress">1 of 8</span>
+                            </div>
                             <div class="glass-pill instruction-banner">
                                 <span class="instruction-icon" id="instruction-icon">👋</span>
                                 <div>
@@ -176,12 +527,19 @@
                                     <div class="instruction-sub" id="instruction-sub">Position hand in frame</div>
                                 </div>
                             </div>
-                            <div class="glass-pill progress-pill"><span id="session-timer">0:00</span></div>
+                            <div class="glass-pill accuracy-meter">
+                                <div class="accuracy-bar-bg">
+                                    <div class="accuracy-bar-fill green" id="accuracy-bar" style="width: 0%"></div>
+                                </div>
+                                <span class="accuracy-percent" id="accuracy-percent">0%</span>
+                            </div>
                         </div>
+
                         <div class="center-feedback">
                             <div id="hold-timer">3</div>
                             <div id="feedback-message">Nice!</div>
                         </div>
+
                         <div class="stats-bar">
                             <div class="glass-pill stat-card" id="streak-card">
                                 <span>🔥</span>
@@ -191,162 +549,554 @@
                                 <span>✨</span>
                                 <div><div id="stat-completed" class="stat-val">0</div><div class="stat-label">Done</div></div>
                             </div>
+                            <div class="glass-pill progress-pill">
+                                <span id="session-timer">0:00</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Zone Legend -->
+                        <div class="zone-legend" id="zone-legend">
+                            <div class="zone-legend-item"><div class="zone-legend-dot green"></div> Target Zone</div>
+                            <div class="zone-legend-item"><div class="zone-legend-dot yellow"></div> Close</div>
+                            <div class="zone-legend-item"><div class="zone-legend-dot purple"></div> Keep Trying</div>
                         </div>
                     </div>
-                    <div id="progress-bar-container"><div id="progress-bar-fill"></div></div>
+
+                    <div id="progress-bar-container">
+                        <div id="progress-bar-fill"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ONBOARDING OVERLAY -->
+    <!-- OVERLAY: Onboarding -->
     <div id="overlay-welcome" class="overlay-screen">
         <div class="overlay-content">
             <div class="onboarding-step active" data-step="1">
                 <div class="onboarding-image">🌱</div>
                 <h1 class="onboarding-title">Welcome to HandHero</h1>
-                <p class="onboarding-desc">Your personal hand therapy companion. Gentle exercises to improve strength and mobility.</p>
+                <p class="onboarding-desc">Your personal hand therapy companion with real-time visual feedback to guide your rehabilitation journey.</p>
                 <div class="onboarding-dots"><div class="onboarding-dot active"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div></div>
-                <button class="btn-primary" onclick="nextStep()">Get Started</button>
+                <button class="btn btn-primary" onclick="nextStep()">Get Started</button>
             </div>
             <div class="onboarding-step" data-step="2">
-                <div class="onboarding-image">✋</div>
-                <h2 class="onboarding-title">How It Works</h2>
-                <p class="onboarding-desc">Position your hand in front of the camera. Follow the on-screen instructions. Hold each position until the timer completes.</p>
+                <div class="onboarding-image">🎯</div>
+                <h2 class="onboarding-title">Visual Accuracy Zones</h2>
+                <p class="onboarding-desc">
+                    <strong style="color: var(--zone-green-solid);">Green zones</strong> show your target position.<br>
+                    <strong style="color: var(--zone-yellow-solid);">Yellow zones</strong> mean you're close.<br>
+                    <strong style="color: var(--zone-purple-solid);">Purple zones</strong> show your current range.<br><br>
+                    Work within YOUR comfortable range – no need for perfection!
+                </p>
                 <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot active"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div></div>
-                <button class="btn-primary" onclick="nextStep()">Next</button>
-                <button class="btn-secondary" onclick="prevStep()" style="margin-top:12px">Back</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next</button>
+                <button class="btn btn-ghost" onclick="prevStep()">Back</button>
             </div>
             <div class="onboarding-step" data-step="3">
                 <div class="onboarding-image">💡</div>
                 <h2 class="onboarding-title">Tips for Success</h2>
-                <p class="onboarding-desc">• Good lighting helps accuracy<br>• Keep hand 12-18 inches from camera<br>• Move slowly and deliberately<br>• Stop if you feel any pain</p>
+                <p class="onboarding-desc">
+                    • Good lighting helps tracking accuracy<br>
+                    • Keep hand 12-18 inches from camera<br>
+                    • Move slowly and deliberately<br>
+                    • <strong>Stop immediately if you feel pain</strong>
+                </p>
                 <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot active"></div><div class="onboarding-dot"></div></div>
-                <button class="btn-primary" onclick="nextStep()">Next</button>
-                <button class="btn-secondary" onclick="prevStep()" style="margin-top:12px">Back</button>
+                <button class="btn btn-primary" onclick="nextStep()">Next</button>
+                <button class="btn btn-ghost" onclick="prevStep()">Back</button>
             </div>
             <div class="onboarding-step" data-step="4">
                 <div class="onboarding-image">⚕️</div>
-                <h2 class="onboarding-title">Safety Information</h2>
+                <h2 class="onboarding-title">Safety First</h2>
                 <div class="disclaimer-box">
                     <h4>Medical Disclaimer</h4>
-                    <p>HandHero is a wellness tool designed to supplement, not replace, professional medical care.</p>
-                    <ul><li>NOT a medical device</li><li>Does NOT provide diagnosis or treatment</li><li>Should NOT replace professional therapy</li></ul>
-                    <p><strong>Stop immediately if you experience:</strong> pain, numbness, tingling, swelling, or any concerning symptoms.</p>
+                    <p>HandHero is a wellness tool to supplement – not replace – professional care.</p>
+                    <ul>
+                        <li>NOT a medical device</li>
+                        <li>Does NOT provide diagnosis</li>
+                        <li>Should NOT replace therapy</li>
+                    </ul>
+                    <p><strong>Stop if you experience:</strong> pain, numbness, tingling, swelling.</p>
                 </div>
                 <div class="checkbox-row">
                     <input type="checkbox" id="disclaimer-check">
-                    <label for="disclaimer-check">I understand this is a wellness tool. I will stop if I experience pain.</label>
+                    <label for="disclaimer-check">I understand this is a wellness tool and will stop if I feel pain.</label>
                 </div>
                 <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot active"></div></div>
-                <button class="btn-primary" id="btn-start" disabled onclick="startApp()">I Understand – Start</button>
-                <button class="btn-secondary" onclick="prevStep()" style="margin-top:12px">Back</button>
+                <button class="btn btn-primary" id="btn-start" disabled onclick="startApp()">I Understand – Begin</button>
+                <button class="btn btn-ghost" onclick="prevStep()">Back</button>
             </div>
         </div>
     </div>
 
-    <!-- PAIN CHECK OVERLAY -->
+    <!-- OVERLAY: Ready (Between Exercises) -->
+    <div id="overlay-ready" class="overlay-screen ready-overlay hidden">
+        <div class="overlay-content">
+            <p style="color: white; font-size: 1.1rem; margin-bottom: 8px; opacity: 0.8;">Next Exercise</p>
+            <div class="ready-countdown" id="ready-countdown">3</div>
+            <div class="ready-exercise-preview">
+                <span class="ready-exercise-icon" id="ready-icon">✋</span>
+                <div style="text-align: left;">
+                    <div class="ready-exercise-name" id="ready-name">Starfish</div>
+                    <div class="ready-exercise-desc" id="ready-desc">Spread all fingers wide</div>
+                </div>
+            </div>
+            <p style="color: white; font-size: 0.9rem; margin-top: 24px; opacity: 0.7;">Position your hand now...</p>
+        </div>
+    </div>
+
+    <!-- OVERLAY: Pain Check -->
     <div id="overlay-pain" class="overlay-screen hidden">
         <div class="overlay-content">
             <div class="onboarding-image">💚</div>
             <h2 class="onboarding-title">Quick Check-In</h2>
             <p class="onboarding-desc">How is your hand feeling?</p>
             <div class="pain-scale">
-                <button class="pain-btn green" onclick="selectPain(0)"><span class="pain-emoji">😊</span><span class="pain-label">Good</span></button>
+                <button class="pain-btn green" onclick="selectPain(0)"><span class="pain-emoji">😊</span><span class="pain-label">Great</span></button>
                 <button class="pain-btn yellow" onclick="selectPain(1)"><span class="pain-emoji">😐</span><span class="pain-label">Mild</span></button>
                 <button class="pain-btn orange" onclick="selectPain(2)"><span class="pain-emoji">😕</span><span class="pain-label">Moderate</span></button>
                 <button class="pain-btn red" onclick="selectPain(3)"><span class="pain-emoji">😣</span><span class="pain-label">Too Much</span></button>
             </div>
-            <p id="pain-advice" style="font-size:0.9rem;color:var(--color-slate-light);min-height:40px"></p>
-            <button class="btn-primary" id="btn-continue" disabled onclick="continuePain()">Continue</button>
+            <p id="pain-advice" style="font-size: 0.9rem; color: var(--color-slate-light); min-height: 40px;"></p>
+            <button class="btn btn-primary" id="btn-continue-pain" disabled onclick="continuePain()">Continue</button>
         </div>
     </div>
 
-    <!-- REST OVERLAY -->
+    <!-- OVERLAY: Rest -->
     <div id="overlay-rest" class="overlay-screen rest-overlay hidden">
         <div class="overlay-content">
-            <h2 class="onboarding-title" style="color:white">Take a Breath</h2>
-            <div class="rest-timer" id="rest-timer">20</div>
-            <p class="rest-message">Relax your hand. We'll continue shortly.</p>
-            <button class="btn-secondary" onclick="skipRest()" style="margin-top:24px;background:rgba(255,255,255,0.9)">I'm Ready – Skip</button>
+            <h2 class="onboarding-title" style="color: white;">Quick Break</h2>
+            <div class="rest-timer" id="rest-timer">8</div>
+            <p class="rest-message">Shake out your hand, take a breath</p>
+            <button class="btn btn-secondary" onclick="skipRest()" style="margin-top: 20px;">I'm Ready</button>
         </div>
     </div>
 
-    <!-- COMPLETE OVERLAY -->
+    <!-- OVERLAY: Complete -->
     <div id="overlay-complete" class="overlay-screen hidden">
         <div class="overlay-content">
             <div class="onboarding-image">🎉</div>
             <h2 class="onboarding-title">Session Complete!</h2>
             <div class="summary-card">
-                <div class="summary-stat"><span class="summary-label">Exercises</span><span class="summary-value" id="sum-done">6</span></div>
-                <div class="summary-stat"><span class="summary-label">Duration</span><span class="summary-value" id="sum-time">3:45</span></div>
-                <div class="summary-stat"><span class="summary-label">Best Streak</span><span class="summary-value" id="sum-streak">4 🔥</span></div>
+                <div class="summary-stat"><span class="summary-label">Exercises</span><span class="summary-value" id="sum-done">8</span></div>
+                <div class="summary-stat"><span class="summary-label">Duration</span><span class="summary-value" id="sum-time">4:30</span></div>
+                <div class="summary-stat"><span class="summary-label">Best Streak</span><span class="summary-value" id="sum-streak">5 🔥</span></div>
+                <div class="summary-stat"><span class="summary-label">Avg Accuracy</span><span class="summary-value" id="sum-accuracy">78%</span></div>
                 <div class="summary-stat"><span class="summary-label">Grade</span><span class="summary-value"><span id="sum-grade" class="grade-badge grade-a">A</span></span></div>
             </div>
-            <p style="font-size:0.85rem;color:var(--color-slate-light);margin-bottom:24px">Great work! Consistency is key.</p>
-            <button class="btn-primary" onclick="exportReport()">📄 Save Report</button>
-            <button class="btn-secondary" onclick="restart()" style="margin-top:12px">New Session</button>
+            <div class="complete-buttons">
+                <button class="btn btn-primary" onclick="goHome()">🏠 Back to Dashboard</button>
+                <button class="btn btn-secondary" onclick="confirmRestart()">🔄 New Session</button>
+                <button class="btn btn-ghost" onclick="exportReport()">📄 Save Report</button>
+            </div>
         </div>
     </div>
 
-    <!-- LOADING OVERLAY -->
+    <!-- OVERLAY: Loading -->
     <div id="overlay-loading" class="overlay-screen hidden">
         <div class="overlay-content">
-            <div class="onboarding-image" style="animation:pulse 1.5s infinite">🖐️</div>
+            <div class="onboarding-image" style="animation: pulse-scale 1.5s infinite;">🖐️</div>
             <h2 class="onboarding-title">Preparing Session</h2>
-            <p class="onboarding-desc" id="loading-msg">Loading AI model...</p>
+            <p class="onboarding-desc" id="loading-msg">Loading hand tracking...</p>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="modal-confirm" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title" id="modal-title">Restart Session?</h3>
+            <p class="modal-desc" id="modal-desc">Your current progress will be saved. Start a new session?</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" id="modal-confirm-btn" onclick="confirmModalAction()">Confirm</button>
+            </div>
         </div>
     </div>
 
 <script>
 // ============================================
-// CONFIGURATION & CONSTANTS  
+// CONFIGURATION
 // ============================================
-const CONFIG = { EXERCISES_PER_SESSION: 6, REST_SECONDS: 20, PAIN_CHECK_EVERY: 3, GOOD_THRESHOLD: 0.70, PARTIAL_THRESHOLD: 0.50, GRACE_MS: 8000 };
-const FINGER = { THUMB: [1,2,3,4], INDEX: [5,6,7,8], MIDDLE: [9,10,11,12], RING: [13,14,15,16], PINKY: [17,18,19,20] };
-const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
+const CONFIG = {
+    EXERCISES_PER_SESSION: 8,
+    REST_SECONDS: 8,
+    PAIN_CHECK_EVERY: 4,
+    READY_COUNTDOWN_SECONDS: 3,
+    
+    // Accuracy thresholds
+    ZONE_GREEN: 0.75,   // 75%+ = green zone
+    ZONE_YELLOW: 0.50,  // 50-75% = yellow zone
+    ZONE_PURPLE: 0.25,  // 25-50% = purple zone
+    
+    HOLD_DURATION_BASE: 1800, // Slightly longer for proper form
+    GRACE_TIMEOUT_MS: 12000,  // More time to attempt
+};
 
-const ALL_EXERCISES = [
-    { id:'starfish', name:'Starfish', icon:'🖐️', desc:'Spread all fingers wide', skeleton:'tips', duration:1500, difficulty:1 },
-    { id:'fist', name:'Gentle Fist', icon:'✊', desc:'Make a soft fist', skeleton:'curl', duration:1200, difficulty:1 },
-    { id:'thumbs', name:'Thumbs Up', icon:'👍', desc:'Thumb up, fingers curled', skeleton:'single', finger:'thumb', duration:1400, difficulty:2 },
-    { id:'pointer', name:'Pointer', icon:'☝️', desc:'Point with index finger', skeleton:'single', finger:'index', duration:1400, difficulty:2 },
-    { id:'ok', name:'OK Sign', icon:'👌', desc:'Touch thumb to index', skeleton:'pinch', targets:[4,8], duration:1200, difficulty:2 },
-    { id:'peace', name:'Peace Sign', icon:'✌️', desc:'Extend index and middle', skeleton:'two', fingers:['index','middle'], duration:1500, difficulty:3 },
-    { id:'pinky', name:'Pinky Wave', icon:'🤙', desc:'Extend pinky, curl others', skeleton:'single', finger:'pinky', duration:1500, difficulty:3 },
-    { id:'rock', name:'Rock On', icon:'🤘', desc:'Index and pinky out', skeleton:'two', fingers:['index','pinky'], duration:1800, difficulty:4 }
+// ============================================
+// FINGER INDICES & BONES
+// ============================================
+const FINGER = {
+    THUMB: [1, 2, 3, 4],
+    INDEX: [5, 6, 7, 8],
+    MIDDLE: [9, 10, 11, 12],
+    RING: [13, 14, 15, 16],
+    PINKY: [17, 18, 19, 20]
+};
+
+const FINGER_NAMES = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+const FINGER_TIPS = [4, 8, 12, 16, 20];
+const FINGER_BASES = [1, 5, 9, 13, 17];
+
+const BONES = [
+    [0,1],[1,2],[2,3],[3,4],
+    [0,5],[5,6],[6,7],[7,8],
+    [0,9],[9,10],[10,11],[11,12],
+    [0,13],[13,14],[14,15],[15,16],
+    [0,17],[17,18],[18,19],[19,20],
+    [5,9],[9,13],[13,17]
 ];
+
+// ============================================
+// EXPANDED EXERCISE LIBRARY
+// ============================================
+const ALL_EXERCISES = [
+    // === BASIC STRETCHES ===
+    {
+        id: 'starfish', name: 'Starfish Spread', icon: '🖐️', category: 'Stretch',
+        desc: 'Spread all fingers as wide as possible',
+        difficulty: 1, duration: 2000,
+        targetType: 'spread', // Visual zone type
+        check: (s) => {
+            // All fingers extended (low curl) and spread apart
+            const extended = s.curls.every(c => c < 0.35);
+            const spread = s.fingerSpread > 0.15;
+            return extended ? (spread ? 1 : 0.7) : Math.max(0.2, 1 - avg(s.curls));
+        }
+    },
+    {
+        id: 'fist', name: 'Gentle Fist', icon: '✊', category: 'Strength',
+        desc: 'Curl all fingers into a relaxed fist',
+        difficulty: 1, duration: 1800,
+        targetType: 'curl',
+        check: (s) => {
+            const curled = s.curls.map(c => c > 0.65 ? 1 : c > 0.45 ? 0.7 : 0.3);
+            return avg(curled);
+        }
+    },
+    {
+        id: 'flat', name: 'Flat Hand', icon: '🤚', category: 'Stretch',
+        desc: 'Press fingers together, fully extended',
+        difficulty: 1, duration: 1800,
+        targetType: 'flat',
+        check: (s) => {
+            const extended = s.curls.every(c => c < 0.25);
+            const together = s.fingerSpread < 0.08;
+            if (extended && together) return 1;
+            if (extended) return 0.75;
+            return Math.max(0.2, 1 - avg(s.curls));
+        }
+    },
+    
+    // === THUMB EXERCISES ===
+    {
+        id: 'thumbs_up', name: 'Thumbs Up', icon: '👍', category: 'Isolation',
+        desc: 'Extend thumb upward, curl other fingers',
+        difficulty: 2, duration: 2000,
+        targetType: 'single', targetFinger: 0,
+        check: (s) => {
+            const thumbOut = s.curls[0] < 0.35 ? 1 : s.curls[0] < 0.5 ? 0.7 : 0.3;
+            const othersCurled = s.curls.slice(1).map(c => c > 0.55 ? 1 : c > 0.35 ? 0.7 : 0.3);
+            return thumbOut * 0.4 + avg(othersCurled) * 0.6;
+        }
+    },
+    {
+        id: 'thumb_to_pinky', name: 'Thumb to Pinky', icon: '🤙', category: 'Precision',
+        desc: 'Touch thumb tip to pinky tip',
+        difficulty: 3, duration: 2200,
+        targetType: 'pinch', targetPair: [4, 20],
+        check: (s) => {
+            const dist = s.pinchDistances[4]; // thumb to pinky
+            if (dist < 0.04) return 1;
+            if (dist < 0.07) return 0.85;
+            if (dist < 0.12) return 0.65;
+            if (dist < 0.18) return 0.45;
+            return 0.2;
+        }
+    },
+    
+    // === INDEX FINGER ===
+    {
+        id: 'pointer', name: 'Pointer', icon: '☝️', category: 'Isolation',
+        desc: 'Point with index finger only',
+        difficulty: 2, duration: 2000,
+        targetType: 'single', targetFinger: 1,
+        check: (s) => {
+            const indexOut = s.curls[1] < 0.30 ? 1 : s.curls[1] < 0.45 ? 0.7 : 0.3;
+            const othersCurled = [s.curls[2], s.curls[3], s.curls[4]].map(c => c > 0.55 ? 1 : c > 0.35 ? 0.7 : 0.3);
+            return indexOut * 0.5 + avg(othersCurled) * 0.5;
+        }
+    },
+    {
+        id: 'ok_sign', name: 'OK Sign', icon: '👌', category: 'Precision',
+        desc: 'Touch thumb tip to index tip',
+        difficulty: 2, duration: 2000,
+        targetType: 'pinch', targetPair: [4, 8],
+        check: (s) => {
+            const dist = s.pinchDistances[0]; // thumb to index
+            if (dist < 0.045) return 1;
+            if (dist < 0.07) return 0.85;
+            if (dist < 0.11) return 0.65;
+            if (dist < 0.16) return 0.45;
+            return 0.2;
+        }
+    },
+    
+    // === TWO FINGER COMBINATIONS ===
+    {
+        id: 'peace', name: 'Peace Sign', icon: '✌️', category: 'Coordination',
+        desc: 'Extend index and middle, curl others',
+        difficulty: 3, duration: 2200,
+        targetType: 'double', targetFingers: [1, 2],
+        check: (s) => {
+            const extended = [s.curls[1], s.curls[2]].map(c => c < 0.30 ? 1 : c < 0.45 ? 0.7 : 0.3);
+            const curled = [s.curls[3], s.curls[4]].map(c => c > 0.55 ? 1 : c > 0.35 ? 0.7 : 0.3);
+            return avg(extended) * 0.5 + avg(curled) * 0.5;
+        }
+    },
+    {
+        id: 'rock_on', name: 'Rock On', icon: '🤘', category: 'Advanced',
+        desc: 'Extend index and pinky, curl middle and ring',
+        difficulty: 4, duration: 2500,
+        targetType: 'double', targetFingers: [1, 4],
+        check: (s) => {
+            const extended = [s.curls[1], s.curls[4]].map(c => c < 0.30 ? 1 : c < 0.45 ? 0.7 : 0.3);
+            const curled = [s.curls[2], s.curls[3]].map(c => c > 0.55 ? 1 : c > 0.35 ? 0.7 : 0.3);
+            return avg(extended) * 0.5 + avg(curled) * 0.5;
+        }
+    },
+    {
+        id: 'scout', name: 'Scout Salute', icon: '🖖', category: 'Coordination',
+        desc: 'Spread between middle and ring finger',
+        difficulty: 3, duration: 2200,
+        targetType: 'vulcan',
+        check: (s) => {
+            const allExtended = s.curls.every(c => c < 0.35);
+            // Check for gap between middle and ring
+            const hasGap = s.fingerGaps && s.fingerGaps[2] > 0.06; // gap between middle-ring
+            if (allExtended && hasGap) return 1;
+            if (allExtended) return 0.7;
+            return Math.max(0.2, 1 - avg(s.curls));
+        }
+    },
+    
+    // === PINKY EXERCISES ===
+    {
+        id: 'pinky_out', name: 'Pinky Extension', icon: '🫰', category: 'Isolation',
+        desc: 'Extend only the pinky finger',
+        difficulty: 3, duration: 2200,
+        targetType: 'single', targetFinger: 4,
+        check: (s) => {
+            const pinkyOut = s.curls[4] < 0.30 ? 1 : s.curls[4] < 0.45 ? 0.7 : 0.3;
+            const othersCurled = [s.curls[1], s.curls[2], s.curls[3]].map(c => c > 0.50 ? 1 : c > 0.30 ? 0.7 : 0.3);
+            return pinkyOut * 0.5 + avg(othersCurled) * 0.5;
+        }
+    },
+    
+    // === OPPOSITION EXERCISES ===
+    {
+        id: 'thumb_to_middle', name: 'Thumb to Middle', icon: '🤌', category: 'Precision',
+        desc: 'Touch thumb tip to middle fingertip',
+        difficulty: 2, duration: 2000,
+        targetType: 'pinch', targetPair: [4, 12],
+        check: (s) => {
+            const dist = s.pinchDistances[1]; // thumb to middle
+            if (dist < 0.045) return 1;
+            if (dist < 0.07) return 0.85;
+            if (dist < 0.11) return 0.65;
+            if (dist < 0.16) return 0.45;
+            return 0.2;
+        }
+    },
+    {
+        id: 'thumb_to_ring', name: 'Thumb to Ring', icon: '🤏', category: 'Precision',
+        desc: 'Touch thumb tip to ring fingertip',
+        difficulty: 3, duration: 2200,
+        targetType: 'pinch', targetPair: [4, 16],
+        check: (s) => {
+            const dist = s.pinchDistances[2]; // thumb to ring
+            if (dist < 0.045) return 1;
+            if (dist < 0.07) return 0.85;
+            if (dist < 0.11) return 0.65;
+            if (dist < 0.16) return 0.45;
+            return 0.2;
+        }
+    },
+    
+    // === RING FINGER (hardest to isolate) ===
+    {
+        id: 'ring_lift', name: 'Ring Finger Lift', icon: '💍', category: 'Advanced',
+        desc: 'Lift ring finger while others stay down',
+        difficulty: 4, duration: 2500,
+        targetType: 'single', targetFinger: 3,
+        check: (s) => {
+            const ringOut = s.curls[3] < 0.35 ? 1 : s.curls[3] < 0.50 ? 0.7 : 0.3;
+            const othersCurled = [s.curls[1], s.curls[2], s.curls[4]].map(c => c > 0.45 ? 1 : c > 0.25 ? 0.7 : 0.3);
+            return ringOut * 0.5 + avg(othersCurled) * 0.5;
+        }
+    },
+    
+    // === SEQUENTIAL/WAVE ===
+    {
+        id: 'claw', name: 'Claw Grip', icon: '🦖', category: 'Strength',
+        desc: 'Curl fingertips while keeping knuckles straight',
+        difficulty: 3, duration: 2200,
+        targetType: 'claw',
+        check: (s) => {
+            // For claw, we want PIP/DIP flexed but MCP extended
+            // Simplified: moderate curl values (not fully curled, not fully extended)
+            const clawScore = s.curls.map(c => {
+                if (c > 0.35 && c < 0.70) return 1; // sweet spot
+                if (c > 0.25 && c < 0.80) return 0.7;
+                return 0.3;
+            });
+            return avg(clawScore);
+        }
+    },
+];
+
+// Helper
+function avg(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+
+// Select exercises for session (balanced)
+function selectExercises() {
+    const shuffle = a => [...a].sort(() => Math.random() - 0.5);
+    const byDiff = (d) => ALL_EXERCISES.filter(e => e.difficulty === d);
+    
+    // 2 easy, 3 medium, 2 hard, 1 advanced
+    const selected = [
+        ...shuffle(byDiff(1)).slice(0, 2),
+        ...shuffle(byDiff(2)).slice(0, 3),
+        ...shuffle(byDiff(3)).slice(0, 2),
+        ...shuffle(byDiff(4)).slice(0, 1),
+    ];
+    
+    return shuffle(selected);
+}
 
 // ============================================
 // STATE
 // ============================================
 const state = {
-    step: 1, screen: 'WELCOME', handLandmarker: null, webcamRunning: false,
-    exercises: [], exIdx: 0, completed: 0, streak: 0, bestStreak: 0, startTime: 0,
-    holding: false, holdStart: 0, progress: 0, cooldown: false,
-    curls: [0,0,0,0,0], pinchIndex: 1, pinchMiddle: 1,
-    currentAcc: 0, peakAcc: 0, attemptStart: 0, hasAttempted: false,
-    painLevels: [], selectedPain: null, log: [], animTime: 0
+    step: 1,
+    screen: 'WELCOME', // WELCOME, LOADING, READY, SESSION, REST, PAIN, COMPLETE
+    handLandmarker: null,
+    webcamRunning: false,
+    animationFrameId: null,
+    
+    // Session
+    exercises: [],
+    exIdx: 0,
+    completed: 0,
+    streak: 0,
+    bestStreak: 0,
+    startTime: 0,
+    
+    // Current exercise
+    holding: false,
+    holdStart: 0,
+    progress: 0,
+    cooldown: false,
+    currentAcc: 0,
+    peakAcc: 0,
+    attemptStart: 0,
+    hasAttempted: false,
+    
+    // Hand analysis
+    landmarks: null,
+    curls: [0, 0, 0, 0, 0],
+    fingerSpread: 0,
+    fingerGaps: [0, 0, 0, 0], // gaps between adjacent fingers
+    pinchDistances: [0, 0, 0, 0], // thumb to each finger
+    
+    // Tracking
+    painLevels: [],
+    selectedPain: null,
+    log: [],
+    
+    // Animation
+    animTime: 0,
+    
+    // Modal
+    modalAction: null,
 };
 
 // ============================================
-// DOM ELEMENTS
+// DOM REFERENCES
 // ============================================
 const $ = id => document.getElementById(id);
 const el = {
-    welcome: $('overlay-welcome'), loading: $('overlay-loading'), pain: $('overlay-pain'),
-    rest: $('overlay-rest'), complete: $('overlay-complete'),
-    videoBg: $('video-bg'), video: $('video-clean'), canvas: $('output-canvas'),
-    frame: $('portal-frame'), view: $('portal-view'),
-    btnQuit: $('btn-quit'), btnAudio: $('btn-audio'), btnSkip: $('btn-skip'),
-    icon: $('instruction-icon'), text: $('instruction-text'), sub: $('instruction-sub'),
-    progress: $('exercise-progress'), timer: $('session-timer'),
-    streak: $('stat-streak'), done: $('stat-completed'), streakCard: $('streak-card'),
-    holdTimer: $('hold-timer'), feedback: $('feedback-message'), bar: $('progress-bar-fill'),
-    restTimer: $('rest-timer'), painAdvice: $('pain-advice'), btnContinue: $('btn-continue'),
-    sumDone: $('sum-done'), sumTime: $('sum-time'), sumStreak: $('sum-streak'), sumGrade: $('sum-grade'),
-    loadMsg: $('loading-msg'), disclaimerCheck: $('disclaimer-check'), btnStart: $('btn-start')
+    welcome: $('overlay-welcome'),
+    loading: $('overlay-loading'),
+    ready: $('overlay-ready'),
+    pain: $('overlay-pain'),
+    rest: $('overlay-rest'),
+    complete: $('overlay-complete'),
+    
+    videoBg: $('video-bg'),
+    video: $('video-clean'),
+    canvas: $('output-canvas'),
+    frame: $('portal-frame'),
+    view: $('portal-view'),
+    
+    btnHome: $('btn-home'),
+    btnAudio: $('btn-audio'),
+    btnSkip: $('btn-skip'),
+    
+    icon: $('instruction-icon'),
+    text: $('instruction-text'),
+    sub: $('instruction-sub'),
+    progress: $('exercise-progress'),
+    timer: $('session-timer'),
+    
+    accuracyBar: $('accuracy-bar'),
+    accuracyPercent: $('accuracy-percent'),
+    
+    streak: $('stat-streak'),
+    done: $('stat-completed'),
+    streakCard: $('streak-card'),
+    
+    holdTimer: $('hold-timer'),
+    feedback: $('feedback-message'),
+    bar: $('progress-bar-fill'),
+    
+    readyCountdown: $('ready-countdown'),
+    readyIcon: $('ready-icon'),
+    readyName: $('ready-name'),
+    readyDesc: $('ready-desc'),
+    
+    restTimer: $('rest-timer'),
+    painAdvice: $('pain-advice'),
+    btnContinuePain: $('btn-continue-pain'),
+    
+    sumDone: $('sum-done'),
+    sumTime: $('sum-time'),
+    sumStreak: $('sum-streak'),
+    sumAccuracy: $('sum-accuracy'),
+    sumGrade: $('sum-grade'),
+    
+    loadMsg: $('loading-msg'),
+    disclaimerCheck: $('disclaimer-check'),
+    btnStart: $('btn-start'),
+    
+    modal: $('modal-confirm'),
+    modalTitle: $('modal-title'),
+    modalDesc: $('modal-desc'),
+    modalConfirmBtn: $('modal-confirm-btn'),
+    
+    zoneLegend: $('zone-legend'),
 };
+
 const ctx = el.canvas.getContext('2d');
 let audioCtx = null;
 
@@ -355,60 +1105,93 @@ let audioCtx = null;
 // ============================================
 function nextStep() {
     state.step++;
-    document.querySelectorAll('.onboarding-step').forEach((s,i) => s.classList.toggle('active', i+1===state.step));
-    document.querySelectorAll('.onboarding-dot').forEach((d,i) => d.classList.toggle('active', i+1===state.step));
+    updateStepUI();
 }
+
 function prevStep() {
     state.step--;
-    document.querySelectorAll('.onboarding-step').forEach((s,i) => s.classList.toggle('active', i+1===state.step));
-    document.querySelectorAll('.onboarding-dot').forEach((d,i) => d.classList.toggle('active', i+1===state.step));
+    updateStepUI();
 }
-el.disclaimerCheck.addEventListener('change', e => el.btnStart.disabled = !e.target.checked);
 
+function updateStepUI() {
+    document.querySelectorAll('.onboarding-step').forEach((s, i) => 
+        s.classList.toggle('active', i + 1 === state.step));
+    document.querySelectorAll('.onboarding-dot').forEach((d, i) => 
+        d.classList.toggle('active', i + 1 === state.step));
+}
+
+el.disclaimerCheck.addEventListener('change', e => {
+    el.btnStart.disabled = !e.target.checked;
+});
+
+// ============================================
+// INITIALIZATION
+// ============================================
 async function startApp() {
     if (!el.disclaimerCheck.checked) return;
+    
     el.welcome.classList.add('hidden');
     el.loading.classList.remove('hidden');
+    
     try {
         el.loadMsg.textContent = 'Loading AI model...';
+        
         const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js");
-        const fs = await vision.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
+        const fs = await vision.FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+        );
+        
         state.handLandmarker = await vision.HandLandmarker.createFromOptions(fs, {
-            baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate: 'GPU' },
-            runningMode: 'VIDEO', numHands: 1
+            baseOptions: {
+                modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+                delegate: 'GPU'
+            },
+            runningMode: 'VIDEO',
+            numHands: 1
         });
+        
         el.loadMsg.textContent = 'Starting camera...';
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { width:1280, height:720, facingMode:'user' } });
+        
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720, facingMode: 'user' }
+        });
+        
         el.videoBg.srcObject = stream;
         el.video.srcObject = stream;
-        el.video.addEventListener('loadeddata', () => {
-            state.webcamRunning = true;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            el.loading.classList.add('hidden');
-            showControls();
-            beginSession();
+        
+        await new Promise(resolve => {
+            el.video.onloadeddata = resolve;
         });
-    } catch(e) {
+        
+        state.webcamRunning = true;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        el.loading.classList.add('hidden');
+        showControls();
+        beginSession();
+        
+    } catch (e) {
+        console.error('Init error:', e);
         el.loadMsg.textContent = 'Error: ' + e.message;
     }
 }
 
-function showControls() { el.btnQuit.classList.remove('hidden'); el.btnAudio.classList.remove('hidden'); el.btnSkip.classList.remove('hidden'); }
-function hideControls() { el.btnQuit.classList.add('hidden'); el.btnAudio.classList.add('hidden'); el.btnSkip.classList.add('hidden'); }
+function showControls() {
+    el.btnHome.classList.remove('hidden');
+    el.btnAudio.classList.remove('hidden');
+    el.btnSkip.classList.remove('hidden');
+}
+
+function hideControls() {
+    el.btnHome.classList.add('hidden');
+    el.btnAudio.classList.add('hidden');
+    el.btnSkip.classList.add('hidden');
+}
 
 // ============================================
 // SESSION MANAGEMENT
 // ============================================
-function selectExercises() {
-    const shuffle = a => a.sort(() => Math.random() - 0.5);
-    const easy = ALL_EXERCISES.filter(e => e.difficulty === 1);
-    const med = ALL_EXERCISES.filter(e => e.difficulty === 2);
-    const hard = ALL_EXERCISES.filter(e => e.difficulty >= 3);
-    return [...shuffle(easy).slice(0,2), ...shuffle(med).slice(0,2), ...shuffle(hard).slice(0,2)];
-}
-
 function beginSession() {
-    state.screen = 'SESSION';
     state.exercises = selectExercises();
     state.exIdx = 0;
     state.completed = 0;
@@ -417,181 +1200,340 @@ function beginSession() {
     state.startTime = Date.now();
     state.log = [];
     state.painLevels = [];
-    loadExercise(0);
-    gameLoop();
+    
+    // Show ready screen for first exercise
+    showReadyScreen(0);
 }
 
-function loadExercise(idx) {
-    state.exIdx = idx;
-    const ex = state.exercises[idx];
+function showReadyScreen(exerciseIndex) {
+    state.screen = 'READY';
+    state.exIdx = exerciseIndex;
+    
+    const ex = state.exercises[exerciseIndex];
+    el.readyIcon.textContent = ex.icon;
+    el.readyName.textContent = ex.name;
+    el.readyDesc.textContent = ex.desc;
+    
+    el.frame.className = 'ready';
+    el.ready.classList.remove('hidden');
+    
+    // Countdown
+    let count = CONFIG.READY_COUNTDOWN_SECONDS;
+    el.readyCountdown.textContent = count;
+    
+    const countdownInterval = setInterval(() => {
+        count--;
+        el.readyCountdown.textContent = count;
+        
+        if (count <= 0) {
+            clearInterval(countdownInterval);
+            el.ready.classList.add('hidden');
+            startExercise(exerciseIndex);
+        }
+    }, 1000);
+    
+    // Speak the exercise
+    speak(`Next: ${ex.name}. ${ex.desc}`);
+}
+
+function startExercise(index) {
+    state.screen = 'SESSION';
+    state.exIdx = index;
+    
+    const ex = state.exercises[index];
+    
     el.icon.textContent = ex.icon;
     el.text.textContent = ex.name;
     el.sub.textContent = ex.desc;
-    el.progress.textContent = `${idx+1} of ${state.exercises.length}`;
+    el.progress.textContent = `${index + 1} of ${state.exercises.length}`;
+    
+    // Reset exercise state
     state.holding = false;
+    state.holdStart = 0;
     state.progress = 0;
+    state.cooldown = false;
     state.currentAcc = 0;
     state.peakAcc = 0;
     state.attemptStart = Date.now();
     state.hasAttempted = false;
+    
     el.bar.style.width = '0%';
-    speak(ex.name + '. ' + ex.desc);
+    el.frame.className = '';
+    
+    // Start game loop if not running
+    if (!state.animationFrameId) {
+        gameLoop();
+    }
 }
 
 function gameLoop() {
-    if (!state.webcamRunning || state.screen !== 'SESSION') return;
+    if (!state.webcamRunning) return;
+    
     state.animTime = Date.now() / 1000;
-    try {
-        const results = state.handLandmarker.detectForVideo(el.video, performance.now());
-        resizeCanvas();
-        ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
-        if (results.landmarks && results.landmarks.length > 0) {
-            const lm = results.landmarks[0];
-            analyzeHand(lm);
-            updateGame();
-            renderSkeleton(lm);
-        } else {
-            state.holding = false;
-            state.progress = Math.max(0, state.progress - 0.03);
-            el.bar.style.width = (state.progress * 100) + '%';
-            el.frame.className = '';
+    
+    // Only process if in SESSION mode
+    if (state.screen === 'SESSION') {
+        try {
+            const results = state.handLandmarker.detectForVideo(el.video, performance.now());
+            
+            resizeCanvas();
+            ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+            
+            if (results.landmarks && results.landmarks.length > 0) {
+                state.landmarks = results.landmarks[0];
+                analyzeHand(state.landmarks);
+                updateGame();
+                renderVisualFeedback(state.landmarks);
+            } else {
+                state.landmarks = null;
+                state.holding = false;
+                state.progress = Math.max(0, state.progress - 0.02);
+                el.bar.style.width = (state.progress * 100) + '%';
+                el.frame.className = '';
+                updateAccuracyMeter(0);
+            }
+        } catch (e) {
+            // Continue silently
         }
-    } catch(e) {}
+    }
+    
     updateTimer();
-    requestAnimationFrame(gameLoop);
+    state.animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 function updateTimer() {
-    const s = Math.floor((Date.now() - state.startTime) / 1000);
-    el.timer.textContent = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+    if (state.startTime) {
+        const s = Math.floor((Date.now() - state.startTime) / 1000);
+        el.timer.textContent = `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+    }
 }
 
 // ============================================
-// HAND ANALYSIS
+// HAND ANALYSIS (Enhanced)
 // ============================================
 function analyzeHand(lm) {
-    const curl = (b, m, t) => {
-        const v1 = { x: lm[m].x - lm[b].x, y: lm[m].y - lm[b].y };
-        const v2 = { x: lm[t].x - lm[m].x, y: lm[t].y - lm[m].y };
+    // Calculate curl for each finger
+    const getCurl = (base, mid, tip) => {
+        const v1 = { x: lm[mid].x - lm[base].x, y: lm[mid].y - lm[base].y };
+        const v2 = { x: lm[tip].x - lm[mid].x, y: lm[tip].y - lm[mid].y };
         const dot = v1.x * v2.x + v1.y * v2.y;
         const mag = Math.hypot(v1.x, v1.y) * Math.hypot(v2.x, v2.y);
         return Math.max(0, Math.min(1, 1 - (dot / mag)));
     };
-    state.curls = [curl(1,2,4), curl(5,6,8), curl(9,10,12), curl(13,14,16), curl(17,18,20)];
-    state.pinchIndex = Math.hypot(lm[8].x - lm[4].x, lm[8].y - lm[4].y);
-    state.pinchMiddle = Math.hypot(lm[12].x - lm[4].x, lm[12].y - lm[4].y);
-}
-
-// ============================================
-// ACCURACY CALCULATORS
-// ============================================
-const Acc = {
-    starfish: s => s.curls.map(c => c < 0.20 ? 1 : c < 0.35 ? 0.8 : c < 0.50 ? 0.5 : 0.2).reduce((a,b) => a+b, 0) / 5,
-    fist: s => s.curls.map(c => c > 0.75 ? 1 : c > 0.60 ? 0.8 : c > 0.45 ? 0.5 : 0.2).reduce((a,b) => a+b, 0) / 5,
-    thumbs: s => {
-        const t = s.curls[0] < 0.35 ? 1 : s.curls[0] < 0.50 ? 0.7 : 0.3;
-        const o = [s.curls[1],s.curls[2],s.curls[3],s.curls[4]].map(c => c > 0.60 ? 1 : c > 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 4;
-        return t * 0.4 + o * 0.6;
-    },
-    pointer: s => {
-        const i = s.curls[1] < 0.30 ? 1 : s.curls[1] < 0.45 ? 0.7 : 0.3;
-        const o = [s.curls[2],s.curls[3],s.curls[4]].map(c => c > 0.60 ? 1 : c > 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 3;
-        return i * 0.5 + o * 0.5;
-    },
-    ok: s => s.pinchIndex < 0.05 ? 1 : s.pinchIndex < 0.08 ? 0.85 : s.pinchIndex < 0.12 ? 0.65 : s.pinchIndex < 0.18 ? 0.45 : 0.2,
-    peace: s => {
-        const e = [s.curls[1],s.curls[2]].map(c => c < 0.30 ? 1 : c < 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 2;
-        const c = [s.curls[3],s.curls[4]].map(c => c > 0.60 ? 1 : c > 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 2;
-        return e * 0.5 + c * 0.5;
-    },
-    pinky: s => {
-        const p = s.curls[4] < 0.30 ? 1 : s.curls[4] < 0.45 ? 0.7 : 0.3;
-        const o = [s.curls[1],s.curls[2],s.curls[3]].map(c => c > 0.50 ? 1 : c > 0.35 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 3;
-        return p * 0.5 + o * 0.5;
-    },
-    rock: s => {
-        const e = [s.curls[1],s.curls[4]].map(c => c < 0.30 ? 1 : c < 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 2;
-        const c = [s.curls[2],s.curls[3]].map(c => c > 0.60 ? 1 : c > 0.45 ? 0.7 : 0.3).reduce((a,b) => a+b, 0) / 2;
-        return e * 0.5 + c * 0.5;
+    
+    state.curls = [
+        getCurl(1, 2, 4),   // thumb
+        getCurl(5, 6, 8),   // index
+        getCurl(9, 10, 12), // middle
+        getCurl(13, 14, 16), // ring
+        getCurl(17, 18, 20)  // pinky
+    ];
+    
+    // Calculate finger spread (average distance between adjacent fingertips)
+    const tips = [4, 8, 12, 16, 20];
+    let totalSpread = 0;
+    state.fingerGaps = [];
+    
+    for (let i = 0; i < tips.length - 1; i++) {
+        const gap = Math.hypot(
+            lm[tips[i]].x - lm[tips[i + 1]].x,
+            lm[tips[i]].y - lm[tips[i + 1]].y
+        );
+        state.fingerGaps.push(gap);
+        totalSpread += gap;
     }
-};
-function getAccuracy() { return Acc[state.exercises[state.exIdx].id]?.(state) || 0.5; }
+    state.fingerSpread = totalSpread / 4;
+    
+    // Calculate pinch distances (thumb to each fingertip)
+    state.pinchDistances = [
+        Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y),   // thumb-index
+        Math.hypot(lm[4].x - lm[12].x, lm[4].y - lm[12].y), // thumb-middle
+        Math.hypot(lm[4].x - lm[16].x, lm[4].y - lm[16].y), // thumb-ring
+        Math.hypot(lm[4].x - lm[20].x, lm[4].y - lm[20].y), // thumb-pinky
+    ];
+}
 
 // ============================================
 // GAME LOGIC
 // ============================================
 function updateGame() {
     if (state.cooldown) return;
+    
     const ex = state.exercises[state.exIdx];
-    state.currentAcc = getAccuracy();
-    if (state.currentAcc > state.peakAcc) state.peakAcc = state.currentAcc;
-    if (state.currentAcc > 0.35 && !state.hasAttempted) { state.hasAttempted = true; state.attemptStart = Date.now(); }
     
+    // Get accuracy from exercise's check function
+    state.currentAcc = ex.check(state);
+    
+    // Track peak
+    if (state.currentAcc > state.peakAcc) {
+        state.peakAcc = state.currentAcc;
+    }
+    
+    // Mark attempt started
+    if (state.currentAcc > 0.3 && !state.hasAttempted) {
+        state.hasAttempted = true;
+        state.attemptStart = Date.now();
+    }
+    
+    // Update accuracy meter
+    updateAccuracyMeter(state.currentAcc);
+    
+    // Check if holding threshold
     const elapsed = Date.now() - state.attemptStart;
-    const meetsGood = state.currentAcc >= CONFIG.GOOD_THRESHOLD;
-    const graceOver = state.hasAttempted && elapsed > CONFIG.GRACE_MS;
-    const meetsPartial = state.peakAcc >= CONFIG.PARTIAL_THRESHOLD;
-    const isHolding = state.currentAcc >= CONFIG.PARTIAL_THRESHOLD;
+    const meetsGood = state.currentAcc >= CONFIG.ZONE_GREEN;
+    const meetsYellow = state.currentAcc >= CONFIG.ZONE_YELLOW;
+    const graceExpired = state.hasAttempted && elapsed > CONFIG.GRACE_TIMEOUT_MS;
     
-    if (isHolding) {
-        if (!state.holding) { state.holding = true; state.holdStart = Date.now(); }
-        const mult = 0.6 + state.currentAcc * 0.4;
-        state.progress = Math.min(1, ((Date.now() - state.holdStart) / ex.duration) * mult);
-        if (state.progress >= 1 && meetsGood) success(state.currentAcc, false);
-        else if (graceOver && meetsPartial && state.progress >= 0.5) success(state.peakAcc, true);
+    if (meetsYellow) {
+        if (!state.holding) {
+            state.holding = true;
+            state.holdStart = Date.now();
+        }
+        
+        // Progress faster with better accuracy
+        const multiplier = 0.5 + state.currentAcc * 0.5;
+        const holdTime = Date.now() - state.holdStart;
+        state.progress = Math.min(1, (holdTime / ex.duration) * multiplier);
+        
+        // Success conditions
+        if (state.progress >= 1 && meetsGood) {
+            exerciseSuccess(state.currentAcc, false);
+        } else if (graceExpired && state.peakAcc >= CONFIG.ZONE_YELLOW && state.progress >= 0.6) {
+            exerciseSuccess(state.peakAcc, true);
+        }
     } else {
         state.holding = false;
-        state.progress = Math.max(0, state.progress - 0.05);
+        state.progress = Math.max(0, state.progress - 0.03);
     }
-    if (graceOver && meetsPartial && !state.cooldown) success(state.peakAcc, true);
     
+    // Grace period success
+    if (graceExpired && state.peakAcc >= CONFIG.ZONE_YELLOW && !state.cooldown) {
+        exerciseSuccess(state.peakAcc, true);
+    }
+    
+    // Update UI
     el.bar.style.width = (state.progress * 100) + '%';
-    el.frame.className = state.progress >= 1 ? 'success' : state.holding ? 'holding' : state.currentAcc >= CONFIG.PARTIAL_THRESHOLD ? 'holding' : '';
+    
+    if (state.progress >= 1) {
+        el.frame.className = 'success';
+    } else if (state.holding) {
+        el.frame.className = 'holding';
+    } else {
+        el.frame.className = '';
+    }
+    
+    // Hold timer
     if (state.holding && state.progress < 1) {
-        el.holdTimer.textContent = Math.ceil((1 - state.progress) * (state.exercises[state.exIdx].duration / 1000));
+        const ex = state.exercises[state.exIdx];
+        const remaining = Math.ceil((1 - state.progress) * (ex.duration / 1000));
+        el.holdTimer.textContent = remaining;
         el.holdTimer.classList.add('show');
-    } else el.holdTimer.classList.remove('show');
+    } else {
+        el.holdTimer.classList.remove('show');
+    }
 }
 
-function success(acc, graceful) {
+function updateAccuracyMeter(acc) {
+    const pct = Math.round(acc * 100);
+    el.accuracyPercent.textContent = pct + '%';
+    el.accuracyBar.style.width = pct + '%';
+    
+    // Color based on zone
+    el.accuracyBar.classList.remove('green', 'yellow', 'purple');
+    if (acc >= CONFIG.ZONE_GREEN) {
+        el.accuracyBar.classList.add('green');
+        el.accuracyPercent.style.color = 'var(--zone-green-solid)';
+    } else if (acc >= CONFIG.ZONE_YELLOW) {
+        el.accuracyBar.classList.add('yellow');
+        el.accuracyPercent.style.color = 'var(--zone-yellow-solid)';
+    } else {
+        el.accuracyBar.classList.add('purple');
+        el.accuracyPercent.style.color = 'var(--zone-purple-solid)';
+    }
+}
+
+function exerciseSuccess(acc, graceful) {
     state.cooldown = true;
     state.completed++;
     state.streak++;
     if (state.streak > state.bestStreak) state.bestStreak = state.streak;
     
+    // Log
     const ex = state.exercises[state.exIdx];
     const pct = Math.round(acc * 100);
-    let grade = pct >= 90 ? 'A' : pct >= 80 ? 'A-' : pct >= 70 ? 'B' : pct >= 60 ? 'B-' : 'C';
-    state.log.push({ name: ex.name, accuracy: pct, grade, graceful });
+    let grade = pct >= 90 ? 'A' : pct >= 80 ? 'A-' : pct >= 70 ? 'B+' : pct >= 60 ? 'B' : 'B-';
+    
+    state.log.push({
+        id: ex.id,
+        name: ex.name,
+        accuracy: pct,
+        grade,
+        graceful
+    });
+    
     console.log(`[HandHero] ${ex.name}: ${pct}% (${grade})${graceful ? ' [Graceful]' : ''}`);
     
-    const msgs = acc >= 0.85 ? ['Perfect!','Excellent!','Amazing!'] : acc >= 0.70 ? ['Great!','Nice!','Good job!'] : ['Good effort!','Keep going!'];
+    // Feedback
+    const msgs = acc >= 0.85 
+        ? ['Perfect! 🌟', 'Excellent!', 'Amazing!'] 
+        : acc >= 0.70 
+            ? ['Great job!', 'Nice work!', 'Well done!']
+            : ['Good effort!', 'Keep going!', 'You did it!'];
+    
     showFeedback(msgs[Math.floor(Math.random() * msgs.length)]);
     playSound();
     spawnParticles();
     
+    // Update stats display
     el.done.textContent = state.completed;
     el.streak.textContent = state.streak;
     el.streakCard.classList.add('pulse');
     setTimeout(() => el.streakCard.classList.remove('pulse'), 300);
     
+    // Next step after delay
     setTimeout(() => {
-        const next = state.exIdx + 1;
-        if (state.completed > 0 && state.completed % CONFIG.PAIN_CHECK_EVERY === 0 && next < state.exercises.length) { showPainCheck(); return; }
-        if (next >= state.exercises.length) endSession();
-        else { loadExercise(next); state.cooldown = false; }
-    }, 1200);
+        const nextIdx = state.exIdx + 1;
+        
+        // Pain check every N exercises
+        if (state.completed > 0 && state.completed % CONFIG.PAIN_CHECK_EVERY === 0 && nextIdx < state.exercises.length) {
+            showPainCheck();
+            return;
+        }
+        
+        // Session complete?
+        if (nextIdx >= state.exercises.length) {
+            endSession();
+            return;
+        }
+        
+        // Show ready screen for next exercise
+        showReadyScreen(nextIdx);
+        state.cooldown = false;
+        
+    }, 1500);
 }
 
-function skip() {
+function skipExercise() {
     if (state.cooldown || state.screen !== 'SESSION') return;
+    
     const ex = state.exercises[state.exIdx];
-    state.log.push({ name: ex.name, accuracy: Math.round(state.peakAcc * 100), grade: 'SKIP', skipped: true });
+    state.log.push({
+        id: ex.id,
+        name: ex.name,
+        accuracy: Math.round(state.peakAcc * 100),
+        grade: 'SKIP',
+        skipped: true
+    });
+    
     state.streak = 0;
     el.streak.textContent = '0';
-    const next = state.exIdx + 1;
-    if (next >= state.exercises.length) endSession();
-    else loadExercise(next);
+    
+    const nextIdx = state.exIdx + 1;
+    if (nextIdx >= state.exercises.length) {
+        endSession();
+    } else {
+        showReadyScreen(nextIdx);
+    }
 }
 
 // ============================================
@@ -601,53 +1543,86 @@ function showPainCheck() {
     state.screen = 'PAIN';
     state.selectedPain = null;
     el.painAdvice.textContent = '';
-    el.btnContinue.disabled = true;
+    el.btnContinuePain.disabled = true;
+    el.btnContinuePain.textContent = 'Continue';
+    
     document.querySelectorAll('.pain-btn').forEach(b => b.classList.remove('selected'));
     el.pain.classList.remove('hidden');
 }
 
-function selectPain(lvl) {
-    state.selectedPain = lvl;
-    state.painLevels.push({ time: Date.now(), level: lvl });
-    document.querySelectorAll('.pain-btn').forEach((b, i) => b.classList.toggle('selected', i === lvl));
-    const advice = ["Great! You're doing well.", "Mild discomfort is normal.", "Let's slow down.", "Please stop and rest."];
-    el.painAdvice.textContent = advice[lvl];
-    el.btnContinue.disabled = false;
-    el.btnContinue.textContent = lvl === 3 ? 'End Session' : 'Continue';
+function selectPain(level) {
+    state.selectedPain = level;
+    state.painLevels.push({ time: Date.now(), level });
+    
+    document.querySelectorAll('.pain-btn').forEach((b, i) => 
+        b.classList.toggle('selected', i === level));
+    
+    const advice = [
+        "Excellent! You're doing great. Let's keep going!",
+        "Some mild discomfort is normal. We'll take it easy.",
+        "Let's slow down a bit. Take your time.",
+        "It's important to stop. Please rest and consult your healthcare provider."
+    ];
+    
+    el.painAdvice.textContent = advice[level];
+    el.btnContinuePain.disabled = false;
+    
+    if (level === 3) {
+        el.btnContinuePain.textContent = 'End Session Safely';
+    }
 }
 
 function continuePain() {
     el.pain.classList.add('hidden');
-    if (state.selectedPain === 3) { endSession(); return; }
+    
+    if (state.selectedPain === 3) {
+        endSession();
+        return;
+    }
+    
+    // Quick rest then continue
     showRest();
 }
 
 // ============================================
-// REST PERIOD
+// REST PERIOD (Shorter!)
 // ============================================
 let restInterval = null;
+
 function showRest() {
     state.screen = 'REST';
-    el.frame.className = 'rest';
+    el.frame.className = 'ready';
+    
     let remaining = CONFIG.REST_SECONDS;
     el.restTimer.textContent = remaining;
     el.rest.classList.remove('hidden');
+    
     restInterval = setInterval(() => {
         remaining--;
         el.restTimer.textContent = remaining;
-        if (remaining <= 0) skipRest();
+        
+        if (remaining <= 0) {
+            skipRest();
+        }
     }, 1000);
 }
 
 function skipRest() {
-    if (restInterval) { clearInterval(restInterval); restInterval = null; }
+    if (restInterval) {
+        clearInterval(restInterval);
+        restInterval = null;
+    }
+    
     el.rest.classList.add('hidden');
     el.frame.className = '';
-    state.screen = 'SESSION';
-    state.cooldown = false;
-    const next = state.exIdx + 1;
-    if (next >= state.exercises.length) endSession();
-    else loadExercise(next);
+    
+    const nextIdx = state.exIdx + 1;
+    if (nextIdx >= state.exercises.length) {
+        endSession();
+    } else {
+        showReadyScreen(nextIdx);
+        state.cooldown = false;
+    }
 }
 
 // ============================================
@@ -656,33 +1631,145 @@ function skipRest() {
 function endSession() {
     state.screen = 'COMPLETE';
     hideControls();
-    const dur = Math.floor((Date.now() - state.startTime) / 1000);
+    
+    // Stop game loop
+    if (state.animationFrameId) {
+        cancelAnimationFrame(state.animationFrameId);
+        state.animationFrameId = null;
+    }
+    
+    const duration = Math.floor((Date.now() - state.startTime) / 1000);
     const valid = state.log.filter(l => !l.skipped);
-    const avg = valid.length > 0 ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length : 0;
-    let grade, cls;
-    if (avg >= 85) { grade = 'A'; cls = 'grade-a'; }
-    else if (avg >= 70) { grade = 'B+'; cls = 'grade-a'; }
-    else if (avg >= 55) { grade = 'B'; cls = 'grade-b'; }
-    else { grade = 'C'; cls = 'grade-c'; }
+    const avgAcc = valid.length > 0 
+        ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length 
+        : 0;
+    
+    let grade, gradeClass;
+    if (avgAcc >= 85) { grade = 'A'; gradeClass = 'grade-a'; }
+    else if (avgAcc >= 75) { grade = 'A-'; gradeClass = 'grade-a'; }
+    else if (avgAcc >= 65) { grade = 'B+'; gradeClass = 'grade-b'; }
+    else if (avgAcc >= 55) { grade = 'B'; gradeClass = 'grade-b'; }
+    else { grade = 'C+'; gradeClass = 'grade-c'; }
     
     el.sumDone.textContent = state.completed;
-    el.sumTime.textContent = `${Math.floor(dur/60)}:${(dur%60).toString().padStart(2,'0')}`;
+    el.sumTime.textContent = `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`;
     el.sumStreak.textContent = state.bestStreak + ' 🔥';
+    el.sumAccuracy.textContent = Math.round(avgAcc) + '%';
     el.sumGrade.textContent = grade;
-    el.sumGrade.className = 'grade-badge ' + cls;
+    el.sumGrade.className = 'grade-badge ' + gradeClass;
+    
     el.complete.classList.remove('hidden');
+    
+    // Save to localStorage for dashboard
+    saveSessionResult(avgAcc, grade, duration);
     
     console.log('\n===== HANDHERO SESSION =====');
     console.table(state.log);
-    console.log('Avg:', Math.round(avg) + '%');
+    console.log('Average:', Math.round(avgAcc) + '%');
     console.log('============================\n');
 }
 
-function restart() { el.complete.classList.add('hidden'); showControls(); beginSession(); }
+function saveSessionResult(avgAcc, grade, duration) {
+    const result = {
+        completed: state.completed,
+        duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`,
+        grade: grade,
+        avgAccuracy: Math.round(avgAcc),
+        bestStreak: state.bestStreak,
+        exercises: state.log,
+        painLevels: state.painLevels,
+        date: new Date().toISOString()
+    };
+    
+    try {
+        localStorage.setItem('handhero_lastSessionResult', JSON.stringify(result));
+    } catch (e) {
+        console.error('Could not save session:', e);
+    }
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+function goHome() {
+    window.location.href = 'handhero_dashboard.html';
+}
+
+function confirmRestart() {
+    showModal(
+        'Start New Session?',
+        'Your current progress has been saved. Ready for another round?',
+        () => {
+            closeModal();
+            el.complete.classList.add('hidden');
+            showControls();
+            beginSession();
+        }
+    );
+}
+
+function showModal(title, desc, onConfirm) {
+    el.modalTitle.textContent = title;
+    el.modalDesc.textContent = desc;
+    state.modalAction = onConfirm;
+    el.modal.classList.add('show');
+}
+
+function closeModal() {
+    el.modal.classList.remove('show');
+    state.modalAction = null;
+}
+
+function confirmModalAction() {
+    if (state.modalAction) {
+        state.modalAction();
+    }
+}
+
+function handleHomeClick() {
+    if (state.screen === 'SESSION' && state.completed > 0) {
+        showModal(
+            'Leave Session?',
+            'Your progress will be saved. Are you sure?',
+            () => {
+                saveSessionResult(
+                    state.log.length > 0 ? avg(state.log.filter(l => !l.skipped).map(l => l.accuracy)) : 0,
+                    'Incomplete',
+                    Math.floor((Date.now() - state.startTime) / 1000)
+                );
+                goHome();
+            }
+        );
+    } else {
+        goHome();
+    }
+}
 
 function exportReport() {
-    const dur = Math.floor((Date.now() - state.startTime) / 1000);
-    const txt = `HANDHERO SESSION REPORT\n${new Date().toLocaleString()}\n\nExercises: ${state.completed}\nDuration: ${Math.floor(dur/60)}:${(dur%60).toString().padStart(2,'0')}\nBest Streak: ${state.bestStreak}\n\nDETAILS:\n${state.log.map(l => `${l.name}: ${l.accuracy}% (${l.grade})`).join('\n')}\n\nPain Levels: ${state.painLevels.map(p => p.level).join(', ') || 'None'}\n\n---\nGenerated by HandHero`;
+    const duration = Math.floor((Date.now() - state.startTime) / 1000);
+    const txt = `HANDHERO SESSION REPORT
+========================
+Date: ${new Date().toLocaleString()}
+
+SUMMARY
+-------
+Exercises Completed: ${state.completed}
+Duration: ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}
+Best Streak: ${state.bestStreak}
+
+EXERCISE DETAILS
+----------------
+${state.log.map(l => `${l.name}: ${l.accuracy}% (${l.grade})${l.skipped ? ' - Skipped' : ''}${l.graceful ? ' - Graceful' : ''}`).join('\n')}
+
+PAIN CHECK-INS
+--------------
+${state.painLevels.length > 0 ? state.painLevels.map((p, i) => `Check ${i + 1}: Level ${p.level}/3`).join('\n') : 'None recorded'}
+
+---
+Generated by HandHero
+This is a wellness tool, not medical advice.
+`;
+    
     const blob = new Blob([txt], { type: 'text/plain' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -691,7 +1778,7 @@ function exportReport() {
 }
 
 // ============================================
-// RENDERING
+// VISUAL FEEDBACK RENDERING
 // ============================================
 function resizeCanvas() {
     if (el.canvas.width !== el.view.clientWidth) {
@@ -704,210 +1791,428 @@ function project(pt) {
     const w = el.canvas.width, h = el.canvas.height;
     const scale = Math.max(w / 1280, h / 720);
     const sw = 1280 * scale, sh = 720 * scale;
-    return { x: (w - sw) / 2 + (1 - pt.x) * sw, y: (h - sh) / 2 + pt.y * sh };
+    return {
+        x: (w - sw) / 2 + (1 - pt.x) * sw,
+        y: (h - sh) / 2 + pt.y * sh
+    };
 }
 
-function renderSkeleton(lm) {
+function renderVisualFeedback(lm) {
     const ex = state.exercises[state.exIdx];
-    if (ex.skeleton === 'tips') renderTips(lm);
-    else if (ex.skeleton === 'curl') renderCurl(lm);
-    else if (ex.skeleton === 'single') renderSingle(lm, ex.finger);
-    else if (ex.skeleton === 'two') renderTwo(lm, ex.fingers);
-    else if (ex.skeleton === 'pinch') renderPinch(lm, ex.targets);
-    else renderMinimal(lm);
-}
-
-function renderTips(lm) {
-    const tips = [0, 4, 8, 12, 16, 20];
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 1;
-    tips.slice(1).forEach(t => {
-        const w = project(lm[0]), p = project(lm[t]);
-        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-    });
-    tips.forEach((idx, i) => {
-        const p = project(lm[idx]);
-        const fIdx = Math.floor((idx - 1) / 4);
-        const good = idx === 0 || state.curls[fIdx] < 0.30;
-        const pulse = 1 + Math.sin(state.animTime * 4 + i) * 0.15;
-        const size = (idx === 0 ? 14 : 12) * pulse;
-        const color = good ? '#68b37a' : 'rgba(255,255,255,0.7)';
-        ctx.fillStyle = color + '30'; ctx.beginPath(); ctx.arc(p.x, p.y, size + 6, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, size * 0.35, 0, Math.PI * 2); ctx.fill();
-    });
-}
-
-function renderCurl(lm) {
-    const fingers = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
-    fingers.forEach((f, i) => {
-        const curl = state.curls[i];
-        const r = 255 - curl * 187, g = 255 - curl * 33, b = 255 - curl * 127;
-        const color = `rgb(${r},${g},${b})`;
-        ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.lineCap = 'round';
-        const w = project(lm[0]), start = project(lm[f[0]]);
-        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(start.x, start.y); ctx.stroke();
-        for (let j = 0; j < f.length - 1; j++) {
-            const a = project(lm[f[j]]), b = project(lm[f[j+1]]);
-            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-        }
-        const pulse = 1 + Math.sin(state.animTime * (2 + curl * 5) + i) * 0.25;
-        f.forEach(idx => {
-            const p = project(lm[idx]);
-            ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, 6 * pulse, 0, Math.PI * 2); ctx.fill();
-        });
-    });
-    const w = project(lm[0]);
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(w.x, w.y, 10, 0, Math.PI * 2); ctx.fill();
-}
-
-function renderSingle(lm, fingerName) {
-    const map = { thumb: FINGER.THUMB, index: FINGER.INDEX, middle: FINGER.MIDDLE, ring: FINGER.RING, pinky: FINGER.PINKY };
-    const curlMap = { thumb: 0, index: 1, middle: 2, ring: 3, pinky: 4 };
-    const indices = [0, ...map[fingerName]];
-    const good = state.curls[curlMap[fingerName]] < 0.30;
-    const color = good ? '#68b37a' : '#d4a574';
     
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
-    BONES.forEach(([s, e]) => {
-        if (!indices.includes(s) || !indices.includes(e)) {
-            const a = project(lm[s]), b = project(lm[e]);
-            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-        }
-    });
-    
-    ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.shadowColor = color; ctx.shadowBlur = 12;
-    const f = map[fingerName];
-    const w = project(lm[0]), start = project(lm[f[0]]);
-    ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(start.x, start.y); ctx.stroke();
-    for (let i = 0; i < f.length - 1; i++) {
-        const a = project(lm[f[i]]), b = project(lm[f[i+1]]);
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    // Render accuracy zones based on exercise type
+    switch (ex.targetType) {
+        case 'spread':
+            renderSpreadZones(lm, ex);
+            break;
+        case 'curl':
+            renderCurlFeedback(lm, ex);
+            break;
+        case 'flat':
+            renderFlatFeedback(lm, ex);
+            break;
+        case 'single':
+            renderSingleFingerZones(lm, ex);
+            break;
+        case 'double':
+            renderDoubleFingerZones(lm, ex);
+            break;
+        case 'pinch':
+            renderPinchZones(lm, ex);
+            break;
+        case 'vulcan':
+            renderVulcanZones(lm, ex);
+            break;
+        case 'claw':
+            renderClawFeedback(lm, ex);
+            break;
+        default:
+            renderDefaultSkeleton(lm);
     }
-    ctx.shadowBlur = 0;
-    
-    const pulse = 1 + Math.sin(state.animTime * 5) * 0.2;
-    indices.forEach(idx => {
-        const p = project(lm[idx]);
-        const size = (idx === 0 ? 12 : 10) * pulse;
-        ctx.fillStyle = color + '40'; ctx.beginPath(); ctx.arc(p.x, p.y, size + 6, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, size * 0.35, 0, Math.PI * 2); ctx.fill();
-    });
 }
 
-function renderTwo(lm, fingerNames) {
-    const map = { thumb: FINGER.THUMB, index: FINGER.INDEX, middle: FINGER.MIDDLE, ring: FINGER.RING, pinky: FINGER.PINKY };
-    const curlMap = { thumb: 0, index: 1, middle: 2, ring: 3, pinky: 4 };
-    let indices = [0];
-    fingerNames.forEach(n => indices.push(...map[n]));
-    const good = fingerNames.every(n => state.curls[curlMap[n]] < 0.30);
-    const color = good ? '#68b37a' : '#87a878';
+// === SPREAD ZONES (Starfish) ===
+function renderSpreadZones(lm, ex) {
+    const wrist = project(lm[0]);
+    const tips = FINGER_TIPS.map(i => project(lm[i]));
     
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
-    BONES.forEach(([s, e]) => {
-        if (!indices.includes(s) && !indices.includes(e)) {
-            const a = project(lm[s]), b = project(lm[e]);
-            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    // Draw target spread zones (dotted arcs between fingers)
+    ctx.setLineDash([8, 8]);
+    ctx.lineWidth = 2;
+    
+    for (let i = 0; i < tips.length - 1; i++) {
+        const gap = state.fingerGaps[i];
+        let color;
+        
+        if (gap > 0.12) {
+            color = 'var(--zone-green-solid)';
+            ctx.strokeStyle = '#68b37a';
+        } else if (gap > 0.07) {
+            color = 'var(--zone-yellow-solid)';
+            ctx.strokeStyle = '#e8b44d';
+        } else {
+            color = 'var(--zone-purple-solid)';
+            ctx.strokeStyle = '#a882c7';
         }
-    });
-    
-    ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.shadowColor = color; ctx.shadowBlur = 10;
-    fingerNames.forEach(name => {
-        const f = map[name];
-        const w = project(lm[0]), start = project(lm[f[0]]);
-        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(start.x, start.y); ctx.stroke();
-        for (let i = 0; i < f.length - 1; i++) {
-            const a = project(lm[f[i]]), b = project(lm[f[i+1]]);
-            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-        }
-    });
-    ctx.shadowBlur = 0;
-    
-    const pulse = 1 + Math.sin(state.animTime * 4) * 0.18;
-    indices.forEach(idx => {
-        const p = project(lm[idx]);
-        const size = (idx === 0 ? 11 : 9) * pulse;
-        ctx.fillStyle = color + '40'; ctx.beginPath(); ctx.arc(p.x, p.y, size + 5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, size * 0.35, 0, Math.PI * 2); ctx.fill();
-    });
-}
-
-function renderPinch(lm, targets) {
-    const [t1, t2] = targets;
-    const f1 = t1 === 4 ? FINGER.THUMB : FINGER.INDEX;
-    const f2 = t2 === 8 ? FINGER.INDEX : FINGER.MIDDLE;
-    const indices = [0, ...f1, ...f2];
-    const p1 = project(lm[t1]), p2 = project(lm[t2]);
-    const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-    const touching = dist < 50;
-    const color = touching ? '#68b37a' : '#87a878';
-    
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
-    BONES.forEach(([s, e]) => {
-        if (!indices.includes(s) && !indices.includes(e)) {
-            const a = project(lm[s]), b = project(lm[e]);
-            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-        }
-    });
-    
-    ctx.strokeStyle = color; ctx.lineWidth = 3;
-    [f1, f2].forEach(f => {
-        const w = project(lm[0]), start = project(lm[f[0]]);
-        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(start.x, start.y); ctx.stroke();
-        for (let i = 0; i < f.length - 1; i++) {
-            const a = project(lm[f[i]]), b = project(lm[f[i+1]]);
-            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-        }
-    });
-    
-    ctx.strokeStyle = touching ? '#68b37a' : 'rgba(135,168,120,0.5)';
-    ctx.setLineDash([6, 6]);
-    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+        
+        // Draw arc between fingertips
+        ctx.beginPath();
+        ctx.moveTo(tips[i].x, tips[i].y);
+        ctx.lineTo(tips[i + 1].x, tips[i + 1].y);
+        ctx.stroke();
+    }
     ctx.setLineDash([]);
     
-    [t1, t2].forEach((tip, i) => {
-        const p = project(lm[tip]);
-        const pulse = 1 + Math.sin(state.animTime * 6 + i * Math.PI) * 0.25;
-        const size = 14 * pulse;
-        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 2);
-        grad.addColorStop(0, color + '60'); grad.addColorStop(1, color + '00');
-        ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, size * 2, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, size * 0.4, 0, Math.PI * 2); ctx.fill();
+    // Draw skeleton with color-coded joints
+    renderColorCodedSkeleton(lm, (fingerIdx) => {
+        const curl = state.curls[fingerIdx];
+        if (curl < 0.25) return '#68b37a';
+        if (curl < 0.40) return '#e8b44d';
+        return '#a882c7';
     });
 }
 
-function renderMinimal(lm) {
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    lm.forEach(pt => {
+// === CURL FEEDBACK (Fist) ===
+function renderCurlFeedback(lm, ex) {
+    renderColorCodedSkeleton(lm, (fingerIdx) => {
+        const curl = state.curls[fingerIdx];
+        if (curl > 0.65) return '#68b37a';
+        if (curl > 0.45) return '#e8b44d';
+        return '#a882c7';
+    });
+    
+    // Draw curl indicators
+    const bases = FINGER_BASES.map(i => project(lm[i]));
+    const tips = FINGER_TIPS.map(i => project(lm[i]));
+    
+    for (let i = 0; i < 5; i++) {
+        const curl = state.curls[i];
+        const color = curl > 0.65 ? '#68b37a' : curl > 0.45 ? '#e8b44d' : '#a882c7';
+        
+        // Draw curl arc indicator
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(bases[i].x, bases[i].y, 25, 0, Math.PI * 2 * curl);
+        ctx.stroke();
+    }
+}
+
+// === SINGLE FINGER ISOLATION ===
+function renderSingleFingerZones(lm, ex) {
+    const targetIdx = ex.targetFinger;
+    
+    renderColorCodedSkeleton(lm, (fingerIdx) => {
+        if (fingerIdx === targetIdx) {
+            // Target finger should be extended
+            const curl = state.curls[fingerIdx];
+            if (curl < 0.30) return '#68b37a';
+            if (curl < 0.45) return '#e8b44d';
+            return '#a882c7';
+        } else {
+            // Other fingers should be curled
+            const curl = state.curls[fingerIdx];
+            if (curl > 0.55) return '#68b37a';
+            if (curl > 0.35) return '#e8b44d';
+            return '#a882c7';
+        }
+    }, targetIdx);
+    
+    // Highlight target finger with glow
+    const fingerIndices = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY][targetIdx];
+    const isGood = state.curls[targetIdx] < 0.30;
+    
+    ctx.shadowColor = isGood ? '#68b37a' : '#e8b44d';
+    ctx.shadowBlur = 20;
+    ctx.strokeStyle = isGood ? '#68b37a' : '#e8b44d';
+    ctx.lineWidth = 4;
+    
+    for (let i = 0; i < fingerIndices.length - 1; i++) {
+        const a = project(lm[fingerIndices[i]]);
+        const b = project(lm[fingerIndices[i + 1]]);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+}
+
+// === DOUBLE FINGER (Peace, Rock) ===
+function renderDoubleFingerZones(lm, ex) {
+    const targetFingers = ex.targetFingers; // [1, 2] for peace, [1, 4] for rock
+    
+    renderColorCodedSkeleton(lm, (fingerIdx) => {
+        if (targetFingers.includes(fingerIdx)) {
+            const curl = state.curls[fingerIdx];
+            if (curl < 0.30) return '#68b37a';
+            if (curl < 0.45) return '#e8b44d';
+            return '#a882c7';
+        } else {
+            const curl = state.curls[fingerIdx];
+            if (curl > 0.55) return '#68b37a';
+            if (curl > 0.35) return '#e8b44d';
+            return '#a882c7';
+        }
+    }, targetFingers[0]);
+    
+    // Highlight both target fingers
+    targetFingers.forEach(targetIdx => {
+        const fingerArrays = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
+        const fingerIndices = fingerArrays[targetIdx];
+        const isGood = state.curls[targetIdx] < 0.30;
+        
+        ctx.shadowColor = isGood ? '#68b37a' : '#e8b44d';
+        ctx.shadowBlur = 15;
+        ctx.strokeStyle = isGood ? '#68b37a' : '#e8b44d';
+        ctx.lineWidth = 4;
+        
+        for (let i = 0; i < fingerIndices.length - 1; i++) {
+            const a = project(lm[fingerIndices[i]]);
+            const b = project(lm[fingerIndices[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        }
+    });
+    ctx.shadowBlur = 0;
+}
+
+// === PINCH ZONES ===
+function renderPinchZones(lm, ex) {
+    const [tip1, tip2] = ex.targetPair;
+    const p1 = project(lm[tip1]);
+    const p2 = project(lm[tip2]);
+    
+    const dist = Math.hypot(lm[tip1].x - lm[tip2].x, lm[tip1].y - lm[tip2].y);
+    
+    // Determine zone color
+    let zoneColor, glowColor;
+    if (dist < 0.05) {
+        zoneColor = 'rgba(104, 179, 122, 0.3)';
+        glowColor = '#68b37a';
+    } else if (dist < 0.10) {
+        zoneColor = 'rgba(232, 180, 77, 0.3)';
+        glowColor = '#e8b44d';
+    } else {
+        zoneColor = 'rgba(168, 130, 199, 0.3)';
+        glowColor = '#a882c7';
+    }
+    
+    // Draw connection line with color
+    ctx.strokeStyle = glowColor;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 10]);
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Draw target zones around fingertips
+    const targetRadius = 35;
+    
+    [p1, p2].forEach((p, i) => {
+        // Outer zone (purple)
+        ctx.fillStyle = 'rgba(168, 130, 199, 0.15)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, targetRadius * 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Middle zone (yellow)
+        ctx.fillStyle = 'rgba(232, 180, 77, 0.2)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, targetRadius * 1.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner zone (green)
+        ctx.fillStyle = 'rgba(104, 179, 122, 0.25)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, targetRadius * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Fingertip
+        ctx.fillStyle = glowColor;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    });
+    
+    // Draw rest of skeleton subdued
+    renderSubduedSkeleton(lm, [tip1, tip2]);
+}
+
+// === HELPER: Color-coded skeleton ===
+function renderColorCodedSkeleton(lm, getColor, highlightFinger = -1) {
+    const fingerArrays = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
+    
+    // Draw wrist
+    const wrist = project(lm[0]);
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw each finger
+    fingerArrays.forEach((finger, fIdx) => {
+        const color = getColor(fIdx);
+        const isHighlight = fIdx === highlightFinger || (Array.isArray(highlightFinger) && highlightFinger.includes(fIdx));
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isHighlight ? 4 : 2.5;
+        ctx.lineCap = 'round';
+        
+        // Wrist to base
+        const base = project(lm[finger[0]]);
+        ctx.beginPath();
+        ctx.moveTo(wrist.x, wrist.y);
+        ctx.lineTo(base.x, base.y);
+        ctx.stroke();
+        
+        // Finger segments
+        for (let i = 0; i < finger.length - 1; i++) {
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        }
+        
+        // Joints
+        const pulse = 1 + Math.sin(state.animTime * 4 + fIdx) * 0.15;
+        finger.forEach(idx => {
+            const p = project(lm[idx]);
+            const size = 6 * pulse;
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    });
+    
+    // Palm connections
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    [[5,9], [9,13], [13,17]].forEach(([a, b]) => {
+        const pa = project(lm[a]);
+        const pb = project(lm[b]);
+        ctx.beginPath();
+        ctx.moveTo(pa.x, pa.y);
+        ctx.lineTo(pb.x, pb.y);
+        ctx.stroke();
+    });
+}
+
+// === HELPER: Subdued skeleton (for pinch focus) ===
+function renderSubduedSkeleton(lm, excludePoints = []) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    
+    BONES.forEach(([a, b]) => {
+        if (excludePoints.includes(a) || excludePoints.includes(b)) return;
+        const pa = project(lm[a]);
+        const pb = project(lm[b]);
+        ctx.beginPath();
+        ctx.moveTo(pa.x, pa.y);
+        ctx.lineTo(pb.x, pb.y);
+        ctx.stroke();
+    });
+    
+    lm.forEach((pt, i) => {
+        if (excludePoints.includes(i)) return;
         const p = project(pt);
-        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
     });
 }
 
+// === FLAT & VULCAN ===
+function renderFlatFeedback(lm, ex) {
+    renderColorCodedSkeleton(lm, (fingerIdx) => {
+        const curl = state.curls[fingerIdx];
+        if (curl < 0.20) return '#68b37a';
+        if (curl < 0.35) return '#e8b44d';
+        return '#a882c7';
+    });
+}
+
+function renderVulcanZones(lm, ex) {
+    renderSpreadZones(lm, ex);
+    
+    // Highlight the gap between middle and ring
+    if (state.fingerGaps && state.fingerGaps[2]) {
+        const middle = project(lm[12]);
+        const ring = project(lm[16]);
+        
+        const gap = state.fingerGaps[2];
+        const color = gap > 0.08 ? '#68b37a' : gap > 0.05 ? '#e8b44d' : '#a882c7';
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(middle.x, middle.y);
+        ctx.lineTo(ring.x, ring.y);
+        ctx.stroke();
+        
+        // Draw "V" indicator
+        const midX = (middle.x + ring.x) / 2;
+        const midY = (middle.y + ring.y) / 2 - 30;
+        
+        ctx.fillStyle = color;
+        ctx.font = 'bold 24px Nunito';
+        ctx.textAlign = 'center';
+        ctx.fillText('🖖', midX, midY);
+    }
+}
+
+function renderClawFeedback(lm, ex) {
+    renderColorCodedSkeleton(lm, (fingerIdx) => {
+        const curl = state.curls[fingerIdx];
+        // Claw wants moderate curl (0.35-0.70)
+        if (curl > 0.35 && curl < 0.70) return '#68b37a';
+        if (curl > 0.25 && curl < 0.80) return '#e8b44d';
+        return '#a882c7';
+    });
+}
+
+function renderDefaultSkeleton(lm) {
+    renderColorCodedSkeleton(lm, () => '#87a878');
+}
+
 // ============================================
-// FEEDBACK & AUDIO
+// AUDIO & FEEDBACK
 // ============================================
-function showFeedback(txt) {
-    el.feedback.textContent = txt;
+function showFeedback(text) {
+    el.feedback.textContent = text;
     el.feedback.classList.add('show');
-    setTimeout(() => el.feedback.classList.remove('show'), 1000);
+    setTimeout(() => el.feedback.classList.remove('show'), 1200);
 }
 
 function spawnParticles() {
     const colors = ['#68b37a', '#d4a574', '#e8998d', '#a8c99b', '#87a878'];
-    for (let i = 0; i < 20; i++) {
+    
+    for (let i = 0; i < 25; i++) {
         const p = document.createElement('div');
         p.className = 'particle';
-        p.style.left = (30 + Math.random() * 40) + '%';
-        p.style.top = (30 + Math.random() * 20) + '%';
-        p.style.width = p.style.height = (6 + Math.random() * 10) + 'px';
+        p.style.left = (25 + Math.random() * 50) + '%';
+        p.style.top = (25 + Math.random() * 30) + '%';
+        p.style.width = p.style.height = (6 + Math.random() * 12) + 'px';
         p.style.background = colors[Math.floor(Math.random() * colors.length)];
-        p.style.animationDelay = (Math.random() * 0.3) + 's';
+        p.style.animationDelay = (Math.random() * 0.4) + 's';
         el.view.appendChild(p);
         setTimeout(() => p.remove(), 2000);
     }
@@ -915,101 +2220,61 @@ function spawnParticles() {
 
 function playSound() {
     if (!audioCtx) return;
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
+    
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    
     o.type = 'sine';
     o.frequency.setValueAtTime(523, audioCtx.currentTime);
     o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
     o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
-    g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-    o.start(); o.stop(audioCtx.currentTime + 0.5);
+    o.start();
+    o.stop(audioCtx.currentTime + 0.5);
 }
 
-const coach = { enabled: true, toggle() { this.enabled = !this.enabled; el.btnAudio.textContent = this.enabled ? '🔊' : '🔇'; } };
-function speak(txt) {
+const coach = {
+    enabled: true,
+    toggle() {
+        this.enabled = !this.enabled;
+        el.btnAudio.textContent = this.enabled ? '🔊' : '🔇';
+    }
+};
+
+function speak(text) {
     if (!coach.enabled || !window.speechSynthesis) return;
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(txt);
-    u.rate = 0.95;
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.9;
+    u.pitch = 1.0;
     speechSynthesis.speak(u);
 }
 
 // ============================================
 // EVENT LISTENERS
 // ============================================
-el.btnQuit.addEventListener('click', () => { if (confirm('End session?')) endSession(); });
+el.btnHome.addEventListener('click', handleHomeClick);
 el.btnAudio.addEventListener('click', () => coach.toggle());
-el.btnSkip.addEventListener('click', skip);
+el.btnSkip.addEventListener('click', skipExercise);
 
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && state.screen === 'SESSION' && confirm('End session?')) endSession();
-    if (e.key === 's' && state.screen === 'SESSION') skip();
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') handleHomeClick();
+    if (e.key === 's' && state.screen === 'SESSION') skipExercise();
 });
 
-console.log('%c🌱 HandHero v3.0', 'font-size:20px;font-weight:bold;color:#68b37a');
+// Close modal on overlay click
+el.modal.addEventListener('click', (e) => {
+    if (e.target === el.modal) closeModal();
+});
+
+// ============================================
+// INIT
+// ============================================
+console.log('%c🌱 HandHero v4.0', 'font-size: 24px; font-weight: bold; color: #68b37a;');
+console.log('%cVisual Accuracy Zones Edition', 'font-size: 14px; color: #87a878;');
 </script>
 </body>
 </html>
-
-// ============================================
-// DASHBOARD INTEGRATION
-// ============================================
-function saveSessionToDashboard() {
-    const duration = Math.floor((Date.now() - state.startTime) / 1000);
-    const mins = Math.floor(duration / 60);
-    const secs = duration % 60;
-    
-    const valid = state.log.filter(l => !l.skipped);
-    const avg = valid.length > 0 ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length : 0;
-    
-    let grade;
-    if (avg >= 85) grade = 'A';
-    else if (avg >= 70) grade = 'B+';
-    else if (avg >= 55) grade = 'B';
-    else grade = 'C';
-    
-    const sessionResult = {
-        completed: state.completed,
-        duration: `${mins}:${secs.toString().padStart(2, '0')}`,
-        grade: grade,
-        avgAccuracy: Math.round(avg),
-        exercises: state.log.map(l => ({
-            id: state.exercises.find(e => e.name === l.name)?.id || l.name.toLowerCase(),
-            name: l.name,
-            accuracy: l.accuracy,
-            grade: l.grade
-        }))
-    };
-    
-    try {
-        localStorage.setItem('handhero_lastSessionResult', JSON.stringify(sessionResult));
-    } catch(e) {
-        console.error('Could not save session:', e);
-    }
-}
-
-// Override endSession to also save to dashboard
-const originalEndSession = endSession;
-endSession = function() {
-    saveSessionToDashboard();
-    originalEndSession();
-    
-    // Add "Back to Dashboard" button
-    const completeOverlay = document.getElementById('overlay-complete');
-    if (completeOverlay && !document.getElementById('btn-dashboard')) {
-        const btn = document.createElement('button');
-        btn.id = 'btn-dashboard';
-        btn.className = 'btn-secondary';
-        btn.style.marginTop = '12px';
-        btn.textContent = '← Back to Dashboard';
-        btn.onclick = () => window.location.href = 'handhero_dashboard.html';
-        completeOverlay.querySelector('.overlay-content').appendChild(btn);
-    }
-};
-
-// Check if we came from dashboard
-const returnUrl = localStorage.getItem('handhero_returnUrl');
-if (returnUrl) {
-    localStorage.removeItem('handhero_returnUrl');
-}
