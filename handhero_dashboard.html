@@ -1140,6 +1140,11 @@
     </style>
 </head>
 <body>
+    <!-- Toast Notification -->
+    <div id="toast" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: white; padding: 14px 24px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; z-index: 1000; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <span id="toast-icon" style="font-size: 1.3rem;">✅</span>
+        <span id="toast-message" style="font-weight: 600; color: #4a5568;">Message</span>
+    </div>
     <!-- ============================================
          AUTH SCREEN
          ============================================ -->
@@ -1418,7 +1423,7 @@
                         <div class="profile-avatar-large" id="profile-avatar">👤</div>
                         <div class="profile-info">
                             <h2 id="profile-name">User</h2>
-                            <p id="profile-email">user@example.com</p>
+                            <p id="profile-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9ce9eff9eedcf9e4fdf1ecf0f9b2fff3f1">[email&#160;protected]</a></p>
                         </div>
                     </div>
 
@@ -1522,7 +1527,7 @@
         </main>
     </div>
 
-    <script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // ============================================
     // DATA STORE (localStorage-backed)
     // ============================================
@@ -1542,6 +1547,23 @@
             localStorage.removeItem('handhero_' + key);
         }
     };
+
+    // ============================================
+    // TOAST NOTIFICATION
+    // ============================================
+    function showToast(message, icon = '✅') {
+        const toast = document.getElementById('toast');
+        const toastIcon = document.getElementById('toast-icon');
+        const toastMsg = document.getElementById('toast-message');
+        toastIcon.textContent = icon;
+        toastMsg.textContent = message;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(100px)';
+        }, 3000);
+    }
 
     // ============================================
     // USER STATE
@@ -1614,7 +1636,7 @@
                 Store.set('currentUser', currentUser);
                 showApp();
             } else {
-                alert('Invalid email or password. Try creating an account!');
+                showToast('Invalid email or password. Try creating an account!', '❌');
             }
         });
 
@@ -1627,7 +1649,7 @@
             
             const users = Store.get('users', {});
             if (users[email]) {
-                alert('An account with this email already exists.');
+                showToast('An account with this email already exists.', '⚠️');
                 return;
             }
 
@@ -1883,7 +1905,7 @@
 
     function practiceExercise(exerciseId) {
         // Would open the session with just this exercise
-        alert(`Practice mode for "${exerciseId}" coming soon! For now, start a full session.`);
+        showToast('Practice mode coming soon! Start a full session instead.', '🔜');
     }
 
     // ============================================
@@ -2042,7 +2064,7 @@
 
         Store.set('currentUser', currentUser);
         updateUserDisplay();
-        alert('Profile saved!');
+        showToast('Profile saved!', '✅');
     }
 
     // ============================================
@@ -2134,7 +2156,7 @@
         Store.set('stats_' + currentUser.id, stats);
     }
 
-    // Check if returning from a session
+    // Check if returning from a session (no alert - toast handled by session page)
     function checkSessionReturn() {
         const sessionResult = Store.get('lastSessionResult');
         if (sessionResult) {
@@ -2144,7 +2166,10 @@
             renderWeeklyChart();
             renderRecentSessions();
             renderHistoryList();
-            alert(`Session recorded! You completed ${sessionResult.completed} exercises with a ${sessionResult.grade} grade.`);
+            renderActivityCalendar();
+            renderMilestones();
+            // Silent save - user already saw toast on session page
+            console.log('Session recorded:', sessionResult);
         }
     }
 
@@ -2176,7 +2201,7 @@
                 renderHistoryList();
                 renderActivityCalendar();
                 renderMilestones();
-                alert('All data cleared.');
+                showToast('All data cleared.', '🗑️');
             }
         }
     }
@@ -2201,12 +2226,4 @@
     // ============================================
     // INITIALIZE
     // ============================================
-    document.addEventListener('DOMContentLoaded', () => {
-        initAuth();
-        checkSessionReturn();
-    });
-
-    console.log('%c🌱 HandHero Dashboard', 'font-size: 20px; font-weight: bold; color: #87a878;');
-    </script>
-</body>
-</html>
+    document.addEvent
