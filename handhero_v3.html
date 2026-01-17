@@ -3,1125 +3,2654 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HandHero Demo | Boundary-Based Detection</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>HandHero | Hand Therapy Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --color-cream: #fdfbf7;
+            --color-warm-white: #faf8f5;
             --color-sage: #87a878;
             --color-sage-dark: #6b9960;
+            --color-sage-light: #a8c99b;
             --color-coral: #e8998d;
             --color-gold: #d4a574;
             --color-slate: #4a5568;
             --color-slate-light: #718096;
-            
+            --color-success: #68b37a;
+            /* Accuracy zone colors - matching the reference image */
             --zone-green: rgba(104, 200, 150, 0.5);
             --zone-green-solid: #68c896;
             --zone-blue: rgba(100, 180, 230, 0.5);
             --zone-blue-solid: #64b4e6;
             --zone-yellow: rgba(240, 200, 100, 0.5);
             --zone-yellow-solid: #f0c864;
-            --zone-red: rgba(230, 130, 130, 0.5);
+            --zone-red: rgba(230, 130, 130, 0.4);
             --zone-red-solid: #e68282;
-            
+            /* CONSISTENT skeleton color - never changes red/green */
             --skeleton-color: #78dcb4;
+            --skeleton-glow: rgba(120, 220, 180, 0.5);
         }
         
+        /* ===== DARK MODE ===== */
+        [data-theme="dark"] {
+            --color-cream: #1a1a2e;
+            --color-warm-white: #16213e;
+            --color-slate: #e8e8e8;
+            --color-slate-light: #a0aec0;
+        }
+        [data-theme="dark"] body { background: #1a1a2e; }
+        [data-theme="dark"] .glass-pill {
+            background: rgba(30, 40, 60, 0.95);
+            border-color: rgba(80, 100, 120, 0.4);
+        }
+        [data-theme="dark"] .overlay-screen { background: rgba(26, 26, 46, 0.98); }
+        [data-theme="dark"] .disclaimer-box,
+        [data-theme="dark"] .summary-card,
+        [data-theme="dark"] .modal-content { background: #16213e; border-color: rgba(80, 100, 120, 0.4); }
+        [data-theme="dark"] .btn-secondary { background: #16213e; color: #e8e8e8; border-color: rgba(80, 100, 120, 0.4); }
+        [data-theme="dark"] .pain-btn { background: rgba(30, 40, 60, 0.8); }
+        [data-theme="dark"] .zone-legend { background: rgba(30, 40, 60, 0.95); }
+        [data-theme="dark"] #video-bg { filter: blur(30px) opacity(0.2) brightness(0.5); }
+        [data-theme="dark"] .float-btn { background: #16213e; border-color: rgba(80, 100, 120, 0.4); }
+        [data-theme="dark"] .ready-exercise-preview { background: rgba(30, 40, 60, 0.95); }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body {
-            font-family: 'Nunito', sans-serif;
-            background: var(--color-cream);
-            color: var(--color-slate);
-            overflow: hidden;
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            background: var(--color-cream); 
+            color: var(--color-slate); 
+            overflow: hidden; 
             user-select: none;
         }
+        *:focus-visible { outline: 3px solid var(--color-sage); outline-offset: 2px; }
         
-        #app {
+        #app-container { 
+            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        #video-bg { 
+            position: absolute; 
+            inset: 0; 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transform: scaleX(-1); 
+            filter: blur(30px) opacity(0.4) sepia(0.1); 
+            z-index: 0;
+        }
+        
+        #portal-wrapper { 
+            position: relative; 
+            width: 92vw; 
+            height: 88vh; 
+            max-width: 1200px; 
+            z-index: 10; 
+        }
+        
+        #portal-frame {
             position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        #video-container {
-            position: relative;
-            width: 90vw;
-            height: 85vh;
-            max-width: 1100px;
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-            background: #1a1a2e;
-        }
-        
-        #video {
-            position: absolute;
-            width: 100%;
+            width: 100%; 
             height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1);
+            border-radius: 32px;
+            padding: 4px;
+            background: linear-gradient(135deg, var(--color-sage), var(--color-gold), var(--color-coral));
+            background-size: 200% 200%;
+            animation: gradient-flow 10s ease infinite;
+            box-shadow: 0 20px 60px -10px rgba(135, 168, 120, 0.25);
+            transition: all 0.4s ease;
         }
         
-        #canvas {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
+        #portal-frame.holding { background: linear-gradient(135deg, var(--color-gold), #e8c9a8); box-shadow: 0 0 50px rgba(212, 165, 116, 0.5); }
+        #portal-frame.success { background: linear-gradient(135deg, var(--color-success), var(--color-sage-light)); box-shadow: 0 0 60px rgba(104, 179, 122, 0.6); }
+        #portal-frame.ready { background: linear-gradient(135deg, #a8c99b, #c9dfc0); }
+        #portal-frame.reset { background: linear-gradient(135deg, #b8a8c9, #c9c0df); }
+        
+        @keyframes gradient-flow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        
+        #portal-view { 
+            width: 100%; 
+            height: 100%; 
+            background: var(--color-warm-white); 
+            border-radius: 28px; 
+            overflow: hidden; 
+            position: relative; 
         }
         
-        /* HUD Elements */
-        .hud {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+        #video-clean { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            width: 100vw; 
+            height: 100vh; 
+            object-fit: cover; 
+            transform: translate(-50%, -50%) scaleX(-1); 
         }
         
-        .hud-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+        #output-canvas { 
+            position: absolute; 
+            inset: 0; 
+            width: 100%; 
+            height: 100%; 
+            pointer-events: none; 
         }
         
-        .glass-card {
-            background: rgba(255,255,255,0.95);
+        /* HUD */
+        #hud-layer { 
+            position: absolute; 
+            inset: 0; 
+            pointer-events: none; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            padding: 20px; 
+        }
+        
+        .top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(16px);
-            border-radius: 16px;
-            padding: 16px 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         }
         
-        .exercise-info {
+        .instruction-banner { padding: 14px 28px; display: flex; align-items: center; gap: 16px; max-width: 480px; }
+        .instruction-icon { font-size: 1.8rem; }
+        .instruction-text { font-size: 1.2rem; font-weight: 700; color: var(--color-slate); }
+        .instruction-sub { font-size: 0.9rem; color: var(--color-slate-light); font-weight: 500; margin-top: 2px; }
+        
+        /* Phase indicator */
+        .phase-indicator {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .phase-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            transition: all 0.3s;
+        }
+        .phase-dot.active { background: var(--color-sage); transform: scale(1.2); }
+        .phase-dot.complete { background: var(--color-success); }
+        .phase-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--color-sage);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         
-        .exercise-icon {
-            font-size: 2.5rem;
-        }
+        .progress-pill { padding: 10px 16px; font-size: 0.8rem; font-weight: 600; color: var(--color-slate-light); }
         
-        .exercise-name {
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--color-slate);
-        }
-        
-        .exercise-desc {
-            font-size: 0.9rem;
-            color: var(--color-slate-light);
-        }
+        .stats-bar { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+        .stat-card { padding: 10px 18px; border-radius: 16px; display: flex; align-items: center; gap: 10px; }
+        .stat-val { font-size: 1.2rem; font-weight: 700; color: var(--color-slate); }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-slate-light); font-weight: 700; }
         
         /* Accuracy Display */
-        .accuracy-card {
-            text-align: center;
-            min-width: 120px;
+        .accuracy-display {
+            padding: 12px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
-        
         .accuracy-value {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             font-weight: 800;
             transition: color 0.3s;
         }
-        
         .accuracy-value.green { color: var(--zone-green-solid); }
         .accuracy-value.blue { color: var(--zone-blue-solid); }
         .accuracy-value.yellow { color: var(--zone-yellow-solid); }
         .accuracy-value.red { color: var(--zone-red-solid); }
-        
         .accuracy-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
             color: var(--color-slate-light);
         }
         
-        /* Phase Indicator */
-        .phase-indicator {
+        /* Floating Buttons - Round minimalist with colors */
+        .float-btn {
+            position: fixed;
+            z-index: 50;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border-radius: 50%;
+            padding: 0;
+            cursor: pointer;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-top: 10px;
+            justify-content: center;
+            transition: all 0.2s;
         }
+        .float-btn:hover { transform: translateY(-2px) scale(1.05); }
+        .float-btn svg { width: 22px; height: 22px; }
         
-        .phase-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #e0e0e0;
+        /* End/X button - Coral red */
+        #btn-home { 
+            top: 20px; 
+            left: 20px; 
+            background: linear-gradient(135deg, #e8998d, #d88880);
+        }
+        #btn-home svg { stroke: white; stroke-width: 2.5; fill: none; }
+        
+        /* Audio button - Green when on, Grey+slash when off */
+        #btn-audio { 
+            top: 20px; 
+            left: 78px; 
+            background: linear-gradient(135deg, #68c896, #58b080);
+        }
+        #btn-audio.off { background: linear-gradient(135deg, #a0a0a0, #808080); }
+        #btn-audio svg { fill: white; }
+        #btn-audio .audio-slash { display: none; }
+        #btn-audio.off .audio-slash { display: block; }
+        
+        /* Theme toggle - Purple/Gold */
+        #btn-theme {
+            top: 20px;
+            left: 136px;
+            background: linear-gradient(135deg, #8080a0, #606080);
+        }
+        [data-theme="dark"] #btn-theme { background: linear-gradient(135deg, #f0c864, #e0b050); }
+        #btn-theme svg { fill: white; }
+        
+        /* Settings button */
+        #btn-settings {
+            top: 20px;
+            left: 194px;
+            background: white;
+            border: 2px solid #e8e4df;
+        }
+        [data-theme="dark"] #btn-settings { background: #16213e; border-color: rgba(80, 100, 120, 0.4); }
+        #btn-settings svg { stroke: var(--color-slate-light); stroke-width: 2; fill: none; }
+        
+        /* Skip button - Blue */
+        #btn-skip { 
+            top: 20px; 
+            right: 20px; 
+            background: linear-gradient(135deg, #64b4e6, #5090c0);
+        }
+        #btn-skip svg { fill: white; }
+        
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 300px;
+            background: white;
+            border: 1px solid #e8e4df;
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 60;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
             transition: all 0.3s;
         }
+        [data-theme="dark"] .settings-panel { background: #16213e; border-color: rgba(80, 100, 120, 0.4); }
+        .settings-panel.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .settings-title { font-size: 1.1rem; font-weight: 800; color: var(--color-slate); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        [data-theme="dark"] .setting-row { border-color: rgba(255,255,255,0.06); }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-label { font-size: 0.9rem; font-weight: 600; color: var(--color-slate); }
+        .setting-desc { font-size: 0.75rem; color: var(--color-slate-light); }
+        .toggle-switch { width: 50px; height: 28px; background: #e0e0e0; border-radius: 14px; position: relative; cursor: pointer; transition: background 0.3s; }
+        .toggle-switch.on { background: var(--color-sage); }
+        .toggle-switch::after { content: ''; position: absolute; width: 22px; height: 22px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .toggle-switch.on::after { transform: translateX(22px); }
+        .setting-select { padding: 8px 12px; border-radius: 10px; border: 1px solid #e8e4df; background: white; font-family: inherit; font-weight: 600; color: var(--color-slate); }
+        [data-theme="dark"] .setting-select { background: #0f1525; border-color: rgba(80, 100, 120, 0.4); color: #e8e8e8; }
         
-        .phase-dot.active { background: var(--color-sage); transform: scale(1.2); }
-        .phase-dot.complete { background: var(--zone-green-solid); }
-        
-        .phase-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--color-sage);
+        /* Skip Suggestion Toast */
+        .skip-toast {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            border: 2px solid var(--zone-blue-solid);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s;
+            z-index: 30;
         }
+        [data-theme="dark"] .skip-toast { background: #16213e; }
+        .skip-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+        .skip-toast-text { font-size: 0.95rem; font-weight: 600; color: var(--color-slate); }
+        .skip-toast-btn { padding: 10px 18px; border-radius: 12px; border: none; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.2s; }
+        .skip-toast-btn.yes { background: var(--zone-blue-solid); color: white; }
+        .skip-toast-btn.no { background: transparent; color: var(--color-slate-light); }
+        .skip-toast-btn:hover { transform: scale(1.05); }
         
         /* Progress Bar */
-        .progress-container {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 8px;
-            background: rgba(0,0,0,0.1);
+        #progress-bar-container { 
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            height: 8px; 
+            background: rgba(0,0,0,0.05); 
+            border-radius: 0 0 28px 28px; 
+            overflow: hidden; 
         }
-        
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--color-sage), var(--zone-green-solid));
-            transition: width 0.1s;
+        #progress-bar-fill { 
+            height: 100%; 
+            width: 0%; 
+            background: linear-gradient(90deg, var(--color-sage), var(--color-success)); 
+            transition: width 0.1s ease; 
         }
         
         /* Center Feedback */
-        .center-feedback {
+        .center-feedback { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            text-align: center; 
+            pointer-events: none; 
+        }
+        #hold-timer { 
+            font-size: 5rem; 
+            font-weight: 800; 
+            color: white; 
+            text-shadow: 0 4px 30px rgba(0,0,0,0.3); 
+            opacity: 0; 
+            transition: opacity 0.2s; 
+        }
+        #hold-timer.show { opacity: 1; }
+        #feedback-message { 
+            font-size: 2.8rem; 
+            font-weight: 800; 
+            color: var(--color-success); 
+            text-shadow: 0 4px 20px rgba(104, 179, 122, 0.4); 
+            opacity: 0; 
+            transform: scale(0.5); 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        #feedback-message.show { opacity: 1; transform: scale(1); }
+        
+        /* Reset Instruction Overlay */
+        #reset-instruction {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
             pointer-events: none;
-        }
-        
-        .big-message {
-            font-size: 3rem;
-            font-weight: 800;
-            color: white;
-            text-shadow: 0 4px 30px rgba(0,0,0,0.4);
             opacity: 0;
             transition: opacity 0.3s;
         }
+        #reset-instruction.show { opacity: 1; }
+        .reset-icon { font-size: 4rem; margin-bottom: 16px; }
+        .reset-text { 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            color: white; 
+            text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.3);
+            padding: 16px 32px;
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+        }
         
-        .big-message.show { opacity: 1; }
+        /* Particles */
+        .particle { position: absolute; pointer-events: none; border-radius: 50%; animation: particle-fall 1.5s ease-out forwards; }
+        @keyframes particle-fall { 0% { opacity: 1; transform: translateY(0) rotate(0deg); } 100% { opacity: 0; transform: translateY(200px) rotate(720deg); } }
+        
+        /* Toast Notification (replaces alert) */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: white;
+            padding: 16px 28px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 300;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast-icon { font-size: 1.5rem; }
+        .toast-message { font-weight: 600; color: var(--color-slate); }
+        
+        /* Overlays */
+        .overlay-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(253, 251, 247, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .overlay-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .overlay-content { max-width: 500px; width: 100%; text-align: center; }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+            color: white;
+            box-shadow: 0 8px 24px -4px rgba(135, 168, 120, 0.4);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -4px rgba(135, 168, 120, 0.5); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: white; color: var(--color-slate); border: 2px solid #e8e4df; }
+        .btn-secondary:hover { background: var(--color-warm-white); border-color: var(--color-sage); }
+        .btn-ghost { background: transparent; color: var(--color-slate-light); padding: 12px 20px; }
+        .btn-ghost:hover { color: var(--color-slate); background: rgba(0,0,0,0.03); }
+        
+        /* Onboarding */
+        .onboarding-step { display: none; }
+        .onboarding-step.active { display: block; }
+        .onboarding-image { font-size: 5rem; margin-bottom: 24px; }
+        .onboarding-title { font-size: 1.9rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
+        .onboarding-desc { font-size: 1.05rem; color: var(--color-slate-light); line-height: 1.6; margin-bottom: 32px; }
+        .onboarding-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
+        .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: #e8e4df; transition: all 0.3s; }
+        .onboarding-dot.active { background: var(--color-sage); width: 28px; border-radius: 5px; }
+        
+        /* Disclaimer */
+        .disclaimer-box { background: white; border: 1px solid #e8e4df; border-radius: 16px; padding: 20px; text-align: left; margin-bottom: 24px; max-height: 180px; overflow-y: auto; }
+        .disclaimer-box h4 { font-weight: 700; color: var(--color-slate); margin-bottom: 8px; }
+        .disclaimer-box p, .disclaimer-box ul { font-size: 0.85rem; color: var(--color-slate-light); line-height: 1.5; margin-bottom: 8px; }
+        .disclaimer-box ul { padding-left: 20px; }
+        .checkbox-row { display: flex; align-items: flex-start; gap: 12px; text-align: left; margin-bottom: 20px; }
+        .checkbox-row input[type="checkbox"] { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--color-sage); }
+        .checkbox-row label { font-size: 0.9rem; color: var(--color-slate); line-height: 1.4; }
+        
+        /* Ready Screen */
+        .ready-overlay { background: rgba(168, 201, 155, 0.97); }
+        .ready-countdown { font-size: 8rem; font-weight: 800; color: white; text-shadow: 0 8px 40px rgba(0,0,0,0.15); animation: pulse-scale 1s ease infinite; }
+        @keyframes pulse-scale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .ready-exercise-preview { background: rgba(255,255,255,0.95); border-radius: 20px; padding: 24px 40px; margin-top: 32px; display: inline-flex; align-items: center; gap: 16px; }
+        .ready-exercise-icon { font-size: 2.5rem; }
+        .ready-exercise-name { font-size: 1.4rem; font-weight: 700; color: var(--color-slate); }
+        .ready-exercise-desc { font-size: 0.9rem; color: var(--color-slate-light); }
+        
+        /* Pain Check */
+        .pain-scale { display: flex; justify-content: space-between; gap: 10px; margin: 24px 0; }
+        .pain-btn { flex: 1; padding: 18px 10px; border-radius: 14px; border: 3px solid transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+        .pain-btn:hover { transform: translateY(-3px); }
+        .pain-btn.green { background: #e8f5e9; }
+        .pain-btn.green:hover, .pain-btn.green.selected { border-color: #68b37a; background: #d4edda; }
+        .pain-btn.yellow { background: #fff8e1; }
+        .pain-btn.yellow:hover, .pain-btn.yellow.selected { border-color: #e8b44d; background: #ffecb3; }
+        .pain-btn.orange { background: #fff3e0; }
+        .pain-btn.orange:hover, .pain-btn.orange.selected { border-color: #e8998d; background: #ffe0b2; }
+        .pain-btn.red { background: #ffebee; }
+        .pain-btn.red:hover, .pain-btn.red.selected { border-color: #d97b7b; background: #ffcdd2; }
+        .pain-emoji { font-size: 2rem; }
+        .pain-label { font-size: 0.8rem; font-weight: 700; color: var(--color-slate); }
+        
+        /* Rest Overlay */
+        .rest-overlay { background: linear-gradient(135deg, rgba(168, 201, 155, 0.95), rgba(135, 168, 120, 0.95)); }
+        .rest-timer { font-size: 4.5rem; font-weight: 800; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .rest-message { font-size: 1.2rem; color: white; margin-top: 12px; opacity: 0.9; }
+        
+        /* Complete Overlay */
+        .summary-card { background: white; border: 1px solid #e8e4df; border-radius: 20px; padding: 24px; margin-bottom: 20px; }
+        .summary-stat { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0ece6; }
+        .summary-stat:last-child { border-bottom: none; }
+        .summary-label { color: var(--color-slate-light); font-weight: 500; }
+        .summary-value { color: var(--color-slate); font-weight: 700; }
+        .grade-badge { display: inline-block; padding: 6px 16px; border-radius: 10px; font-weight: 800; font-size: 1rem; }
+        .grade-a { background: #d4edda; color: #155724; }
+        .grade-b { background: #fff3cd; color: #856404; }
+        .grade-c { background: #ffe0b2; color: #e65100; }
+        .complete-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
         
         /* Zone Legend */
         .zone-legend {
             position: absolute;
-            bottom: 30px;
+            bottom: 80px;
             left: 20px;
-            background: rgba(255,255,255,0.95);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: auto;
+            background: rgba(255,255,255,0.9);
             padding: 12px 16px;
             border-radius: 12px;
-            font-size: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        
         .zone-legend-title {
+            font-size: 0.7rem;
             font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--color-slate);
+            text-transform: uppercase;
+            color: var(--color-slate-light);
+            margin-bottom: 4px;
         }
-        
-        .zone-item {
+        .zone-legend-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin: 4px 0;
-        }
-        
-        .zone-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-        
-        .zone-dot.green { background: var(--zone-green-solid); }
-        .zone-dot.blue { background: var(--zone-blue-solid); }
-        .zone-dot.yellow { background: var(--zone-yellow-solid); }
-        .zone-dot.red { background: var(--zone-red-solid); }
-        
-        /* Exercise Buttons */
-        .exercise-nav {
-            position: absolute;
-            bottom: 30px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            pointer-events: auto;
-        }
-        
-        .nav-btn {
-            background: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-family: inherit;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: all 0.2s;
-        }
-        
-        .nav-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-        }
-        
-        .nav-btn.primary {
-            background: var(--color-sage);
-            color: white;
-        }
-        
-        /* Status Panel */
-        .status-panel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 200px;
-        }
-        
-        .finger-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-        
-        .finger-status:last-child { border-bottom: none; }
-        
-        .finger-name {
-            width: 60px;
+            font-size: 0.75rem;
             font-weight: 600;
-            font-size: 0.85rem;
+            color: var(--color-slate);
         }
-        
-        .finger-bar {
-            flex: 1;
-            height: 8px;
-            background: #eee;
+        .zone-legend-dot {
+            width: 14px;
+            height: 14px;
             border-radius: 4px;
-            overflow: hidden;
         }
+        .zone-legend-dot.green { background: var(--zone-green); border: 2px solid var(--zone-green-solid); }
+        .zone-legend-dot.blue { background: var(--zone-blue); border: 2px solid var(--zone-blue-solid); }
+        .zone-legend-dot.yellow { background: var(--zone-yellow); border: 2px solid var(--zone-yellow-solid); }
         
-        .finger-bar-fill {
-            height: 100%;
-            transition: width 0.2s, background 0.2s;
-        }
-        
-        .finger-zone {
-            width: 20px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-align: center;
-        }
-        
-        /* Start Screen */
-        .overlay {
-            position: absolute;
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
             inset: 0;
-            background: rgba(253, 251, 247, 0.98);
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 100;
-            transition: opacity 0.4s;
-        }
-        
-        .overlay.hidden {
             opacity: 0;
-            pointer-events: none;
+            visibility: hidden;
+            transition: all 0.3s;
         }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-content { background: white; border-radius: 24px; padding: 32px; max-width: 400px; width: 90%; text-align: center; }
+        .modal-title { font-size: 1.3rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
+        .modal-desc { color: var(--color-slate-light); margin-bottom: 24px; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
         
-        .start-content {
-            text-align: center;
-            max-width: 500px;
-            padding: 40px;
-        }
-        
-        .start-logo {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
-        
-        .start-title {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-            color: var(--color-slate);
-        }
-        
-        .start-desc {
-            color: var(--color-slate-light);
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        
-        .start-btn {
-            background: linear-gradient(135deg, var(--color-sage), var(--color-sage-dark));
-            color: white;
-            border: none;
-            padding: 16px 40px;
-            border-radius: 16px;
-            font-family: inherit;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 8px 30px rgba(135, 168, 120, 0.4);
-            transition: all 0.2s;
-        }
-        
-        .start-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(135, 168, 120, 0.5);
-        }
-        
-        /* Loading State */
-        .loading-text {
-            color: var(--color-slate-light);
-            margin-top: 20px;
-        }
-        
-        /* Debug Toggle */
-        .debug-toggle {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 50;
-        }
-        
-        .debug-toggle label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
     </style>
 </head>
-<body>
-    <div id="app">
-        <div id="video-container">
-            <video id="video" autoplay playsinline></video>
-            <canvas id="canvas"></canvas>
-            
-            <div class="hud">
-                <div class="hud-top">
-                    <div class="glass-card">
-                        <div class="exercise-info">
-                            <span class="exercise-icon" id="ex-icon">☝️</span>
-                            <div>
-                                <div class="exercise-name" id="ex-name">Index Finger</div>
-                                <div class="exercise-desc" id="ex-desc">Extend only your index finger</div>
+<body data-theme="light">
+    <!-- Floating Controls - Round SVG icons -->
+    <button id="btn-home" class="float-btn hidden" aria-label="End session" title="End Session">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+    </button>
+    <button id="btn-audio" class="float-btn hidden" aria-label="Toggle audio" title="Toggle Audio">
+        <svg viewBox="0 0 24 24">
+            <path d="M3 9v6h4l5 5V4L7 9H3z"/>
+            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+            <line class="audio-slash" x1="4" y1="4" x2="20" y2="20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+    </button>
+    <button id="btn-theme" class="float-btn hidden" aria-label="Toggle theme" title="Toggle Dark/Light Mode">
+        <svg viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+    </button>
+    <button id="btn-settings" class="float-btn hidden" aria-label="Settings" title="Settings">
+        <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+    </button>
+    <button id="btn-skip" class="float-btn hidden" aria-label="Skip exercise" title="Skip Exercise">
+        <svg viewBox="0 0 24 24">
+            <path d="M5 4l10 8-10 8V4z"/>
+            <rect x="17" y="5" width="2" height="14"/>
+        </svg>
+    </button>
+    
+    <!-- Settings Panel -->
+    <div id="settings-panel" class="settings-panel">
+        <div class="settings-title">⚙️ Settings</div>
+        <div class="setting-row">
+            <div>
+                <div class="setting-label">Auto-advance</div>
+                <div class="setting-desc">Automatically start next exercise</div>
+            </div>
+            <div class="toggle-switch on" id="toggle-autoadvance" onclick="toggleSetting('autoAdvance')"></div>
+        </div>
+        <div class="setting-row">
+            <div>
+                <div class="setting-label">Voice Coach</div>
+                <div class="setting-desc">Spoken exercise instructions</div>
+            </div>
+            <div class="toggle-switch on" id="toggle-voice" onclick="toggleSetting('voice')"></div>
+        </div>
+        <div class="setting-row">
+            <div>
+                <div class="setting-label">Sound Effects</div>
+                <div class="setting-desc">Success and feedback sounds</div>
+            </div>
+            <div class="toggle-switch on" id="toggle-sounds" onclick="toggleSetting('sounds')"></div>
+        </div>
+        <div class="setting-row">
+            <div>
+                <div class="setting-label">Countdown Timer</div>
+                <div class="setting-desc">Seconds between exercises</div>
+            </div>
+            <select class="setting-select" id="select-countdown" onchange="updateCountdown(this.value)">
+                <option value="2">2 sec</option>
+                <option value="3" selected>3 sec</option>
+                <option value="4">4 sec</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Toast Notification (replaces browser alert) -->
+    <div id="toast" class="toast">
+        <span class="toast-icon">✅</span>
+        <span class="toast-message" id="toast-message">Session saved!</span>
+    </div>
+
+    <!-- Main Container -->
+    <div id="app-container">
+        <video id="video-bg" playsinline muted autoplay></video>
+        <div id="portal-wrapper">
+            <div id="portal-frame">
+                <div id="portal-view">
+                    <video id="video-clean" playsinline muted autoplay></video>
+                    <canvas id="output-canvas"></canvas>
+                    
+                    <div id="hud-layer">
+                        <div class="top-row">
+                            <div class="glass-pill progress-pill">
+                                <span id="exercise-progress">1 of 8</span>
+                            </div>
+                            <div class="glass-pill instruction-banner">
+                                <span class="instruction-icon" id="instruction-icon">👋</span>
+                                <div>
+                                    <div class="instruction-text" id="instruction-text">Get Ready</div>
+                                    <div class="instruction-sub" id="instruction-sub">Position hand in frame</div>
+                                    <div class="phase-indicator" id="phase-indicator">
+                                        <div class="phase-dot" id="phase-dot-1"></div>
+                                        <div class="phase-dot" id="phase-dot-2"></div>
+                                        <span class="phase-label" id="phase-label">Step 1: Reset</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-pill accuracy-display">
+                                <span class="accuracy-value green" id="accuracy-value">0%</span>
+                                <span class="accuracy-label">Accuracy</span>
                             </div>
                         </div>
-                        <div class="phase-indicator">
-                            <div class="phase-dot" id="phase-1"></div>
-                            <div class="phase-dot" id="phase-2"></div>
-                            <span class="phase-label" id="phase-label">Ready</span>
+
+                        <div class="center-feedback">
+                            <div id="hold-timer">3</div>
+                            <div id="feedback-message">Nice!</div>
+                        </div>
+                        
+                        <!-- Reset instruction overlay -->
+                        <div id="reset-instruction">
+                            <div class="reset-icon">✊</div>
+                            <div class="reset-text" id="reset-text">Make a fist to begin</div>
+                        </div>
+
+                        <div class="stats-bar">
+                            <div class="glass-pill stat-card" id="streak-card">
+                                <span>🔥</span>
+                                <div><div id="stat-streak" class="stat-val">0</div><div class="stat-label">Streak</div></div>
+                            </div>
+                            <div class="glass-pill stat-card">
+                                <span>✨</span>
+                                <div><div id="stat-completed" class="stat-val">0</div><div class="stat-label">Done</div></div>
+                            </div>
+                            <div class="glass-pill progress-pill">
+                                <span id="session-timer">0:00</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Zone Legend -->
+                        <div class="zone-legend" id="zone-legend">
+                            <div class="zone-legend-title">Accuracy Zones</div>
+                            <div class="zone-legend-item"><div class="zone-legend-dot green"></div> 85%+ Perfect</div>
+                            <div class="zone-legend-item"><div class="zone-legend-dot blue"></div> 65%+ Good</div>
+                            <div class="zone-legend-item"><div class="zone-legend-dot yellow"></div> 40%+ Keep trying</div>
+                        </div>
+                        
+                        <!-- Skip Suggestion Toast (appears after 8 sec of struggling) -->
+                        <div class="skip-toast" id="skip-toast">
+                            <span class="skip-toast-text">Having trouble? Skip this one?</span>
+                            <button class="skip-toast-btn yes" onclick="acceptSkipSuggestion()">Skip</button>
+                            <button class="skip-toast-btn no" onclick="dismissSkipSuggestion()">Keep trying</button>
                         </div>
                     </div>
-                    
-                    <div class="glass-card accuracy-card">
-                        <div class="accuracy-value" id="accuracy">0%</div>
-                        <div class="accuracy-label">Accuracy</div>
+
+                    <div id="progress-bar-container">
+                        <div id="progress-bar-fill"></div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="center-feedback">
-                <div class="big-message" id="big-message">Perfect!</div>
-            </div>
-            
-            <div class="progress-container">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
-            
-            <div class="zone-legend">
-                <div class="zone-legend-title">Accuracy Zones</div>
-                <div class="zone-item"><div class="zone-dot green"></div> 85%+ Perfect</div>
-                <div class="zone-item"><div class="zone-dot blue"></div> 65%+ Good</div>
-                <div class="zone-item"><div class="zone-dot yellow"></div> 40%+ Keep trying</div>
-                <div class="zone-item"><div class="zone-dot red"></div> Below 40%</div>
-            </div>
-            
-            <div class="exercise-nav">
-                <button class="nav-btn" id="btn-prev">← Previous</button>
-                <button class="nav-btn" id="btn-skip">Skip →</button>
-                <button class="nav-btn primary" id="btn-next">Next Exercise</button>
-            </div>
-            
-            <div class="glass-card status-panel" id="status-panel">
-                <div class="finger-status">
-                    <span class="finger-name">Thumb</span>
-                    <div class="finger-bar"><div class="finger-bar-fill" id="bar-thumb"></div></div>
-                    <span class="finger-zone" id="zone-thumb">-</span>
-                </div>
-                <div class="finger-status">
-                    <span class="finger-name">Index</span>
-                    <div class="finger-bar"><div class="finger-bar-fill" id="bar-index"></div></div>
-                    <span class="finger-zone" id="zone-index">-</span>
-                </div>
-                <div class="finger-status">
-                    <span class="finger-name">Middle</span>
-                    <div class="finger-bar"><div class="finger-bar-fill" id="bar-middle"></div></div>
-                    <span class="finger-zone" id="zone-middle">-</span>
-                </div>
-                <div class="finger-status">
-                    <span class="finger-name">Ring</span>
-                    <div class="finger-bar"><div class="finger-bar-fill" id="bar-ring"></div></div>
-                    <span class="finger-zone" id="zone-ring">-</span>
-                </div>
-                <div class="finger-status">
-                    <span class="finger-name">Pinky</span>
-                    <div class="finger-bar"><div class="finger-bar-fill" id="bar-pinky"></div></div>
-                    <span class="finger-zone" id="zone-pinky">-</span>
-                </div>
-            </div>
-            
-            <div class="debug-toggle">
-                <label><input type="checkbox" id="show-boundaries" checked> Show Boundaries</label>
-                <label><input type="checkbox" id="show-skeleton" checked> Show Skeleton</label>
-            </div>
-        </div>
-        
-        <!-- Start Overlay -->
-        <div class="overlay" id="start-overlay">
-            <div class="start-content">
-                <div class="start-logo">🖐️</div>
-                <h1 class="start-title">HandHero Demo</h1>
-                <p class="start-desc">
-                    Boundary-based hand tracking that uses <strong>human logic</strong> to measure accuracy, 
-                    not AI precision. See how natural movements are evaluated with forgiveness built in.
-                </p>
-                <button class="start-btn" id="start-btn">Start Demo</button>
-                <p class="loading-text" id="loading-text" style="display:none;">Loading hand tracking...</p>
             </div>
         </div>
     </div>
 
-    <!-- MediaPipe -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <!-- OVERLAY: Onboarding -->
+    <div id="overlay-welcome" class="overlay-screen">
+        <div class="overlay-content">
+            <div class="onboarding-step active" data-step="1">
+                <div class="onboarding-image">🌱</div>
+                <h1 class="onboarding-title">Welcome to HandHero</h1>
+                <p class="onboarding-desc">Your personal hand therapy companion with real-time visual feedback to guide your rehabilitation journey.</p>
+                <div class="onboarding-dots"><div class="onboarding-dot active"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div></div>
+                <button class="btn btn-primary" onclick="nextStep()">Get Started</button>
+            </div>
+            <div class="onboarding-step" data-step="2">
+                <div class="onboarding-image">🎯</div>
+                <h2 class="onboarding-title">Visual Accuracy Zones</h2>
+                <p class="onboarding-desc">
+                    Watch the <strong>shaded zone</strong> between your fingers:<br><br>
+                    <span style="color: var(--zone-green-solid);">🟢 Green</span> = Perfect! You're in the target zone<br>
+                    <span style="color: var(--zone-blue-solid);">🔵 Blue</span> = Good! Almost there<br>
+                    <span style="color: var(--zone-yellow-solid);">🟡 Yellow</span> = Keep adjusting<br><br>
+                    Work at YOUR comfortable pace!
+                </p>
+                <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot active"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div></div>
+                <button class="btn btn-primary" onclick="nextStep()">Next</button>
+                <button class="btn btn-ghost" onclick="prevStep()">Back</button>
+            </div>
+            <div class="onboarding-step" data-step="3">
+                <div class="onboarding-image">✊</div>
+                <h2 class="onboarding-title">Two-Step Exercises</h2>
+                <p class="onboarding-desc">
+                    Each exercise has two steps:<br><br>
+                    <strong>Step 1:</strong> Make a fist to reset<br>
+                    <strong>Step 2:</strong> Extend ONLY the required finger(s)<br><br>
+                    This ensures proper isolation and form.
+                </p>
+                <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot active"></div><div class="onboarding-dot"></div></div>
+                <button class="btn btn-primary" onclick="nextStep()">Next</button>
+                <button class="btn btn-ghost" onclick="prevStep()">Back</button>
+            </div>
+            <div class="onboarding-step" data-step="4">
+                <div class="onboarding-image">⚕️</div>
+                <h2 class="onboarding-title">Safety First</h2>
+                <div class="disclaimer-box">
+                    <h4>Medical Disclaimer</h4>
+                    <p>HandHero is a wellness tool to supplement – not replace – professional care.</p>
+                    <ul>
+                        <li>NOT a medical device</li>
+                        <li>Does NOT provide diagnosis</li>
+                        <li>Should NOT replace therapy</li>
+                    </ul>
+                    <p><strong>Stop if you experience:</strong> pain, numbness, tingling, swelling.</p>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="disclaimer-check">
+                    <label for="disclaimer-check">I understand this is a wellness tool and will stop if I feel pain.</label>
+                </div>
+                <div class="onboarding-dots"><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot"></div><div class="onboarding-dot active"></div></div>
+                <button class="btn btn-primary" id="btn-start" disabled onclick="startApp()">I Understand – Begin</button>
+                <button class="btn btn-ghost" onclick="prevStep()">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY: Ready (Between Exercises) -->
+    <div id="overlay-ready" class="overlay-screen ready-overlay hidden">
+        <div class="overlay-content">
+            <p style="color: white; font-size: 1.1rem; margin-bottom: 8px; opacity: 0.8;">Next Exercise</p>
+            <div class="ready-countdown" id="ready-countdown">3</div>
+            <div class="ready-exercise-preview">
+                <span class="ready-exercise-icon" id="ready-icon">✋</span>
+                <div style="text-align: left;">
+                    <div class="ready-exercise-name" id="ready-name">Starfish</div>
+                    <div class="ready-exercise-desc" id="ready-desc">Spread all fingers wide</div>
+                </div>
+            </div>
+            <p style="color: white; font-size: 0.9rem; margin-top: 24px; opacity: 0.7;">Get ready to make a fist first...</p>
+        </div>
+    </div>
+
+    <!-- OVERLAY: Pain Check -->
+    <div id="overlay-pain" class="overlay-screen hidden">
+        <div class="overlay-content">
+            <div class="onboarding-image">💚</div>
+            <h2 class="onboarding-title">Quick Check-In</h2>
+            <p class="onboarding-desc">How is your hand feeling?</p>
+            <div class="pain-scale">
+                <button class="pain-btn green" onclick="selectPain(0)"><span class="pain-emoji">😊</span><span class="pain-label">Great</span></button>
+                <button class="pain-btn yellow" onclick="selectPain(1)"><span class="pain-emoji">😐</span><span class="pain-label">Mild</span></button>
+                <button class="pain-btn orange" onclick="selectPain(2)"><span class="pain-emoji">😕</span><span class="pain-label">Moderate</span></button>
+                <button class="pain-btn red" onclick="selectPain(3)"><span class="pain-emoji">😣</span><span class="pain-label">Too Much</span></button>
+            </div>
+            <p id="pain-advice" style="font-size: 0.9rem; color: var(--color-slate-light); min-height: 40px;"></p>
+            <button class="btn btn-primary" id="btn-continue-pain" disabled onclick="continuePain()">Continue</button>
+        </div>
+    </div>
+
+    <!-- OVERLAY: Rest -->
+    <div id="overlay-rest" class="overlay-screen rest-overlay hidden">
+        <div class="overlay-content">
+            <h2 class="onboarding-title" style="color: white;">Quick Break</h2>
+            <div class="rest-timer" id="rest-timer">8</div>
+            <p class="rest-message">Shake out your hand, take a breath</p>
+            <button class="btn btn-secondary" onclick="skipRest()" style="margin-top: 20px;">I'm Ready</button>
+        </div>
+    </div>
+
+    <!-- OVERLAY: Complete -->
+    <div id="overlay-complete" class="overlay-screen hidden">
+        <div class="overlay-content">
+            <div class="onboarding-image">🎉</div>
+            <h2 class="onboarding-title">Session Complete!</h2>
+            <div class="summary-card">
+                <div class="summary-stat"><span class="summary-label">Exercises</span><span class="summary-value" id="sum-done">8</span></div>
+                <div class="summary-stat"><span class="summary-label">Duration</span><span class="summary-value" id="sum-time">4:30</span></div>
+                <div class="summary-stat"><span class="summary-label">Best Streak</span><span class="summary-value" id="sum-streak">5 🔥</span></div>
+                <div class="summary-stat"><span class="summary-label">Avg Accuracy</span><span class="summary-value" id="sum-accuracy">78%</span></div>
+                <div class="summary-stat"><span class="summary-label">Grade</span><span class="summary-value"><span id="sum-grade" class="grade-badge grade-a">A</span></span></div>
+            </div>
+            <div class="complete-buttons">
+                <button class="btn btn-primary" onclick="goHome()">🏠 Back to Dashboard</button>
+                <button class="btn btn-secondary" onclick="confirmRestart()">🔄 New Session</button>
+                <button class="btn btn-ghost" onclick="exportReport()">📄 Save Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY: Loading -->
+    <div id="overlay-loading" class="overlay-screen hidden">
+        <div class="overlay-content">
+            <div class="onboarding-image" style="animation: pulse-scale 1.5s infinite;">🖐️</div>
+            <h2 class="onboarding-title">Preparing Session</h2>
+            <p class="onboarding-desc" id="loading-msg">Loading hand tracking...</p>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="modal-confirm" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title" id="modal-title">Restart Session?</h3>
+            <p class="modal-desc" id="modal-desc">Your current progress will be saved. Start a new session?</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" id="modal-confirm-btn" onclick="confirmModalAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ============================================
+// CONFIGURATION
+// ============================================
+const CONFIG = {
+    EXERCISES_PER_SESSION: 8,
+    REST_SECONDS: 8,
+    PAIN_CHECK_EVERY: 4,
+    READY_COUNTDOWN_SECONDS: 3,  // Default, can be overridden by settings
     
-    <!-- Boundary Engine -->
-    <script>
-    /**
-     * HandHero Boundary-Based Detection Engine (Inline)
-     */
-    const BoundaryEngine = {
-        FINGERS: {
-            THUMB:  { base: 1, mid: 2, dip: 3, tip: 4, name: 'Thumb' },
-            INDEX:  { base: 5, mid: 6, dip: 7, tip: 8, name: 'Index' },
-            MIDDLE: { base: 9, mid: 10, dip: 11, tip: 12, name: 'Middle' },
-            RING:   { base: 13, mid: 14, dip: 15, tip: 16, name: 'Ring' },
-            PINKY:  { base: 17, mid: 18, dip: 19, tip: 20, name: 'Pinky' }
-        },
-        
-        FINGER_ORDER: ['THUMB', 'INDEX', 'MIDDLE', 'RING', 'PINKY'],
-        TIPS: [4, 8, 12, 16, 20],
-        BASES: [1, 5, 9, 13, 17],
-        
-        ZONES: {
-            GREEN_THRESHOLD: 0.12,
-            YELLOW_THRESHOLD: 0.04,
-            RED_THRESHOLD: 0.0,
-        },
-        
-        THUMB_BOUNDARY: 0.15,
-        
-        getHandFrame(landmarks) {
-            const wrist = landmarks[0];
-            const middleTip = landmarks[12];
-            const indexBase = landmarks[5];
-            const pinkyBase = landmarks[17];
-            
-            const handHeight = Math.sqrt(
-                Math.pow(middleTip.x - wrist.x, 2) + 
-                Math.pow(middleTip.y - wrist.y, 2) +
-                Math.pow((middleTip.z || 0) - (wrist.z || 0), 2)
-            );
-            
-            const handWidth = Math.sqrt(
-                Math.pow(pinkyBase.x - indexBase.x, 2) + 
-                Math.pow(pinkyBase.y - indexBase.y, 2)
-            );
-            
-            const palmCenter = {
-                x: (landmarks[0].x + landmarks[5].x + landmarks[9].x + landmarks[13].x + landmarks[17].x) / 5,
-                y: (landmarks[0].y + landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 5
-            };
-            
-            const baseLineY = (landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 4;
-            
-            return { handHeight, handWidth, palmCenter, baseLineY, wrist, landmarks };
-        },
-        
-        checkNonTargetFinger(fingerIndex, landmarks, handFrame) {
-            const finger = this.FINGERS[this.FINGER_ORDER[fingerIndex]];
-            const tip = landmarks[finger.tip];
-            const base = landmarks[finger.base];
-            
-            const tipBelowBase = tip.y - base.y;
-            const normalizedDistance = tipBelowBase / handFrame.handHeight;
-            
-            if (normalizedDistance >= this.ZONES.GREEN_THRESHOLD) {
-                return { zone: 'GREEN', score: 1.0 };
-            } else if (normalizedDistance >= this.ZONES.YELLOW_THRESHOLD) {
-                const progress = (normalizedDistance - this.ZONES.YELLOW_THRESHOLD) / 
-                               (this.ZONES.GREEN_THRESHOLD - this.ZONES.YELLOW_THRESHOLD);
-                return { zone: 'YELLOW', score: 0.65 + (progress * 0.20) };
-            } else if (normalizedDistance >= this.ZONES.RED_THRESHOLD) {
-                const progress = (normalizedDistance - this.ZONES.RED_THRESHOLD) / 
-                               (this.ZONES.YELLOW_THRESHOLD - this.ZONES.RED_THRESHOLD);
-                return { zone: 'ORANGE', score: 0.40 + (progress * 0.25) };
-            } else {
-                return { zone: 'RED', score: Math.max(0.15, 0.40 + normalizedDistance * 2) };
-            }
-        },
-        
-        checkTargetFinger(fingerIndex, landmarks, handFrame) {
-            const finger = this.FINGERS[this.FINGER_ORDER[fingerIndex]];
-            const tip = landmarks[finger.tip];
-            const base = landmarks[finger.base];
-            const wrist = landmarks[0];
-            
-            const tipAboveBase = base.y - tip.y;
-            const normalizedExtension = tipAboveBase / handFrame.handHeight;
-            
-            const tipToWrist = Math.sqrt(
-                Math.pow(tip.x - wrist.x, 2) + 
-                Math.pow(tip.y - wrist.y, 2)
-            );
-            const baseToWrist = Math.sqrt(
-                Math.pow(base.x - wrist.x, 2) + 
-                Math.pow(base.y - wrist.y, 2)
-            );
-            const extensionRatio = tipToWrist / baseToWrist;
-            
-            if (normalizedExtension > 0.08 && extensionRatio > 1.2) {
-                return { zone: 'GREEN', score: 1.0 };
-            } else if (normalizedExtension > 0.03 && extensionRatio > 1.1) {
-                return { zone: 'BLUE', score: 0.85 };
-            } else if (normalizedExtension > -0.02 && extensionRatio > 0.95) {
-                return { zone: 'YELLOW', score: 0.65 };
-            } else {
-                return { zone: 'RED', score: Math.max(0.20, 0.50 + normalizedExtension) };
-            }
-        },
-        
-        checkThumbBoundary(landmarks, handFrame) {
-            const thumbTip = landmarks[4];
-            const indexBase = landmarks[5];
-            const middleBase = landmarks[9];
-            
-            // Simple check: thumb should not be past index finger horizontally
-            const thumbPastIndex = Math.abs(thumbTip.x - indexBase.x) < handFrame.handWidth * 0.5;
-            
-            if (thumbPastIndex) {
-                return { zone: 'GREEN', score: 1.0 };
-            } else {
-                return { zone: 'YELLOW', score: 0.7 };
-            }
-        },
-        
-        evaluateIsolation(landmarks, targetFingers) {
-            const handFrame = this.getHandFrame(landmarks);
-            const fingerResults = [];
-            let totalScore = 0;
-            let worstZone = 'GREEN';
-            const zoneRank = { 'GREEN': 4, 'BLUE': 3, 'YELLOW': 2, 'ORANGE': 1, 'RED': 0 };
-            
-            for (let i = 0; i < 5; i++) {
-                const isTarget = targetFingers.includes(i);
-                let result;
-                
-                if (i === 0 && !isTarget) {
-                    result = this.checkThumbBoundary(landmarks, handFrame);
-                } else if (isTarget) {
-                    result = this.checkTargetFinger(i, landmarks, handFrame);
-                } else {
-                    result = this.checkNonTargetFinger(i, landmarks, handFrame);
-                }
-                
-                result.isTarget = isTarget;
-                result.fingerName = this.FINGER_ORDER[i];
-                fingerResults.push(result);
-                
-                totalScore += result.score;
-                
-                if (zoneRank[result.zone] < zoneRank[worstZone]) {
-                    worstZone = result.zone;
-                }
-            }
-            
-            const accuracy = totalScore / 5;
-            
-            let overallZone;
-            if (accuracy >= 0.85) overallZone = 'GREEN';
-            else if (accuracy >= 0.65) overallZone = 'BLUE';
-            else if (accuracy >= 0.40) overallZone = 'YELLOW';
-            else overallZone = 'RED';
-            
-            return {
-                accuracy,
-                overallZone,
-                worstZone,
-                fingerResults,
-                passed: accuracy >= 0.65,
-                handFrame
-            };
-        },
-        
-        evaluateSpread(landmarks) {
-            const handFrame = this.getHandFrame(landmarks);
-            
-            let extensionScore = 0;
-            for (let i = 0; i < 5; i++) {
-                const result = this.checkTargetFinger(i, landmarks, handFrame);
-                extensionScore += result.score;
-            }
-            extensionScore /= 5;
-            
-            const tips = this.TIPS.map(i => landmarks[i]);
-            let gapScore = 0;
-            for (let i = 0; i < tips.length - 1; i++) {
-                const gap = Math.sqrt(
-                    Math.pow(tips[i + 1].x - tips[i].x, 2) +
-                    Math.pow(tips[i + 1].y - tips[i].y, 2)
-                );
-                const normalizedGap = gap / handFrame.handWidth;
-                
-                if (normalizedGap > 0.18) gapScore += 1.0;
-                else if (normalizedGap > 0.10) gapScore += 0.75;
-                else if (normalizedGap > 0.05) gapScore += 0.50;
-                else gapScore += 0.25;
-            }
-            gapScore /= 4;
-            
-            const accuracy = (extensionScore * 0.5) + (gapScore * 0.5);
-            
-            let overallZone;
-            if (accuracy >= 0.85) overallZone = 'GREEN';
-            else if (accuracy >= 0.65) overallZone = 'BLUE';
-            else if (accuracy >= 0.40) overallZone = 'YELLOW';
-            else overallZone = 'RED';
-            
-            // Return finger results for spread (all targets)
-            const fingerResults = [];
-            for (let i = 0; i < 5; i++) {
-                const result = this.checkTargetFinger(i, landmarks, handFrame);
-                result.isTarget = true;
-                result.fingerName = this.FINGER_ORDER[i];
-                fingerResults.push(result);
-            }
-            
-            return { accuracy, overallZone, fingerResults, passed: accuracy >= 0.65, handFrame };
-        }
-    };
-    </script>
+    // Accuracy thresholds for zones
+    ZONE_GREEN: 0.85,   // 85%+ = green (perfect)
+    ZONE_BLUE: 0.65,    // 65-85% = blue (good)
+    ZONE_YELLOW: 0.40,  // 40-65% = yellow (keep trying)
     
-    <!-- Main App -->
-    <script>
-    // ============================================
-    // EXERCISES
-    // ============================================
-    const EXERCISES = [
-        { id: 'index', name: 'Index Finger', icon: '☝️', desc: 'Extend only your index finger', targets: [1], type: 'isolation' },
-        { id: 'middle', name: 'Middle Finger', icon: '🖕', desc: 'Extend only your middle finger', targets: [2], type: 'isolation' },
-        { id: 'ring', name: 'Ring Finger', icon: '💍', desc: 'Extend only your ring finger', targets: [3], type: 'isolation' },
-        { id: 'pinky', name: 'Pinky Finger', icon: '🤙', desc: 'Extend only your pinky finger', targets: [4], type: 'isolation' },
-        { id: 'thumb', name: 'Thumbs Up', icon: '👍', desc: 'Extend only your thumb', targets: [0], type: 'isolation' },
-        { id: 'peace', name: 'Peace Sign', icon: '✌️', desc: 'Extend index and middle fingers', targets: [1, 2], type: 'isolation' },
-        { id: 'spread', name: 'Full Spread', icon: '🖐️', desc: 'Spread all fingers wide', targets: [0,1,2,3,4], type: 'spread' },
+    // Hold duration
+    HOLD_DURATION_MS: 2500,
+    
+    // Reset detection
+    RESET_CURL_THRESHOLD: 0.60,  // All fingers must be this curled for reset
+    RESET_HOLD_MS: 800,          // Must hold fist for this long
+    
+    // Isolation strictness - more forgiving
+    NON_TARGET_MAX_EXTENSION: 0.30,
+    
+    // Progress decay - slow, doesn't reset instantly
+    PROGRESS_DECAY_RATE: 0.008,
+    
+    // Struggle detection
+    STRUGGLE_TIME_MS: 8000,  // Show skip suggestion after 8 seconds of struggling
+    
+    // Boundary margin for invisible detection
+    BOUNDARY_MARGIN: 0.03,
+};
+
+// ============================================
+// USER SETTINGS (persisted to localStorage)
+// ============================================
+const settings = {
+    autoAdvance: true,
+    voice: true,
+    sounds: true,
+    countdownTime: 3,
+    theme: 'light',
+};
+
+// Load saved settings
+try {
+    const saved = localStorage.getItem('handhero_settings');
+    if (saved) {
+        Object.assign(settings, JSON.parse(saved));
+        document.body.setAttribute('data-theme', settings.theme);
+    }
+} catch(e) {}
+
+function saveSettings() {
+    try { 
+        localStorage.setItem('handhero_settings', JSON.stringify(settings)); 
+    } catch(e) {}
+}
+
+function toggleSetting(key) {
+    settings[key] = !settings[key];
+    const toggleEl = document.getElementById('toggle-' + key.toLowerCase());
+    if (toggleEl) toggleEl.classList.toggle('on', settings[key]);
+    saveSettings();
+    
+    // Update audio button if needed
+    if (key === 'sounds' || key === 'voice') {
+        updateAudioButtonState();
+    }
+}
+
+function updateCountdown(val) {
+    settings.countdownTime = parseInt(val);
+    saveSettings();
+}
+
+function toggleTheme() {
+    settings.theme = settings.theme === 'light' ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', settings.theme);
+    saveSettings();
+}
+
+function toggleSettingsPanel() {
+    const panel = document.getElementById('settings-panel');
+    panel.classList.toggle('show');
+}
+
+function updateAudioButtonState() {
+    const audioEnabled = settings.sounds || settings.voice;
+    document.getElementById('btn-audio').classList.toggle('off', !audioEnabled);
+}
+
+// ============================================
+// FINGER CONSTANTS
+// ============================================
+const FINGER = {
+    THUMB: [1, 2, 3, 4],
+    INDEX: [5, 6, 7, 8],
+    MIDDLE: [9, 10, 11, 12],
+    RING: [13, 14, 15, 16],
+    PINKY: [17, 18, 19, 20]
+};
+const FINGER_ARRAYS = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
+const FINGER_NAMES = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'];
+const FINGER_TIPS = [4, 8, 12, 16, 20];
+
+// ============================================
+// EXERCISE LIBRARY
+// ============================================
+const ALL_EXERCISES = [
+    // === ISOLATION EXERCISES (Single Finger) ===
+    {
+        id: 'thumbs_up',
+        name: 'Thumbs Up',
+        icon: '👍',
+        category: 'Isolation',
+        desc: 'Extend only your thumb',
+        difficulty: 2,
+        type: 'isolation',
+        targetFingers: [0], // Only thumb should be up
+        showZone: true,     // Show shaded zone
+    },
+    {
+        id: 'pointer',
+        name: 'Pointer Finger',
+        icon: '☝️',
+        category: 'Isolation',
+        desc: 'Extend only your index finger',
+        difficulty: 2,
+        type: 'isolation',
+        targetFingers: [1],
+        showZone: true,
+    },
+    {
+        id: 'middle_finger_lift',
+        name: 'Middle Finger Lift',
+        icon: '🖕',
+        category: 'Isolation',
+        desc: 'Extend only your middle finger',
+        difficulty: 3,
+        type: 'isolation',
+        targetFingers: [2],
+        showZone: true,
+    },
+    {
+        id: 'ring_finger_lift',
+        name: 'Ring Finger Lift',
+        icon: '💍',
+        category: 'Advanced',
+        desc: 'Extend only your ring finger (hardest!)',
+        difficulty: 4,
+        type: 'isolation',
+        targetFingers: [3],
+        showZone: true,
+    },
+    {
+        id: 'pinky_out',
+        name: 'Pinky Extension',
+        icon: '🤙',
+        category: 'Isolation',
+        desc: 'Extend only your pinky finger',
+        difficulty: 3,
+        type: 'isolation',
+        targetFingers: [4],
+        showZone: true,
+    },
+    
+    // === TWO FINGER COMBINATIONS ===
+    {
+        id: 'peace',
+        name: 'Peace Sign',
+        icon: '✌️',
+        category: 'Coordination',
+        desc: 'Extend index and middle fingers only',
+        difficulty: 2,
+        type: 'isolation',
+        targetFingers: [1, 2],
+        showZone: true,
+    },
+    {
+        id: 'rock_on',
+        name: 'Rock On',
+        icon: '🤘',
+        category: 'Advanced',
+        desc: 'Extend index and pinky only',
+        difficulty: 4,
+        type: 'isolation',
+        targetFingers: [1, 4],
+        showZone: true,
+    },
+    
+    // === PINCH EXERCISES (Shaded zone between two points) ===
+    {
+        id: 'ok_sign',
+        name: 'OK Sign',
+        icon: '👌',
+        category: 'Precision',
+        desc: 'Touch thumb tip to index tip',
+        difficulty: 2,
+        type: 'pinch',
+        pinchPair: [4, 8], // Thumb tip to index tip
+        showZone: true,
+    },
+    {
+        id: 'thumb_to_middle',
+        name: 'Thumb to Middle',
+        icon: '🤌',
+        category: 'Precision',
+        desc: 'Touch thumb tip to middle fingertip',
+        difficulty: 2,
+        type: 'pinch',
+        pinchPair: [4, 12],
+        showZone: true,
+    },
+    {
+        id: 'thumb_to_ring',
+        name: 'Thumb to Ring',
+        icon: '🤏',
+        category: 'Precision',
+        desc: 'Touch thumb tip to ring fingertip',
+        difficulty: 3,
+        type: 'pinch',
+        pinchPair: [4, 16],
+        showZone: true,
+    },
+    {
+        id: 'thumb_to_pinky',
+        name: 'Thumb to Pinky',
+        icon: '🤙',
+        category: 'Precision',
+        desc: 'Touch thumb tip to pinky tip',
+        difficulty: 3,
+        type: 'pinch',
+        pinchPair: [4, 20],
+        showZone: true,
+    },
+    
+    // === SPREAD EXERCISES (Zone between adjacent fingers) ===
+    {
+        id: 'starfish',
+        name: 'Starfish Spread',
+        icon: '🖐️',
+        category: 'Stretch',
+        desc: 'Spread all fingers as wide as possible',
+        difficulty: 1,
+        type: 'spread',
+        showZone: true,
+    },
+    {
+        id: 'flat_hand',
+        name: 'Flat Hand',
+        icon: '🤚',
+        category: 'Stretch',
+        desc: 'Fingers together, fully extended',
+        difficulty: 1,
+        type: 'flat',
+        showZone: false,
+    },
+    
+    // === FULL HAND ===
+    {
+        id: 'fist',
+        name: 'Gentle Fist',
+        icon: '✊',
+        category: 'Strength',
+        desc: 'Curl all fingers into a fist',
+        difficulty: 1,
+        type: 'fist',
+        showZone: false,
+    },
+];
+
+// Select exercises for session
+function selectExercises() {
+    const shuffle = a => [...a].sort(() => Math.random() - 0.5);
+    const byDiff = d => ALL_EXERCISES.filter(e => e.difficulty === d);
+    
+    // Balanced selection: 2 easy, 3 medium, 2 hard, 1 advanced
+    const selected = [
+        ...shuffle(byDiff(1)).slice(0, 2),
+        ...shuffle(byDiff(2)).slice(0, 3),
+        ...shuffle(byDiff(3)).slice(0, 2),
+        ...shuffle(byDiff(4)).slice(0, 1),
     ];
     
-    // ============================================
-    // STATE
-    // ============================================
-    const state = {
-        currentExercise: 0,
-        hands: null,
-        camera: null,
-        landmarks: null,
-        lastResult: null,
-        progress: 0,
-        holding: false,
-        holdStart: 0,
-        showBoundaries: true,
-        showSkeleton: true
+    return shuffle(selected);
+}
+
+// ============================================
+// STATE
+// ============================================
+const state = {
+    step: 1,
+    screen: 'WELCOME',
+    handLandmarker: null,
+    webcamRunning: false,
+    animationFrameId: null,
+    
+    // Session
+    exercises: [],
+    exIdx: 0,
+    completed: 0,
+    streak: 0,
+    bestStreak: 0,
+    startTime: 0,
+    
+    // Exercise phases
+    phase: 'RESET',  // 'RESET' -> 'EXECUTE'
+    resetStartTime: 0,
+    resetComplete: false,
+    
+    // Current exercise tracking
+    holding: false,
+    holdStart: 0,
+    progress: 0,
+    cooldown: false,
+    currentAcc: 0,
+    peakAcc: 0,
+    
+    // Struggle tracking (for skip suggestion)
+    exerciseStartTime: 0,
+    skipToastShown: false,
+    
+    // Hand analysis
+    landmarks: null,
+    curls: [0, 0, 0, 0, 0],
+    fingerSpread: 0,
+    fingerGaps: [0, 0, 0, 0],
+    pinchDistances: {},
+    
+    // Boundary-based scores (invisible)
+    boundaryScores: [0, 0, 0, 0, 0],
+    
+    // Tracking
+    painLevels: [],
+    selectedPain: null,
+    log: [],
+    
+    // Animation
+    animTime: 0,
+    
+    // Modal
+    modalAction: null,
+    
+    // Settings panel
+    settingsOpen: false,
+};
+
+// ============================================
+// DOM REFERENCES
+// ============================================
+const $ = id => document.getElementById(id);
+const el = {
+    welcome: $('overlay-welcome'),
+    loading: $('overlay-loading'),
+    ready: $('overlay-ready'),
+    pain: $('overlay-pain'),
+    rest: $('overlay-rest'),
+    complete: $('overlay-complete'),
+    
+    videoBg: $('video-bg'),
+    video: $('video-clean'),
+    canvas: $('output-canvas'),
+    frame: $('portal-frame'),
+    view: $('portal-view'),
+    
+    btnHome: $('btn-home'),
+    btnAudio: $('btn-audio'),
+    btnSkip: $('btn-skip'),
+    btnTheme: $('btn-theme'),
+    btnSettings: $('btn-settings'),
+    settingsPanel: $('settings-panel'),
+    skipToast: $('skip-toast'),
+    
+    icon: $('instruction-icon'),
+    text: $('instruction-text'),
+    sub: $('instruction-sub'),
+    progress: $('exercise-progress'),
+    timer: $('session-timer'),
+    
+    accuracyValue: $('accuracy-value'),
+    
+    phaseDot1: $('phase-dot-1'),
+    phaseDot2: $('phase-dot-2'),
+    phaseLabel: $('phase-label'),
+    phaseIndicator: $('phase-indicator'),
+    
+    streak: $('stat-streak'),
+    done: $('stat-completed'),
+    streakCard: $('streak-card'),
+    
+    holdTimer: $('hold-timer'),
+    feedback: $('feedback-message'),
+    bar: $('progress-bar-fill'),
+    
+    resetInstruction: $('reset-instruction'),
+    resetText: $('reset-text'),
+    
+    readyCountdown: $('ready-countdown'),
+    readyIcon: $('ready-icon'),
+    readyName: $('ready-name'),
+    readyDesc: $('ready-desc'),
+    
+    restTimer: $('rest-timer'),
+    painAdvice: $('pain-advice'),
+    btnContinuePain: $('btn-continue-pain'),
+    
+    sumDone: $('sum-done'),
+    sumTime: $('sum-time'),
+    sumStreak: $('sum-streak'),
+    sumAccuracy: $('sum-accuracy'),
+    sumGrade: $('sum-grade'),
+    
+    loadMsg: $('loading-msg'),
+    disclaimerCheck: $('disclaimer-check'),
+    btnStart: $('btn-start'),
+    
+    toast: $('toast'),
+    toastMessage: $('toast-message'),
+    
+    modal: $('modal-confirm'),
+    modalTitle: $('modal-title'),
+    modalDesc: $('modal-desc'),
+    
+    zoneLegend: $('zone-legend'),
+};
+
+const ctx = el.canvas.getContext('2d');
+let audioCtx = null;
+
+// ============================================
+// TOAST NOTIFICATION (replaces alert)
+// ============================================
+function showToast(message, icon = '✅') {
+    el.toastMessage.textContent = message;
+    el.toast.querySelector('.toast-icon').textContent = icon;
+    el.toast.classList.add('show');
+    setTimeout(() => el.toast.classList.remove('show'), 3000);
+}
+
+// ============================================
+// ONBOARDING
+// ============================================
+function nextStep() {
+    state.step++;
+    updateStepUI();
+}
+
+function prevStep() {
+    state.step--;
+    updateStepUI();
+}
+
+function updateStepUI() {
+    document.querySelectorAll('.onboarding-step').forEach((s, i) => 
+        s.classList.toggle('active', i + 1 === state.step));
+    document.querySelectorAll('.onboarding-dot').forEach((d, i) => 
+        d.classList.toggle('active', i + 1 === state.step));
+}
+
+el.disclaimerCheck.addEventListener('change', e => {
+    el.btnStart.disabled = !e.target.checked;
+});
+
+// ============================================
+// INITIALIZATION
+// ============================================
+async function startApp() {
+    if (!el.disclaimerCheck.checked) return;
+    
+    el.welcome.classList.add('hidden');
+    el.loading.classList.remove('hidden');
+    
+    try {
+        el.loadMsg.textContent = 'Loading AI model...';
+        
+        const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js");
+        const fs = await vision.FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+        );
+        
+        state.handLandmarker = await vision.HandLandmarker.createFromOptions(fs, {
+            baseOptions: {
+                modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+                delegate: 'GPU'
+            },
+            runningMode: 'VIDEO',
+            numHands: 1
+        });
+        
+        el.loadMsg.textContent = 'Starting camera...';
+        
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720, facingMode: 'user' }
+        });
+        
+        el.videoBg.srcObject = stream;
+        el.video.srcObject = stream;
+        
+        await new Promise(resolve => { el.video.onloadeddata = resolve; });
+        
+        state.webcamRunning = true;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        el.loading.classList.add('hidden');
+        showControls();
+        beginSession();
+        
+    } catch (e) {
+        console.error('Init error:', e);
+        el.loadMsg.textContent = 'Error: ' + e.message;
+    }
+}
+
+function showControls() {
+    el.btnHome.classList.remove('hidden');
+    el.btnAudio.classList.remove('hidden');
+    el.btnSkip.classList.remove('hidden');
+    el.btnTheme.classList.remove('hidden');
+    el.btnSettings.classList.remove('hidden');
+    
+    // Apply saved settings to UI
+    updateAudioButtonState();
+    $('toggle-autoadvance').classList.toggle('on', settings.autoAdvance);
+    $('toggle-voice').classList.toggle('on', settings.voice);
+    $('toggle-sounds').classList.toggle('on', settings.sounds);
+    $('select-countdown').value = settings.countdownTime.toString();
+}
+
+function hideControls() {
+    el.btnHome.classList.add('hidden');
+    el.btnAudio.classList.add('hidden');
+    el.btnSkip.classList.add('hidden');
+    el.btnTheme.classList.add('hidden');
+    el.btnSettings.classList.add('hidden');
+    el.settingsPanel.classList.remove('show');
+}
+
+// ============================================
+// SESSION MANAGEMENT
+// ============================================
+function beginSession() {
+    state.exercises = selectExercises();
+    state.exIdx = 0;
+    state.completed = 0;
+    state.streak = 0;
+    state.bestStreak = 0;
+    state.startTime = Date.now();
+    state.log = [];
+    state.painLevels = [];
+    
+    showReadyScreen(0);
+}
+
+function showReadyScreen(exerciseIndex) {
+    state.screen = 'READY';
+    state.exIdx = exerciseIndex;
+    
+    const ex = state.exercises[exerciseIndex];
+    el.readyIcon.textContent = ex.icon;
+    el.readyName.textContent = ex.name;
+    el.readyDesc.textContent = ex.desc;
+    
+    el.frame.className = 'ready';
+    el.ready.classList.remove('hidden');
+    
+    let count = settings.countdownTime;  // Use settings instead of CONFIG
+    el.readyCountdown.textContent = count;
+    
+    const countdownInterval = setInterval(() => {
+        count--;
+        el.readyCountdown.textContent = count;
+        
+        if (count <= 0) {
+            clearInterval(countdownInterval);
+            el.ready.classList.add('hidden');
+            startExercise(exerciseIndex);
+        }
+    }, 1000);
+    
+    speak(`Next: ${ex.name}. ${ex.desc}. Make a fist to begin.`);
+}
+
+function startExercise(index) {
+    state.screen = 'SESSION';
+    state.exIdx = index;
+    
+    const ex = state.exercises[index];
+    
+    el.icon.textContent = ex.icon;
+    el.text.textContent = ex.name;
+    el.sub.textContent = ex.desc;
+    el.progress.textContent = `${index + 1} of ${state.exercises.length}`;
+    
+    // Start in RESET phase
+    state.phase = 'RESET';
+    state.resetComplete = false;
+    state.resetStartTime = 0;
+    
+    state.holding = false;
+    state.holdStart = 0;
+    state.progress = 0;
+    state.cooldown = false;
+    state.currentAcc = 0;
+    state.peakAcc = 0;
+    
+    // Initialize struggle tracking
+    state.exerciseStartTime = Date.now();
+    state.skipToastShown = false;
+    el.skipToast.classList.remove('show');
+    
+    updatePhaseUI();
+    
+    el.bar.style.width = '0%';
+    el.frame.className = 'reset';
+    
+    // Show reset instruction
+    el.resetInstruction.classList.add('show');
+    el.resetText.textContent = 'Make a fist to begin';
+    
+    if (!state.animationFrameId) {
+        gameLoop();
+    }
+}
+
+function updatePhaseUI() {
+    if (state.phase === 'RESET') {
+        el.phaseDot1.classList.add('active');
+        el.phaseDot1.classList.remove('complete');
+        el.phaseDot2.classList.remove('active', 'complete');
+        el.phaseLabel.textContent = 'Step 1: Make a fist';
+    } else {
+        el.phaseDot1.classList.remove('active');
+        el.phaseDot1.classList.add('complete');
+        el.phaseDot2.classList.add('active');
+        el.phaseDot2.classList.remove('complete');
+        
+        const ex = state.exercises[state.exIdx];
+        if (ex.targetFingers) {
+            const names = ex.targetFingers.map(i => FINGER_NAMES[i]).join(' & ');
+            el.phaseLabel.textContent = `Step 2: Extend ${names}`;
+        } else {
+            el.phaseLabel.textContent = 'Step 2: ' + ex.desc;
+        }
+    }
+}
+
+// ============================================
+// GAME LOOP
+// ============================================
+function gameLoop() {
+    if (!state.webcamRunning) return;
+    
+    state.animTime = Date.now() / 1000;
+    
+    if (state.screen === 'SESSION') {
+        try {
+            const results = state.handLandmarker.detectForVideo(el.video, performance.now());
+            
+            resizeCanvas();
+            ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+            
+            if (results.landmarks && results.landmarks.length > 0) {
+                state.landmarks = results.landmarks[0];
+                analyzeHand(state.landmarks);
+                
+                if (state.phase === 'RESET') {
+                    checkResetPhase();
+                } else {
+                    updateExecutePhase();
+                }
+                
+                renderVisuals(state.landmarks);
+            } else {
+                state.landmarks = null;
+                if (state.phase === 'EXECUTE') {
+                    state.holding = false;
+                    state.progress = Math.max(0, state.progress - 0.02);
+                    el.bar.style.width = (state.progress * 100) + '%';
+                }
+                updateAccuracyDisplay(0);
+            }
+        } catch (e) {}
+    }
+    
+    updateTimer();
+    state.animationFrameId = requestAnimationFrame(gameLoop);
+}
+
+function updateTimer() {
+    if (state.startTime) {
+        const s = Math.floor((Date.now() - state.startTime) / 1000);
+        el.timer.textContent = `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+    }
+}
+
+// ============================================
+// HAND ANALYSIS
+// ============================================
+function analyzeHand(lm) {
+    // Calculate curl for each finger
+    const getCurl = (base, mid, tip) => {
+        const v1 = { x: lm[mid].x - lm[base].x, y: lm[mid].y - lm[base].y };
+        const v2 = { x: lm[tip].x - lm[mid].x, y: lm[tip].y - lm[mid].y };
+        const dot = v1.x * v2.x + v1.y * v2.y;
+        const mag = Math.hypot(v1.x, v1.y) * Math.hypot(v2.x, v2.y);
+        return Math.max(0, Math.min(1, 1 - (dot / mag)));
     };
     
-    // ============================================
-    // DOM
-    // ============================================
-    const $ = id => document.getElementById(id);
-    const video = $('video');
-    const canvas = $('canvas');
-    const ctx = canvas.getContext('2d');
+    state.curls = [
+        getCurl(1, 2, 4),
+        getCurl(5, 6, 8),
+        getCurl(9, 10, 12),
+        getCurl(13, 14, 16),
+        getCurl(17, 18, 20)
+    ];
     
-    // ============================================
-    // MEDIAPIPE SETUP
-    // ============================================
-    async function initHands() {
-        $('loading-text').style.display = 'block';
-        $('start-btn').style.display = 'none';
-        
-        state.hands = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-        });
-        
-        state.hands.setOptions({
-            maxNumHands: 1,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.7,
-            minTrackingConfidence: 0.6
-        });
-        
-        state.hands.onResults(onResults);
-        
-        state.camera = new Camera(video, {
-            onFrame: async () => {
-                await state.hands.send({ image: video });
-            },
-            width: 1280,
-            height: 720
-        });
-        
-        await state.camera.start();
-        
-        $('start-overlay').classList.add('hidden');
+    // Calculate finger gaps
+    const tips = FINGER_TIPS;
+    state.fingerGaps = [];
+    for (let i = 0; i < tips.length - 1; i++) {
+        state.fingerGaps.push(Math.hypot(
+            lm[tips[i]].x - lm[tips[i + 1]].x,
+            lm[tips[i]].y - lm[tips[i + 1]].y
+        ));
     }
+    state.fingerSpread = state.fingerGaps.reduce((a, b) => a + b, 0) / 4;
     
-    // ============================================
-    // HAND PROCESSING
-    // ============================================
-    function onResults(results) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-            state.landmarks = results.multiHandLandmarks[0];
-            processHand(state.landmarks);
-        } else {
-            state.landmarks = null;
-            updateUI(null);
-        }
-    }
+    // Calculate pinch distances
+    state.pinchDistances = {
+        '4-8': Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y),
+        '4-12': Math.hypot(lm[4].x - lm[12].x, lm[4].y - lm[12].y),
+        '4-16': Math.hypot(lm[4].x - lm[16].x, lm[4].y - lm[16].y),
+        '4-20': Math.hypot(lm[4].x - lm[20].x, lm[4].y - lm[20].y),
+    };
+}
+
+// ============================================
+// RESET PHASE
+// ============================================
+function checkResetPhase() {
+    // Check if all fingers are curled (fist)
+    const allCurled = state.curls.every(c => c >= CONFIG.RESET_CURL_THRESHOLD);
     
-    function processHand(landmarks) {
-        const ex = EXERCISES[state.currentExercise];
-        let result;
-        
-        if (ex.type === 'spread') {
-            result = BoundaryEngine.evaluateSpread(landmarks);
-        } else {
-            result = BoundaryEngine.evaluateIsolation(landmarks, ex.targets);
+    if (allCurled) {
+        if (state.resetStartTime === 0) {
+            state.resetStartTime = Date.now();
         }
         
-        state.lastResult = result;
+        const elapsed = Date.now() - state.resetStartTime;
+        const progress = Math.min(1, elapsed / CONFIG.RESET_HOLD_MS);
         
-        // Update hold/progress
-        if (result.accuracy >= 0.65) {
-            if (!state.holding) {
-                state.holding = true;
-                state.holdStart = Date.now();
+        el.resetText.textContent = `Hold fist... ${Math.ceil((CONFIG.RESET_HOLD_MS - elapsed) / 1000)}`;
+        el.bar.style.width = (progress * 50) + '%'; // First half of bar
+        
+        if (elapsed >= CONFIG.RESET_HOLD_MS) {
+            // Reset complete!
+            state.phase = 'EXECUTE';
+            state.resetComplete = true;
+            el.resetInstruction.classList.remove('show');
+            el.frame.className = '';
+            updatePhaseUI();
+            
+            const ex = state.exercises[state.exIdx];
+            if (ex.targetFingers) {
+                const names = ex.targetFingers.map(i => FINGER_NAMES[i]).join(' and ');
+                speak(`Good! Now extend your ${names} only.`);
+            } else {
+                speak(`Good! Now ${ex.desc}`);
             }
-            const holdTime = Date.now() - state.holdStart;
-            state.progress = Math.min(1, holdTime / 2000); // 2 second hold
-        } else {
-            state.holding = false;
-            state.progress = Math.max(0, state.progress - 0.015); // Slow decay
         }
-        
-        // Render
-        if (state.showSkeleton) renderSkeleton(landmarks, result);
-        if (state.showBoundaries) renderBoundaries(landmarks, result);
-        
-        updateUI(result);
-        
-        // Success check
-        if (state.progress >= 1) {
-            showSuccess();
-        }
+    } else {
+        state.resetStartTime = 0;
+        el.resetText.textContent = 'Make a fist to begin';
+        el.bar.style.width = '0%';
     }
     
-    // ============================================
-    // RENDERING
-    // ============================================
-    function renderSkeleton(landmarks, result) {
-        const CONNECTIONS = [
-            [0, 1], [1, 2], [2, 3], [3, 4],       // Thumb
-            [0, 5], [5, 6], [6, 7], [7, 8],       // Index
-            [0, 9], [9, 10], [10, 11], [11, 12],  // Middle
-            [0, 13], [13, 14], [14, 15], [15, 16],// Ring
-            [0, 17], [17, 18], [18, 19], [19, 20],// Pinky
-            [5, 9], [9, 13], [13, 17]             // Palm
-        ];
+    updateAccuracyDisplay(allCurled ? 0.5 : 0);
+}
+
+// ============================================
+// EXECUTE PHASE
+// ============================================
+function updateExecutePhase() {
+    if (state.cooldown) return;
+    
+    const ex = state.exercises[state.exIdx];
+    
+    // Calculate accuracy based on exercise type
+    let accuracy = 0;
+    let isolationValid = true;
+    
+    if (ex.type === 'isolation') {
+        // Check target fingers are extended AND non-targets are curled
+        const targetExtended = ex.targetFingers.every(i => state.curls[i] < 0.35);
+        const nonTargetsCurled = state.curls.every((curl, i) => {
+            if (ex.targetFingers.includes(i)) return true; // Skip targets
+            return curl >= CONFIG.NON_TARGET_MAX_EXTENSION;
+        });
         
-        const skeletonColor = '#78dcb4';
+        if (!nonTargetsCurled) {
+    isolationValid = false;
+    // Keep accuracy based on target fingers only.
+    // Non-target fingers simply block "completion" when they're clearly too extended.
+} else if (targetExtended) {
+
+            // Calculate how well the target fingers are extended
+            const targetScore = ex.targetFingers.map(i => {
+                const curl = state.curls[i];
+                if (curl < 0.15) return 1;
+                if (curl < 0.25) return 0.9;
+                if (curl < 0.35) return 0.75;
+                return 0.5;
+            });
+            accuracy = targetScore.reduce((a, b) => a + b, 0) / targetScore.length;
+        } else {
+            // Partial extension
+            const targetScore = ex.targetFingers.map(i => Math.max(0, 1 - state.curls[i] * 1.5));
+            accuracy = targetScore.reduce((a, b) => a + b, 0) / targetScore.length * 0.6;
+        }
         
-        // Draw connections
+    } else if (ex.type === 'pinch') {
+        const [p1, p2] = ex.pinchPair;
+        const key = `${p1}-${p2}`;
+        const dist = state.pinchDistances[key] || 1;
+        
+        if (dist < 0.03) accuracy = 1;
+        else if (dist < 0.05) accuracy = 0.9;
+        else if (dist < 0.08) accuracy = 0.75;
+        else if (dist < 0.12) accuracy = 0.55;
+        else if (dist < 0.18) accuracy = 0.35;
+        else accuracy = 0.15;
+        
+    } else if (ex.type === 'spread') {
+        const avgSpread = state.fingerSpread;
+        const extended = state.curls.every(c => c < 0.30);
+        
+        if (extended && avgSpread > 0.14) accuracy = 1;
+        else if (extended && avgSpread > 0.10) accuracy = 0.85;
+        else if (extended && avgSpread > 0.07) accuracy = 0.65;
+        else if (extended) accuracy = 0.45;
+        else accuracy = Math.max(0.2, 1 - avg(state.curls));
+        
+    } else if (ex.type === 'flat') {
+        const extended = state.curls.every(c => c < 0.20);
+        const together = state.fingerSpread < 0.06;
+        
+        if (extended && together) accuracy = 1;
+        else if (extended) accuracy = 0.7;
+        else accuracy = Math.max(0.2, 1 - avg(state.curls));
+        
+    } else if (ex.type === 'fist') {
+        const curled = state.curls.every(c => c > 0.65);
+        if (curled) accuracy = 1;
+        else accuracy = avg(state.curls);
+    }
+    
+    state.currentAcc = accuracy;
+    if (accuracy > state.peakAcc) state.peakAcc = accuracy;
+    
+    updateAccuracyDisplay(accuracy);
+    
+    // Check for struggle - show skip suggestion after 8 seconds in yellow or below
+    const elapsed = Date.now() - state.exerciseStartTime;
+    if (state.phase === 'EXECUTE' && elapsed > CONFIG.STRUGGLE_TIME_MS && state.peakAcc < CONFIG.ZONE_BLUE && !state.skipToastShown) {
+        state.skipToastShown = true;
+        el.skipToast.classList.add('show');
+    }
+    
+    // Hold logic
+    const meetsThreshold = accuracy >= CONFIG.ZONE_YELLOW && isolationValid;
+    
+    if (meetsThreshold) {
+        if (!state.holding) {
+            state.holding = true;
+            state.holdStart = Date.now();
+        }
+        
+        const multiplier = 0.5 + accuracy * 0.5;
+        const holdTime = Date.now() - state.holdStart;
+        state.progress = Math.min(1, (holdTime / CONFIG.HOLD_DURATION_MS) * multiplier);
+        
+        // Success!
+        if (state.progress >= 1 && accuracy >= CONFIG.ZONE_BLUE) {
+            exerciseSuccess(accuracy);
+        }
+    } else {
+        state.holding = false;
+        // SLOW decay - doesn't reset progress completely on small mistakes
+        state.progress = Math.max(0, state.progress - CONFIG.PROGRESS_DECAY_RATE);
+    }
+    
+    // Update UI
+    el.bar.style.width = (50 + state.progress * 50) + '%'; // Second half of bar
+    
+    if (state.progress >= 1) {
+        el.frame.className = 'success';
+    } else if (state.holding) {
+        el.frame.className = 'holding';
+    } else {
+        el.frame.className = '';
+    }
+    
+    // Hold timer display
+    if (state.holding && state.progress < 1) {
+        const remaining = Math.ceil((1 - state.progress) * (CONFIG.HOLD_DURATION_MS / 1000));
+        el.holdTimer.textContent = remaining;
+        el.holdTimer.classList.add('show');
+    } else {
+        el.holdTimer.classList.remove('show');
+    }
+}
+
+function updateAccuracyDisplay(acc) {
+    const pct = Math.round(acc * 100);
+    el.accuracyValue.textContent = pct + '%';
+    
+    el.accuracyValue.classList.remove('green', 'blue', 'yellow', 'red');
+    if (acc >= CONFIG.ZONE_GREEN) el.accuracyValue.classList.add('green');
+    else if (acc >= CONFIG.ZONE_BLUE) el.accuracyValue.classList.add('blue');
+    else if (acc >= CONFIG.ZONE_YELLOW) el.accuracyValue.classList.add('yellow');
+    else el.accuracyValue.classList.add('red');
+}
+
+function avg(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+
+// ============================================
+// EXERCISE SUCCESS
+// ============================================
+function exerciseSuccess(acc) {
+    state.cooldown = true;
+    state.completed++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    
+    const ex = state.exercises[state.exIdx];
+    const pct = Math.round(acc * 100);
+    let grade = pct >= 90 ? 'A' : pct >= 80 ? 'A-' : pct >= 70 ? 'B+' : pct >= 60 ? 'B' : 'B-';
+    
+    state.log.push({ id: ex.id, name: ex.name, accuracy: pct, grade });
+    
+    const msgs = acc >= 0.85 
+        ? ['Perfect! 🌟', 'Excellent!', 'Amazing!'] 
+        : acc >= 0.70 
+            ? ['Great job!', 'Nice work!', 'Well done!']
+            : ['Good effort!', 'Keep going!', 'You did it!'];
+    
+    showFeedback(msgs[Math.floor(Math.random() * msgs.length)]);
+    playSound();
+    spawnParticles();
+    
+    el.done.textContent = state.completed;
+    el.streak.textContent = state.streak;
+    
+    setTimeout(() => {
+        const nextIdx = state.exIdx + 1;
+        
+        if (state.completed > 0 && state.completed % CONFIG.PAIN_CHECK_EVERY === 0 && nextIdx < state.exercises.length) {
+            showPainCheck();
+            return;
+        }
+        
+        if (nextIdx >= state.exercises.length) {
+            endSession();
+            return;
+        }
+        
+        showReadyScreen(nextIdx);
+        state.cooldown = false;
+    }, 1800);
+}
+
+function skipExercise() {
+    if (state.cooldown || state.screen !== 'SESSION') return;
+    
+    const ex = state.exercises[state.exIdx];
+    state.log.push({ id: ex.id, name: ex.name, accuracy: Math.round(state.peakAcc * 100), grade: 'SKIP', skipped: true });
+    state.streak = 0;
+    el.streak.textContent = '0';
+    
+    const nextIdx = state.exIdx + 1;
+    if (nextIdx >= state.exercises.length) {
+        endSession();
+    } else {
+        showReadyScreen(nextIdx);
+    }
+}
+
+// ============================================
+// VISUAL RENDERING
+// ============================================
+function resizeCanvas() {
+    if (el.canvas.width !== el.view.clientWidth) {
+        el.canvas.width = el.view.clientWidth;
+        el.canvas.height = el.view.clientHeight;
+    }
+}
+
+function project(pt) {
+    const w = el.canvas.width, h = el.canvas.height;
+    const scale = Math.max(w / 1280, h / 720);
+    const sw = 1280 * scale, sh = 720 * scale;
+    return { x: (w - sw) / 2 + (1 - pt.x) * sw, y: (h - sh) / 2 + pt.y * sh };
+}
+
+function renderVisuals(lm) {
+    const ex = state.exercises[state.exIdx];
+    
+    if (state.phase === 'RESET') {
+        renderResetVisuals(lm);
+    } else {
+        // Render based on exercise type with shaded zones
+        if (ex.showZone) {
+            if (ex.type === 'isolation') {
+                renderIsolationZone(lm, ex);
+            } else if (ex.type === 'pinch') {
+                renderPinchZone(lm, ex);
+            } else if (ex.type === 'spread') {
+                renderSpreadZone(lm, ex);
+            } else {
+                renderBasicSkeleton(lm);
+            }
+        } else {
+            renderBasicSkeleton(lm);
+        }
+    }
+}
+
+function renderResetVisuals(lm) {
+    // CONSISTENT mint green skeleton color - never red/green changes
+    const skeletonColor = '#78dcb4';
+    
+    // Show all fingers - progress shown via fill amount, not color change
+    FINGER_ARRAYS.forEach((finger, fIdx) => {
+        const curl = state.curls[fIdx];
+        const isCurled = curl >= CONFIG.RESET_CURL_THRESHOLD;
+        
         ctx.strokeStyle = skeletonColor;
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
         
-        for (const [i, j] of CONNECTIONS) {
-            const a = landmarks[i];
-            const b = landmarks[j];
+        // Draw finger
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
+        ctx.beginPath();
+        ctx.moveTo(wrist.x, wrist.y);
+        ctx.lineTo(base.x, base.y);
+        ctx.stroke();
+        
+        for (let i = 0; i < finger.length - 1; i++) {
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
             ctx.beginPath();
-            ctx.moveTo(a.x * canvas.width, a.y * canvas.height);
-            ctx.lineTo(b.x * canvas.width, b.y * canvas.height);
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
             ctx.stroke();
         }
         
-        // Draw joints
-        const ex = EXERCISES[state.currentExercise];
-        
-        landmarks.forEach((lm, idx) => {
-            const x = lm.x * canvas.width;
-            const y = lm.y * canvas.height;
+        // Draw joints - filled if curled (progress indicator)
+        finger.forEach(idx => {
+            const p = project(lm[idx]);
+            ctx.fillStyle = isCurled ? skeletonColor : 'rgba(120, 220, 180, 0.4)';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            ctx.fill();
             
-            // Determine if this is a target fingertip
-            const fingerIdx = getFingerFromNode(idx);
-            const isTargetTip = BoundaryEngine.TIPS.includes(idx) && ex.targets.includes(fingerIdx);
-            
-            const size = isTargetTip ? 10 : 6;
-            
-            // Glow for target tips
-            if (isTargetTip) {
-                ctx.shadowColor = skeletonColor;
-                ctx.shadowBlur = 15;
+            // White inner dot if curled (shows completion)
+            if (isCurled) {
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+                ctx.fill();
             }
+        });
+    });
+    
+    // Wrist
+    const wrist = project(lm[0]);
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function renderIsolationZone(lm, ex) {
+    const targets = ex.targetFingers;
+    const skeletonColor = '#78dcb4';  // Consistent mint green
+    
+    // Draw shaded zone between target fingers (if multiple)
+    if (targets.length >= 2) {
+        const tips = targets.map(i => project(lm[FINGER_TIPS[i]]));
+        const wrist = project(lm[0]);
+        
+        // Create polygon from tips to wrist
+        ctx.beginPath();
+        ctx.moveTo(tips[0].x, tips[0].y);
+        for (let i = 1; i < tips.length; i++) {
+            ctx.lineTo(tips[i].x, tips[i].y);
+        }
+        ctx.closePath();
+        
+        // Zone color based on accuracy (only the zone changes color!)
+        const color = getZoneColor(state.currentAcc);
+        ctx.fillStyle = color;
+        ctx.fill();
+        
+        // Draw percentage in zone
+        const centerX = tips.reduce((s, p) => s + p.x, 0) / tips.length;
+        const centerY = tips.reduce((s, p) => s + p.y, 0) / tips.length;
+        
+        ctx.font = 'bold 24px Nunito';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(Math.round(state.currentAcc * 100) + '%', centerX, centerY - 30);
+    }
+    
+    // Draw all fingers with CONSISTENT skeleton color
+    FINGER_ARRAYS.forEach((finger, fIdx) => {
+        const isTarget = targets.includes(fIdx);
+        
+        // Skeleton is always same mint green - no red/green changes
+        ctx.strokeStyle = skeletonColor;
+        ctx.lineWidth = isTarget ? 4 : 2;
+        ctx.lineCap = 'round';
+        
+        // Draw finger bones
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
+        ctx.beginPath();
+        ctx.moveTo(wrist.x, wrist.y);
+        ctx.lineTo(base.x, base.y);
+        ctx.stroke();
+        
+        for (let i = 0; i < finger.length - 1; i++) {
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        }
+        
+        // Draw joints with glow for targets
+        if (isTarget) {
+            ctx.shadowColor = skeletonColor;
+            ctx.shadowBlur = 15;
+        }
+        
+        finger.forEach((idx, jIdx) => {
+            const p = project(lm[idx]);
+            const size = (isTarget ? 8 : 5) * (1 + Math.sin(state.animTime * 4 + fIdx) * 0.15);
             
             ctx.fillStyle = skeletonColor;
             ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
             ctx.fill();
             
-            // White center for tips
-            if (BoundaryEngine.TIPS.includes(idx)) {
+            if (isTarget) {
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
-                ctx.arc(x, y, size * 0.4, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, size * 0.4, 0, Math.PI * 2);
                 ctx.fill();
             }
-            
-            ctx.shadowBlur = 0;
         });
-    }
-    
-    function getFingerFromNode(nodeIdx) {
-        if (nodeIdx >= 1 && nodeIdx <= 4) return 0;   // Thumb
-        if (nodeIdx >= 5 && nodeIdx <= 8) return 1;   // Index
-        if (nodeIdx >= 9 && nodeIdx <= 12) return 2;  // Middle
-        if (nodeIdx >= 13 && nodeIdx <= 16) return 3; // Ring
-        if (nodeIdx >= 17 && nodeIdx <= 20) return 4; // Pinky
-        return -1;
-    }
-    
-    function renderBoundaries(landmarks, result) {
-        const ex = EXERCISES[state.currentExercise];
-        const handFrame = result.handFrame;
         
-        // Draw boundary lines for non-target fingers
-        for (let i = 1; i < 5; i++) { // Skip thumb for now
-            if (ex.targets.includes(i)) continue; // Skip target fingers
-            
-            const finger = BoundaryEngine.FINGERS[BoundaryEngine.FINGER_ORDER[i]];
-            const base = landmarks[finger.base];
-            const tip = landmarks[finger.tip];
-            
-            const baseX = base.x * canvas.width;
-            const baseY = base.y * canvas.height;
-            const tipX = tip.x * canvas.width;
-            const tipY = tip.y * canvas.height;
-            
-            // Green boundary line
-            const greenY = baseY + (BoundaryEngine.ZONES.GREEN_THRESHOLD * handFrame.handHeight * canvas.height);
-            
-            // Yellow boundary line  
-            const yellowY = baseY + (BoundaryEngine.ZONES.YELLOW_THRESHOLD * handFrame.handHeight * canvas.height);
-            
-            // Draw lines
-            ctx.setLineDash([6, 4]);
-            
-            // Green line
-            ctx.strokeStyle = 'rgba(104, 200, 150, 0.6)';
-            ctx.lineWidth = 2;
+        ctx.shadowBlur = 0;
+    });
+    
+    // Wrist
+    const wrist = project(lm[0]);
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function renderPinchZone(lm, ex) {
+    const [p1Idx, p2Idx] = ex.pinchPair;
+    const p1 = project(lm[p1Idx]);
+    const p2 = project(lm[p2Idx]);
+    
+    const key = `${p1Idx}-${p2Idx}`;
+    const dist = state.pinchDistances[key] || 1;
+    
+    // Draw shaded triangle between thumb and target finger
+    const wrist = project(lm[0]);
+    
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.lineTo(wrist.x, wrist.y);
+    ctx.closePath();
+    
+    const color = getZoneColor(state.currentAcc);
+    ctx.fillStyle = color;
+    ctx.fill();
+    
+    // Draw dashed line between fingertips
+    ctx.setLineDash([8, 8]);
+    ctx.strokeStyle = getZoneSolidColor(state.currentAcc);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Percentage label
+    const midX = (p1.x + p2.x) / 2;
+    const midY = (p1.y + p2.y) / 2 - 20;
+    
+    ctx.font = 'bold 28px Nunito';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 4;
+    ctx.strokeText(Math.round(state.currentAcc * 100) + '%', midX, midY);
+    ctx.fillText(Math.round(state.currentAcc * 100) + '%', midX, midY);
+    
+    // Draw target circles around fingertips
+    [p1, p2].forEach(p => {
+        // Outer zone
+        ctx.fillStyle = 'rgba(240, 200, 100, 0.15)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 50, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Middle zone
+        ctx.fillStyle = 'rgba(100, 180, 230, 0.2)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 35, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner zone
+        ctx.fillStyle = 'rgba(104, 200, 150, 0.25)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Fingertip dot
+        ctx.fillStyle = getZoneSolidColor(state.currentAcc);
+        ctx.shadowColor = getZoneSolidColor(state.currentAcc);
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    });
+    
+    // Subdued skeleton
+    renderSubduedSkeleton(lm, [p1Idx, p2Idx]);
+}
+
+function renderSpreadZone(lm, ex) {
+    const tips = FINGER_TIPS.map(i => project(lm[i]));
+    const wrist = project(lm[0]);
+    const skeletonColor = '#78dcb4';  // Consistent mint green
+    
+    // Draw shaded zones between each pair of adjacent fingers
+    for (let i = 0; i < tips.length - 1; i++) {
+        const gap = state.fingerGaps[i];
+        let zoneAcc;
+        if (gap > 0.12) zoneAcc = 1;
+        else if (gap > 0.08) zoneAcc = 0.75;
+        else if (gap > 0.05) zoneAcc = 0.5;
+        else zoneAcc = 0.25;
+        
+        // Triangle between two fingertips and wrist
+        ctx.beginPath();
+        ctx.moveTo(tips[i].x, tips[i].y);
+        ctx.lineTo(tips[i + 1].x, tips[i + 1].y);
+        ctx.lineTo(wrist.x, wrist.y);
+        ctx.closePath();
+        
+        ctx.fillStyle = getZoneColor(zoneAcc);
+        ctx.fill();
+    }
+    
+    // Draw skeleton with CONSISTENT color
+    FINGER_ARRAYS.forEach((finger, fIdx) => {
+        ctx.strokeStyle = skeletonColor;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
+        ctx.beginPath();
+        ctx.moveTo(wrist.x, wrist.y);
+        ctx.lineTo(base.x, base.y);
+        ctx.stroke();
+        
+        for (let i = 0; i < finger.length - 1; i++) {
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
             ctx.beginPath();
-            ctx.moveTo(baseX - 25, greenY);
-            ctx.lineTo(baseX + 25, greenY);
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
             ctx.stroke();
-            
-            // Yellow line
-            ctx.strokeStyle = 'rgba(240, 200, 100, 0.6)';
-            ctx.beginPath();
-            ctx.moveTo(baseX - 20, yellowY);
-            ctx.lineTo(baseX + 20, yellowY);
-            ctx.stroke();
-            
-            ctx.setLineDash([]);
-            
-            // Draw zone fill if tip is in zone
-            const fingerResult = result.fingerResults[i];
-            if (fingerResult && !fingerResult.isTarget) {
-                const zoneColor = getZoneColor(fingerResult.zone);
-                
-                // Subtle zone highlight
-                ctx.fillStyle = zoneColor;
-                ctx.beginPath();
-                ctx.arc(tipX, tipY, 20, 0, Math.PI * 2);
-                ctx.fill();
-            }
         }
         
-        // Draw target zone for target fingers
-        ex.targets.forEach(fingerIdx => {
-            if (fingerIdx === 0) return; // Skip thumb special handling
-            
-            const tip = landmarks[BoundaryEngine.TIPS[fingerIdx]];
-            const x = tip.x * canvas.width;
-            const y = tip.y * canvas.height;
-            
-            const fingerResult = result.fingerResults[fingerIdx];
-            const zoneColor = getZoneColor(fingerResult.zone);
-            
-            // Pulsing target zone
-            const pulse = 1 + Math.sin(Date.now() / 200) * 0.1;
-            
-            ctx.fillStyle = zoneColor;
+        finger.forEach(idx => {
+            const p = project(lm[idx]);
+            ctx.fillStyle = skeletonColor;
             ctx.beginPath();
-            ctx.arc(x, y, 25 * pulse, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
             ctx.fill();
         });
-    }
+    });
     
-    function getZoneColor(zone) {
-        switch(zone) {
-            case 'GREEN': return 'rgba(104, 200, 150, 0.4)';
-            case 'BLUE': return 'rgba(100, 180, 230, 0.4)';
-            case 'YELLOW': return 'rgba(240, 200, 100, 0.4)';
-            case 'ORANGE': return 'rgba(240, 160, 100, 0.4)';
-            case 'RED': return 'rgba(230, 130, 130, 0.4)';
-            default: return 'rgba(200, 200, 200, 0.3)';
-        }
-    }
+    // Overall accuracy label
+    ctx.font = 'bold 24px Nunito';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText(Math.round(state.currentAcc * 100) + '%', wrist.x, wrist.y - 40);
     
-    // ============================================
-    // UI UPDATES
-    // ============================================
-    function updateUI(result) {
-        const ex = EXERCISES[state.currentExercise];
+    // Wrist
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function renderBasicSkeleton(lm) {
+    const skeletonColor = '#78dcb4';  // Consistent mint green
+    
+    FINGER_ARRAYS.forEach((finger, fIdx) => {
+        ctx.strokeStyle = skeletonColor;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
         
-        $('ex-icon').textContent = ex.icon;
-        $('ex-name').textContent = ex.name;
-        $('ex-desc').textContent = ex.desc;
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
+        ctx.beginPath();
+        ctx.moveTo(wrist.x, wrist.y);
+        ctx.lineTo(base.x, base.y);
+        ctx.stroke();
         
-        if (!result) {
-            $('accuracy').textContent = '--';
-            $('accuracy').className = 'accuracy-value';
-            $('progress-fill').style.width = '0%';
-            return;
+        for (let i = 0; i < finger.length - 1; i++) {
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
         }
         
-        // Accuracy
-        const pct = Math.round(result.accuracy * 100);
-        $('accuracy').textContent = pct + '%';
-        $('accuracy').className = 'accuracy-value ' + result.overallZone.toLowerCase();
-        
-        // Progress bar
-        $('progress-fill').style.width = (state.progress * 100) + '%';
-        
-        // Phase indicator
-        $('phase-1').className = 'phase-dot ' + (state.progress > 0 ? 'complete' : 'active');
-        $('phase-2').className = 'phase-dot ' + (state.progress >= 1 ? 'complete' : (state.progress > 0 ? 'active' : ''));
-        $('phase-label').textContent = state.progress >= 1 ? 'Complete!' : (state.holding ? 'Hold...' : 'Get ready');
-        
-        // Finger status bars
-        const fingerNames = ['thumb', 'index', 'middle', 'ring', 'pinky'];
-        result.fingerResults.forEach((fr, i) => {
-            const bar = $('bar-' + fingerNames[i]);
-            const zone = $('zone-' + fingerNames[i]);
-            
-            bar.style.width = (fr.score * 100) + '%';
-            bar.style.background = getZoneSolidColor(fr.zone);
-            
-            zone.textContent = fr.isTarget ? '🎯' : (fr.zone === 'GREEN' ? '✓' : fr.zone[0]);
+        finger.forEach(idx => {
+            const p = project(lm[idx]);
+            ctx.fillStyle = skeletonColor;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            ctx.fill();
         });
-    }
+    });
     
-    function getZoneSolidColor(zone) {
-        switch(zone) {
-            case 'GREEN': return '#68c896';
-            case 'BLUE': return '#64b4e6';
-            case 'YELLOW': return '#f0c864';
-            case 'ORANGE': return '#f0a050';
-            case 'RED': return '#e68282';
-            default: return '#ccc';
-        }
-    }
+    const wrist = project(lm[0]);
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(wrist.x, wrist.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function renderSubduedSkeleton(lm, excludePoints) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
     
-    function showSuccess() {
-        const msg = $('big-message');
-        msg.textContent = ['Perfect! 🌟', 'Excellent!', 'Great job!'][Math.floor(Math.random() * 3)];
-        msg.classList.add('show');
+    FINGER_ARRAYS.forEach(finger => {
+        const wrist = project(lm[0]);
+        const base = project(lm[finger[0]]);
         
-        setTimeout(() => {
-            msg.classList.remove('show');
-            nextExercise();
-        }, 1500);
-    }
-    
-    // ============================================
-    // NAVIGATION
-    // ============================================
-    function nextExercise() {
-        state.currentExercise = (state.currentExercise + 1) % EXERCISES.length;
-        resetExercise();
-    }
-    
-    function prevExercise() {
-        state.currentExercise = (state.currentExercise - 1 + EXERCISES.length) % EXERCISES.length;
-        resetExercise();
-    }
-    
-    function resetExercise() {
-        state.progress = 0;
-        state.holding = false;
-        state.holdStart = 0;
-    }
-    
-    // ============================================
-    // EVENT LISTENERS
-    // ============================================
-    $('start-btn').addEventListener('click', initHands);
-    $('btn-next').addEventListener('click', nextExercise);
-    $('btn-prev').addEventListener('click', prevExercise);
-    $('btn-skip').addEventListener('click', nextExercise);
-    
-    $('show-boundaries').addEventListener('change', (e) => {
-        state.showBoundaries = e.target.checked;
+        if (!excludePoints.includes(finger[0])) {
+            ctx.beginPath();
+            ctx.moveTo(wrist.x, wrist.y);
+            ctx.lineTo(base.x, base.y);
+            ctx.stroke();
+        }
+        
+        for (let i = 0; i < finger.length - 1; i++) {
+            if (excludePoints.includes(finger[i]) || excludePoints.includes(finger[i + 1])) continue;
+            const a = project(lm[finger[i]]);
+            const b = project(lm[finger[i + 1]]);
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+        }
     });
+}
+
+function getZoneColor(acc) {
+    if (acc >= CONFIG.ZONE_GREEN) return 'rgba(104, 200, 150, 0.5)';
+    if (acc >= CONFIG.ZONE_BLUE) return 'rgba(100, 180, 230, 0.5)';
+    if (acc >= CONFIG.ZONE_YELLOW) return 'rgba(240, 200, 100, 0.5)';
+    return 'rgba(230, 130, 130, 0.4)';
+}
+
+function getZoneSolidColor(acc) {
+    if (acc >= CONFIG.ZONE_GREEN) return '#68c896';
+    if (acc >= CONFIG.ZONE_BLUE) return '#64b4e6';
+    if (acc >= CONFIG.ZONE_YELLOW) return '#f0c864';
+    return '#e68282';
+}
+
+// ============================================
+// PAIN CHECK & REST
+// ============================================
+function showPainCheck() {
+    state.screen = 'PAIN';
+    state.selectedPain = null;
+    el.painAdvice.textContent = '';
+    el.btnContinuePain.disabled = true;
+    document.querySelectorAll('.pain-btn').forEach(b => b.classList.remove('selected'));
+    el.pain.classList.remove('hidden');
+}
+
+function selectPain(level) {
+    state.selectedPain = level;
+    state.painLevels.push({ time: Date.now(), level });
+    document.querySelectorAll('.pain-btn').forEach((b, i) => b.classList.toggle('selected', i === level));
+    const advice = [
+        "Excellent! You're doing great.",
+        "Some mild discomfort is normal.",
+        "Let's take it slower.",
+        "Please stop and rest."
+    ];
+    el.painAdvice.textContent = advice[level];
+    el.btnContinuePain.disabled = false;
+    el.btnContinuePain.textContent = level === 3 ? 'End Session' : 'Continue';
+}
+
+function continuePain() {
+    el.pain.classList.add('hidden');
+    if (state.selectedPain === 3) { endSession(); return; }
+    showRest();
+}
+
+let restInterval = null;
+function showRest() {
+    state.screen = 'REST';
+    let remaining = CONFIG.REST_SECONDS;
+    el.restTimer.textContent = remaining;
+    el.rest.classList.remove('hidden');
+    restInterval = setInterval(() => {
+        remaining--;
+        el.restTimer.textContent = remaining;
+        if (remaining <= 0) skipRest();
+    }, 1000);
+}
+
+function skipRest() {
+    if (restInterval) { clearInterval(restInterval); restInterval = null; }
+    el.rest.classList.add('hidden');
+    const nextIdx = state.exIdx + 1;
+    if (nextIdx >= state.exercises.length) endSession();
+    else { showReadyScreen(nextIdx); state.cooldown = false; }
+}
+
+// ============================================
+// SESSION END
+// ============================================
+function endSession() {
+    state.screen = 'COMPLETE';
+    hideControls();
     
-    $('show-skeleton').addEventListener('change', (e) => {
-        state.showSkeleton = e.target.checked;
-    });
+    if (state.animationFrameId) {
+        cancelAnimationFrame(state.animationFrameId);
+        state.animationFrameId = null;
+    }
     
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight') nextExercise();
-        if (e.key === 'ArrowLeft') prevExercise();
+    const duration = Math.floor((Date.now() - state.startTime) / 1000);
+    const valid = state.log.filter(l => !l.skipped);
+    const avgAcc = valid.length > 0 ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length : 0;
+    
+    let grade, gradeClass;
+    if (avgAcc >= 85) { grade = 'A'; gradeClass = 'grade-a'; }
+    else if (avgAcc >= 70) { grade = 'B+'; gradeClass = 'grade-b'; }
+    else if (avgAcc >= 55) { grade = 'B'; gradeClass = 'grade-b'; }
+    else { grade = 'C+'; gradeClass = 'grade-c'; }
+    
+    el.sumDone.textContent = state.completed;
+    el.sumTime.textContent = `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`;
+    el.sumStreak.textContent = state.bestStreak + ' 🔥';
+    el.sumAccuracy.textContent = Math.round(avgAcc) + '%';
+    el.sumGrade.textContent = grade;
+    el.sumGrade.className = 'grade-badge ' + gradeClass;
+    
+    el.complete.classList.remove('hidden');
+    
+    // Save silently (no alert!)
+    saveSessionResult(avgAcc, grade, duration);
+}
+
+function saveSessionResult(avgAcc, grade, duration) {
+    const result = {
+        completed: state.completed,
+        duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`,
+        grade: grade,
+        avgAccuracy: Math.round(avgAcc),
+        bestStreak: state.bestStreak,
+        exercises: state.log,
+        date: new Date().toISOString()
+    };
+    
+    try {
+        localStorage.setItem('handhero_lastSessionResult', JSON.stringify(result));
+        // Show toast instead of alert
+        showToast(`Session saved! ${state.completed} exercises, ${grade} grade`, '✅');
+    } catch (e) {
+        console.error('Save error:', e);
+    }
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+function goHome() {
+    window.location.href = 'handhero_dashboard.html';
+}
+
+function confirmRestart() {
+    showModal('Start New Session?', 'Ready for another round?', () => {
+        closeModal();
+        el.complete.classList.add('hidden');
+        showControls();
+        beginSession();
     });
-    </script>
+}
+
+function showModal(title, desc, onConfirm) {
+    el.modalTitle.textContent = title;
+    el.modalDesc.textContent = desc;
+    state.modalAction = onConfirm;
+    el.modal.classList.add('show');
+}
+
+function closeModal() {
+    el.modal.classList.remove('show');
+    state.modalAction = null;
+}
+
+function confirmModalAction() {
+    if (state.modalAction) state.modalAction();
+}
+
+function handleHomeClick() {
+    if (state.screen === 'SESSION' && state.completed > 0) {
+        showModal('Leave Session?', 'Your progress will be saved.', () => {
+            const duration = Math.floor((Date.now() - state.startTime) / 1000);
+            const valid = state.log.filter(l => !l.skipped);
+            const avgAcc = valid.length > 0 ? valid.reduce((s, l) => s + l.accuracy, 0) / valid.length : 0;
+            saveSessionResult(avgAcc, 'Incomplete', duration);
+            goHome();
+        });
+    } else {
+        goHome();
+    }
+}
+
+function exportReport() {
+    const duration = Math.floor((Date.now() - state.startTime) / 1000);
+    const txt = `HANDHERO SESSION REPORT\n${'='.repeat(40)}\nDate: ${new Date().toLocaleString()}\n\nSUMMARY\n${'-'.repeat(20)}\nExercises: ${state.completed}\nDuration: ${Math.floor(duration/60)}:${(duration%60).toString().padStart(2,'0')}\nBest Streak: ${state.bestStreak}\n\nDETAILS\n${'-'.repeat(20)}\n${state.log.map(l => `${l.name}: ${l.accuracy}% (${l.grade})`).join('\n')}\n\n---\nGenerated by HandHero`;
+    const blob = new Blob([txt], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `handhero-${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+}
+
+// ============================================
+// AUDIO & FEEDBACK
+// ============================================
+function showFeedback(text) {
+    el.feedback.textContent = text;
+    el.feedback.classList.add('show');
+    setTimeout(() => el.feedback.classList.remove('show'), 1200);
+}
+
+function spawnParticles() {
+    const colors = ['#68c896', '#64b4e6', '#f0c864', '#a8c99b'];
+    for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = (25 + Math.random() * 50) + '%';
+        p.style.top = (25 + Math.random() * 30) + '%';
+        p.style.width = p.style.height = (6 + Math.random() * 10) + 'px';
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        el.view.appendChild(p);
+        setTimeout(() => p.remove(), 2000);
+    }
+}
+
+function playSound() {
+    if (!audioCtx || !settings.sounds) return;  // Respect settings
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(523, audioCtx.currentTime);
+    o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+    o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
+    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    o.start(); o.stop(audioCtx.currentTime + 0.5);
+}
+
+// Toggle all audio (voice + sounds)
+function toggleAllAudio() {
+    const currentlyOn = settings.sounds || settings.voice;
+    settings.sounds = !currentlyOn;
+    settings.voice = !currentlyOn;
+    $('toggle-sounds').classList.toggle('on', settings.sounds);
+    $('toggle-voice').classList.toggle('on', settings.voice);
+    updateAudioButtonState();
+    saveSettings();
+}
+
+function speak(text) {
+    if (!settings.voice || !window.speechSynthesis) return;  // Respect settings
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.9;
+    speechSynthesis.speak(u);
+}
+
+// Skip suggestion helpers
+function acceptSkipSuggestion() {
+    el.skipToast.classList.remove('show');
+    skipExercise();
+}
+
+function dismissSkipSuggestion() {
+    el.skipToast.classList.remove('show');
+    state.skipToastShown = true; // Don't show again for this exercise
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+el.btnHome.addEventListener('click', handleHomeClick);
+el.btnAudio.addEventListener('click', toggleAllAudio);
+el.btnSkip.addEventListener('click', skipExercise);
+el.btnTheme.addEventListener('click', toggleTheme);
+el.btnSettings.addEventListener('click', toggleSettingsPanel);
+
+// Close settings panel when clicking outside
+document.addEventListener('click', (e) => {
+    if (!el.settingsPanel.contains(e.target) && !el.btnSettings.contains(e.target)) {
+        el.settingsPanel.classList.remove('show');
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') handleHomeClick();
+    if (e.key === 's' && state.screen === 'SESSION') skipExercise();
+});
+
+el.modal.addEventListener('click', (e) => {
+    if (e.target === el.modal) closeModal();
+});
+
+// ============================================
+// INIT
+// ============================================
+console.log('%c🌱 HandHero v5.0', 'font-size: 24px; font-weight: bold; color: #68c896;');
+console.log('%cShaded Accuracy Zones + Multi-Step Exercises', 'font-size: 14px; color: #64b4e6;');
+</script>
+<!-- PATCH: Relaxed Fist Reset (non-breaking) -->
+<script>
+// ===============================
+// RELAXED FIST RESET TUNING
+// Goal: allow a loose fist so users can quickly isolate fingers
+// No logic removal, only threshold relaxation + stability smoothing
+// ===============================
+
+// 1) Slightly relax curl requirement
+CONFIG.RESET_CURL_THRESHOLD = 0.45; // was 0.60
+
+// 2) Shorten hold time (less frustrating)
+CONFIG.RESET_HOLD_MS = 500; // was 800
+
+// 3) Allow one "imperfect" finger (camera ambiguity)
+const MAX_RELAXED_FINGERS = 1;
+
+// 4) Add temporal smoothing to avoid frame jitter
+let relaxedResetBuffer = [];
+const RESET_BUFFER_SIZE = 6;
+
+// Wrap original reset checker safely
+const _originalCheckResetPhase = checkResetPhase;
+
+checkResetPhase = function () {
+    // Count fingers that are reasonably curled
+    const curledCount = state.curls.filter(c => c >= CONFIG.RESET_CURL_THRESHOLD).length;
+
+    // Allow one finger to be slightly off
+    const relaxedCurled = curledCount >= (5 - MAX_RELAXED_FINGERS);
+
+    // Temporal smoothing (majority vote)
+    relaxedResetBuffer.push(relaxedCurled);
+    if (relaxedResetBuffer.length > RESET_BUFFER_SIZE) relaxedResetBuffer.shift();
+
+    const stableRelaxed = relaxedResetBuffer.filter(Boolean).length >= Math.ceil(RESET_BUFFER_SIZE * 0.6);
+
+    if (stableRelaxed) {
+        if (state.resetStartTime === 0) state.resetStartTime = Date.now();
+
+        const elapsed = Date.now() - state.resetStartTime;
+        const progress = Math.min(1, elapsed / CONFIG.RESET_HOLD_MS);
+
+        el.resetText.textContent = 'Loose fist detected';
+        el.bar.style.width = (progress * 50) + '%';
+
+        if (elapsed >= CONFIG.RESET_HOLD_MS) {
+            state.phase = 'EXECUTE';
+            state.resetComplete = true;
+            state.resetStartTime = 0;
+            relaxedResetBuffer = [];
+
+            el.resetInstruction.classList.remove('show');
+            el.frame.className = '';
+            updatePhaseUI();
+
+            const ex = state.exercises[state.exIdx];
+            if (ex.targetFingers) {
+                const names = ex.targetFingers.map(i => FINGER_NAMES[i]).join(' and ');
+                speak(`Good. Now extend ${names}.`);
+            } else {
+                speak(`Good. Now ${ex.desc}`);
+            }
+        }
+    } else {
+        state.resetStartTime = 0;
+        el.resetText.textContent = 'Relax fingers, then isolate';
+        el.bar.style.width = '0%';
+    }
+
+    updateAccuracyDisplay(stableRelaxed ? 0.4 : 0);
+};
+</script>
 </body>
 </html>
