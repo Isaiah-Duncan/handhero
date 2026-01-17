@@ -5,10 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HandHero | Your Hand Therapy Journey</title>
     <meta name="description" content="Track your hand therapy progress with personalized exercises and insights">
+    <!-- THEME: Prevent FOUC by setting theme before rendering -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('handhero_theme') || 
+                         (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.dataset.theme = theme;
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
+        /* THEME: CSS Variables for Light/Dark Mode */
+        :root[data-theme="light"] {
+            /* Core theme variables */
+            --bg: #fdfbf7;
+            --surface: #ffffff;
+            --surface-2: #faf8f5;
+            --text: #4a5568;
+            --muted: #718096;
+            --border: #e8e4df;
+            --primary: #87a878;
+            --primary-contrast: #ffffff;
+            --accent: #6b9960;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --success: #68b37a;
+            --warning: #e8b44d;
+            --danger: #d97b7b;
+            
+            /* Legacy color mappings for compatibility */
             --color-cream: #fdfbf7;
             --color-warm-white: #faf8f5;
             --color-sage: #87a878;
@@ -27,8 +52,6 @@
             --color-success: #68b37a;
             --color-warning: #e8b44d;
             --color-danger: #d97b7b;
-
-            /* Light mode colors (default) */
             --bg-primary: #fdfbf7;
             --bg-secondary: #ffffff;
             --bg-tertiary: #faf8f5;
@@ -40,10 +63,26 @@
             --scrollbar-thumb-hover: #b8b4ac;
         }
 
-        [data-theme="dark"] {
+        :root[data-theme="dark"] {
+            /* Core theme variables */
+            --bg: #1a1a1a;
+            --surface: #2a2a2a;
+            --surface-2: #333333;
+            --text: #e5e7eb;
+            --muted: #d1d5db;
+            --border: #404040;
+            --primary: #7cc08b;
+            --primary-contrast: #ffffff;
+            --accent: #6b9960;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --success: #68b37a;
+            --warning: #e8b44d;
+            --danger: #d97b7b;
+            
+            /* Legacy color mappings for compatibility */
             --color-cream: #1a1a1a;
             --color-warm-white: #2a2a2a;
-            --color-sage: #87a878;
+            --color-sage: #7cc08b;
             --color-sage-dark: #6b9960;
             --color-sage-light: #a8c99b;
             --color-sage-pale: #2d3a28;
@@ -59,8 +98,6 @@
             --color-success: #68b37a;
             --color-warning: #e8b44d;
             --color-danger: #d97b7b;
-
-            /* Dark mode colors */
             --bg-primary: #1a1a1a;
             --bg-secondary: #2a2a2a;
             --bg-tertiary: #333333;
@@ -76,8 +113,8 @@
         
         body { 
             font-family: 'Nunito', sans-serif; 
-            background-color: var(--color-cream); 
-            color: var(--color-slate); 
+            background-color: var(--bg); 
+            color: var(--text); 
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
         }
@@ -105,8 +142,8 @@
         /* Sidebar */
         .sidebar {
             width: 280px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             position: fixed;
@@ -119,7 +156,7 @@
 
         .sidebar-header {
             padding: 24px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
         }
 
         .logo {
@@ -142,12 +179,12 @@
         .logo-text {
             font-size: 1.4rem;
             font-weight: 800;
-            color: var(--color-slate);
+            color: var(--text);
         }
 
         .logo-sub {
             font-size: 0.7rem;
-            color: var(--color-slate-light);
+            color: var(--muted);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -214,13 +251,13 @@
 
         .sidebar-footer {
             padding: 16px;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--border);
         }
 
         /* Theme Toggle Button */
         .theme-toggle-container {
             padding: 12px 24px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
         }
 
         .theme-toggle {
@@ -233,10 +270,10 @@
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 600;
-            color: var(--text-primary);
+            color: var(--text);
             text-decoration: none;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
+            background: var(--surface-2);
+            border: 2px solid var(--border);
             width: 100%;
             text-align: left;
             font-family: inherit;
@@ -245,8 +282,8 @@
 
         .theme-toggle:hover {
             background: var(--color-sage-pale);
-            border-color: var(--color-sage);
-            color: var(--color-slate);
+            border-color: var(--primary);
+            color: var(--text);
         }
 
         .theme-toggle-left {
@@ -325,28 +362,28 @@
         .page-title {
             font-size: 1.8rem;
             font-weight: 800;
-            color: var(--color-slate);
+            color: var(--text);
             margin-bottom: 4px;
         }
 
         .page-subtitle {
             font-size: 1rem;
-            color: var(--color-slate-light);
+            color: var(--muted);
         }
 
         /* ============================================
            CARDS
            ============================================ */
         .card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 20px;
             padding: 24px;
             transition: all 0.2s;
         }
 
         .card:hover {
-            box-shadow: 0 8px 24px -8px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 24px -8px var(--shadow);
         }
 
         .card-header {
@@ -359,19 +396,19 @@
         .card-title {
             font-size: 1.1rem;
             font-weight: 700;
-            color: var(--color-slate);
+            color: var(--text);
         }
 
         .card-action {
             font-size: 0.85rem;
             font-weight: 600;
-            color: var(--color-sage);
+            color: var(--primary);
             cursor: pointer;
             transition: color 0.2s;
         }
 
         .card-action:hover {
-            color: var(--color-sage-dark);
+            color: var(--accent);
         }
 
         /* ============================================
@@ -385,8 +422,8 @@
         }
 
         .stat-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 20px;
             padding: 24px;
             position: relative;
@@ -424,14 +461,14 @@
         .stat-value {
             font-size: 2rem;
             font-weight: 800;
-            color: var(--color-slate);
+            color: var(--text);
             line-height: 1;
             margin-bottom: 4px;
         }
 
         .stat-label {
             font-size: 0.85rem;
-            color: var(--color-slate-light);
+            color: var(--muted);
             font-weight: 600;
         }
 
@@ -460,9 +497,9 @@
            START SESSION CARD
            ============================================ */
         .start-session-card {
-            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
             border: none;
-            color: white;
+            color: var(--primary-contrast);
             padding: 32px;
             display: flex;
             align-items: center;
@@ -473,7 +510,7 @@
 
         .start-session-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 16px 40px -8px rgba(135, 168, 120, 0.4);
+            box-shadow: 0 16px 40px -8px var(--shadow);
         }
 
         .start-session-icon {
@@ -799,17 +836,17 @@
         .form-input {
             width: 100%;
             padding: 14px 18px;
-            border: 2px solid var(--border-color);
+            border: 2px solid var(--border);
             border-radius: 14px;
             font-size: 1rem;
             font-family: inherit;
             transition: all 0.2s;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
+            background: var(--surface);
+            color: var(--text);
         }
 
         .form-input:focus {
-            border-color: var(--color-sage);
+            border-color: var(--primary);
             outline: none;
         }
 
@@ -905,25 +942,25 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
-            color: white;
-            box-shadow: 0 8px 24px -4px rgba(135, 168, 120, 0.4);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: var(--primary-contrast);
+            box-shadow: 0 8px 24px -4px var(--shadow);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 28px -4px rgba(135, 168, 120, 0.5);
+            box-shadow: 0 12px 28px -4px var(--shadow);
         }
 
         .btn-secondary {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 2px solid var(--border-color);
+            background: var(--surface);
+            color: var(--text);
+            border: 2px solid var(--border);
         }
 
         .btn-secondary:hover {
-            background: var(--bg-tertiary);
-            border-color: var(--color-sage);
+            background: var(--surface-2);
+            border-color: var(--primary);
         }
 
         .btn-danger {
@@ -1618,6 +1655,24 @@
                                 <option value="normal" selected>Normal - Balanced</option>
                                 <option value="hard">Hard - More precise</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="profile-section-title">🌓 Appearance</div>
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 12px 0;">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text);">Theme</div>
+                                    <div style="font-size: 0.8rem; color: var(--muted); margin-top: 2px;">Light or Dark mode</div>
+                                </div>
+                                <button id="settings-theme-toggle" type="button" class="theme-toggle" onclick="toggleTheme()" style="width: auto; min-width: 140px; justify-content: center;">
+                                    <div class="theme-toggle-left">
+                                        <span class="theme-toggle-icon" id="settings-theme-icon">🌙</span>
+                                        <span id="settings-theme-text">Dark Mode</span>
+                                    </div>
+                                </button>
+                            </label>
                         </div>
                     </div>
 
@@ -2330,46 +2385,58 @@
     // ============================================
     // THEME TOGGLE
     // ============================================
-    const themeStorageKey = 'handhero-theme';
+    // THEME: Single source of truth - localStorage key 'handhero_theme'
+    const THEME_STORAGE_KEY = 'handhero_theme';
 
     function getPreferredTheme() {
-        const stored = localStorage.getItem(themeStorageKey);
+        const stored = localStorage.getItem(THEME_STORAGE_KEY);
         if (stored === 'light' || stored === 'dark') return stored;
-        const legacy = Store.get('theme', null);
-        if (legacy === 'light' || legacy === 'dark') return legacy;
+        // Optional: respect system preference if no saved preference
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
     function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem(themeStorageKey, theme);
-        Store.set('theme', theme);
+        // THEME: Set dataset.theme on root element
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
         updateThemeUI(theme);
     }
 
     function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || getPreferredTheme();
+        const currentTheme = document.documentElement.dataset.theme || getPreferredTheme();
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
         applyTheme(newTheme);
-        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', newTheme === 'dark' ? 'dYOT' : '?~??,?');
+        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', newTheme === 'dark' ? '🌙' : '☀️');
     }
 
     function updateThemeUI(theme) {
-        const icon = document.getElementById('theme-icon');
-        const text = document.getElementById('theme-text');
-        const button = document.getElementById('theme-toggle-btn');
+        // Update sidebar toggle
+        const sidebarIcon = document.getElementById('theme-icon');
+        const sidebarText = document.getElementById('theme-text');
+        const sidebarButton = document.getElementById('theme-toggle-btn');
+        
+        // Update settings page toggle
+        const settingsIcon = document.getElementById('settings-theme-icon');
+        const settingsText = document.getElementById('settings-theme-text');
+        const settingsButton = document.getElementById('settings-theme-toggle');
 
         if (theme === 'dark') {
-            icon.textContent = '?~??,?';
-            text.textContent = 'Light Mode';
+            if (sidebarIcon) sidebarIcon.textContent = '☀️';
+            if (sidebarText) sidebarText.textContent = 'Light Mode';
+            if (settingsIcon) settingsIcon.textContent = '☀️';
+            if (settingsText) settingsText.textContent = 'Light Mode';
         } else {
-            icon.textContent = 'dYOT';
-            text.textContent = 'Dark Mode';
+            if (sidebarIcon) sidebarIcon.textContent = '🌙';
+            if (sidebarText) sidebarText.textContent = 'Dark Mode';
+            if (settingsIcon) settingsIcon.textContent = '🌙';
+            if (settingsText) settingsText.textContent = 'Dark Mode';
         }
 
-        if (button) {
-            button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+        if (sidebarButton) {
+            sidebarButton.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+        }
+        if (settingsButton) {
+            settingsButton.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
         }
     }
 
