@@ -218,34 +218,52 @@
         }
 
         /* Theme Toggle Button */
+        .theme-toggle-container {
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
         .theme-toggle {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
             padding: 12px 16px;
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 600;
-            color: var(--color-slate-light);
+            color: var(--text-primary);
             text-decoration: none;
-            background: none;
-            border: none;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
             width: 100%;
             text-align: left;
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
         .theme-toggle:hover {
             background: var(--color-sage-pale);
+            border-color: var(--color-sage);
             color: var(--color-slate);
         }
 
+        .theme-toggle-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .theme-toggle-icon {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             width: 24px;
             text-align: center;
+        }
+
+        .theme-toggle-arrow {
+            font-size: 1rem;
+            opacity: 0.5;
         }
 
         .user-card {
@@ -1302,6 +1320,17 @@
                 </div>
             </div>
 
+            <!-- Theme Toggle at top -->
+            <div class="theme-toggle-container">
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <div class="theme-toggle-left">
+                        <span class="theme-toggle-icon" id="theme-icon">🌙</span>
+                        <span id="theme-text">Dark Mode</span>
+                    </div>
+                    <span class="theme-toggle-arrow">→</span>
+                </button>
+            </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">Menu</div>
@@ -1333,10 +1362,6 @@
                         <span class="nav-item-icon">⚙️</span>
                         Settings
                     </a>
-                    <button class="theme-toggle" onclick="toggleTheme()">
-                        <span class="theme-toggle-icon" id="theme-icon">🌙</span>
-                        <span id="theme-text">Dark Mode</span>
-                    </button>
                 </div>
             </nav>
 
