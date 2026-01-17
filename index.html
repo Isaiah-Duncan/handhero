@@ -13,26 +13,72 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --bg-start: #fdfbf7;
+      --bg-end: #e8f0e5;
+      --card-bg: #ffffff;
+      --card-border: #e8e4df;
+      --text-main: #4a5568;
+      --text-muted: #6b7280;
+      --text-soft: #9ca3af;
+      --logo-start: #87a878;
+      --logo-end: #6b9960;
+      --btn-shadow: rgba(135, 168, 120, 0.45);
+    }
+    [data-theme="dark"] {
+      --bg-start: #111827;
+      --bg-end: #0b1220;
+      --card-bg: #0f172a;
+      --card-border: #1f2937;
+      --text-main: #e5e7eb;
+      --text-muted: #cbd5f5;
+      --text-soft: #94a3b8;
+      --logo-start: #7cc08b;
+      --logo-end: #4f9467;
+      --btn-shadow: rgba(124, 192, 139, 0.25);
+    }
     body {
       font-family: 'Nunito', sans-serif;
-      background: linear-gradient(135deg, #fdfbf7 0%, #e8f0e5 100%);
-      color: #4a5568;
+      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text-main);
       -webkit-font-smoothing: antialiased;
+      transition: background 300ms ease, color 300ms ease;
+    }
+    .theme-card {
+      background: var(--card-bg);
+      border-color: var(--card-border);
+      transition: background 300ms ease, border-color 300ms ease;
+    }
+    .theme-muted {
+      color: var(--text-muted);
+    }
+    .theme-soft {
+      color: var(--text-soft);
+    }
+    .theme-logo {
+      background: linear-gradient(135deg, var(--logo-start) 0%, var(--logo-end) 100%);
+    }
+    .theme-toggle {
+      background: var(--card-bg);
+      border-color: var(--card-border);
+      color: var(--text-main);
     }
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center px-6">
 
-  <main class="w-full max-w-xl bg-white border border-[#e8e4df] rounded-3xl p-10 shadow-xl">
+  <main class="w-full max-w-xl theme-card border rounded-3xl p-10 shadow-xl relative">
+    <button id="themeToggle" type="button" aria-pressed="false" class="theme-toggle border rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wide absolute right-6 top-6 transition">
+      Dark mode
+    </button>
 
     <!-- Logo -->
     <div class="text-center mb-8">
-      <div class="mx-auto mb-4 w-20 h-20 rounded-2xl flex items-center justify-center text-4xl"
-           style="background: linear-gradient(135deg, #87a878 0%, #6b9960 100%);">
+      <div class="mx-auto mb-4 w-20 h-20 rounded-2xl flex items-center justify-center text-4xl theme-logo">
         🌱
       </div>
       <h1 class="text-3xl font-extrabold mb-2">HandHero</h1>
-      <p class="text-gray-500">Your gentle hand therapy companion</p>
+      <p class="theme-muted">Your gentle hand therapy companion</p>
     </div>
 
     <!-- Value proposition -->
@@ -40,7 +86,7 @@
       <p>
         HandHero helps you practice gentle hand exercises using your camera for real-time guidance.
       </p>
-      <p class="text-sm text-gray-500">
+      <p class="text-sm theme-muted">
         Designed for daily mobility support — not diagnosis or medical treatment.
       </p>
     </div>
@@ -49,17 +95,17 @@
     <div class="space-y-4">
       <a href="handhero_dashboard.html"
          class="block w-full text-center py-4 rounded-2xl font-bold text-white transition"
-         style="background: linear-gradient(135deg, #87a878 0%, #6b9960 100%); box-shadow: 0 12px 28px -6px rgba(135,168,120,0.45);">
+         style="background: linear-gradient(135deg, var(--logo-start) 0%, var(--logo-end) 100%); box-shadow: 0 12px 28px -6px var(--btn-shadow);">
         Continue to Dashboard
       </a>
 
-      <p class="text-center text-sm text-gray-400">
+      <p class="text-center text-sm theme-soft">
         You will be able to sign in or create an account on the next screen
       </p>
     </div>
 
     <!-- Trust / disclaimer -->
-    <div class="mt-10 text-xs text-gray-400 text-center leading-relaxed">
+    <div class="mt-10 text-xs theme-soft text-center leading-relaxed">
       <p class="mb-2">
         HandHero is not a medical device and does not provide diagnosis or treatment.
         Stop exercising if you feel pain or discomfort.
@@ -73,5 +119,33 @@
 
   </main>
 
+  <script>
+    const root = document.documentElement;
+    const toggle = document.getElementById('themeToggle');
+    const storageKey = 'handhero-theme';
+    const getPreferredTheme = () => {
+      const stored = localStorage.getItem(storageKey);
+      if (stored === 'light' || stored === 'dark') return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+    const applyTheme = (theme) => {
+      if (theme === 'dark') {
+        root.setAttribute('data-theme', 'dark');
+        toggle.textContent = 'Light mode';
+        toggle.setAttribute('aria-pressed', 'true');
+      } else {
+        root.removeAttribute('data-theme');
+        toggle.textContent = 'Dark mode';
+        toggle.setAttribute('aria-pressed', 'false');
+      }
+    };
+    const currentTheme = getPreferredTheme();
+    applyTheme(currentTheme);
+    toggle.addEventListener('click', () => {
+      const nextTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(storageKey, nextTheme);
+      applyTheme(nextTheme);
+    });
+  </script>
 </body>
 </html>

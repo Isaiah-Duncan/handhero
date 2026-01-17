@@ -1322,7 +1322,7 @@
 
             <!-- Theme Toggle at top -->
             <div class="theme-toggle-container">
-                <button class="theme-toggle" onclick="toggleTheme()">
+                <button id="theme-toggle-btn" type="button" class="theme-toggle" onclick="toggleTheme()" aria-pressed="false">
                     <div class="theme-toggle-left">
                         <span class="theme-toggle-icon" id="theme-icon">🌙</span>
                         <span id="theme-text">Dark Mode</span>
@@ -2330,34 +2330,52 @@
     // ============================================
     // THEME TOGGLE
     // ============================================
+    const themeStorageKey = 'handhero-theme';
+
+    function getPreferredTheme() {
+        const stored = localStorage.getItem(themeStorageKey);
+        if (stored === 'light' || stored === 'dark') return stored;
+        const legacy = Store.get('theme', null);
+        if (legacy === 'light' || legacy === 'dark') return legacy;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem(themeStorageKey, theme);
+        Store.set('theme', theme);
+        updateThemeUI(theme);
+    }
+
     function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const currentTheme = document.documentElement.getAttribute('data-theme') || getPreferredTheme();
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-        document.documentElement.setAttribute('data-theme', newTheme);
-        Store.set('theme', newTheme);
-
-        updateThemeUI(newTheme);
-        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', newTheme === 'dark' ? '🌙' : '☀️');
+        applyTheme(newTheme);
+        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', newTheme === 'dark' ? 'dYOT' : '?~??,?');
     }
 
     function updateThemeUI(theme) {
         const icon = document.getElementById('theme-icon');
         const text = document.getElementById('theme-text');
+        const button = document.getElementById('theme-toggle-btn');
 
         if (theme === 'dark') {
-            icon.textContent = '☀️';
+            icon.textContent = '?~??,?';
             text.textContent = 'Light Mode';
         } else {
-            icon.textContent = '🌙';
+            icon.textContent = 'dYOT';
             text.textContent = 'Dark Mode';
+        }
+
+        if (button) {
+            button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
         }
     }
 
     function initTheme() {
-        const savedTheme = Store.get('theme', 'light');
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeUI(savedTheme);
+        const savedTheme = getPreferredTheme();
+        applyTheme(savedTheme);
     }
 
     // ============================================
