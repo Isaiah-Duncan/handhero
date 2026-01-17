@@ -5,35 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HandHero | Your Hand Therapy Journey</title>
     <meta name="description" content="Track your hand therapy progress with personalized exercises and insights">
-    <!-- THEME: Prevent FOUC by setting theme before rendering -->
-    <script>
-        (function() {
-            const theme = localStorage.getItem('handhero_theme') || 
-                         (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            document.documentElement.dataset.theme = theme;
-        })();
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* THEME: CSS Variables for Light/Dark Mode */
-        :root[data-theme="light"] {
-            /* Core theme variables */
-            --bg: #fdfbf7;
-            --surface: #ffffff;
-            --surface-2: #faf8f5;
-            --text: #4a5568;
-            --muted: #718096;
-            --border: #e8e4df;
-            --primary: #87a878;
-            --primary-contrast: #ffffff;
-            --accent: #6b9960;
-            --shadow: rgba(0, 0, 0, 0.08);
-            --success: #68b37a;
-            --warning: #e8b44d;
-            --danger: #d97b7b;
-            
-            /* Legacy color mappings for compatibility */
+        :root {
             --color-cream: #fdfbf7;
             --color-warm-white: #faf8f5;
             --color-sage: #87a878;
@@ -52,6 +27,8 @@
             --color-success: #68b37a;
             --color-warning: #e8b44d;
             --color-danger: #d97b7b;
+
+            /* Light mode colors (default) */
             --bg-primary: #fdfbf7;
             --bg-secondary: #ffffff;
             --bg-tertiary: #faf8f5;
@@ -63,26 +40,10 @@
             --scrollbar-thumb-hover: #b8b4ac;
         }
 
-        :root[data-theme="dark"] {
-            /* Core theme variables */
-            --bg: #1a1a1a;
-            --surface: #2a2a2a;
-            --surface-2: #333333;
-            --text: #e5e7eb;
-            --muted: #d1d5db;
-            --border: #404040;
-            --primary: #7cc08b;
-            --primary-contrast: #ffffff;
-            --accent: #6b9960;
-            --shadow: rgba(0, 0, 0, 0.3);
-            --success: #68b37a;
-            --warning: #e8b44d;
-            --danger: #d97b7b;
-            
-            /* Legacy color mappings for compatibility */
+        [data-theme="dark"] {
             --color-cream: #1a1a1a;
             --color-warm-white: #2a2a2a;
-            --color-sage: #7cc08b;
+            --color-sage: #87a878;
             --color-sage-dark: #6b9960;
             --color-sage-light: #a8c99b;
             --color-sage-pale: #2d3a28;
@@ -98,6 +59,8 @@
             --color-success: #68b37a;
             --color-warning: #e8b44d;
             --color-danger: #d97b7b;
+
+            /* Dark mode colors */
             --bg-primary: #1a1a1a;
             --bg-secondary: #2a2a2a;
             --bg-tertiary: #333333;
@@ -113,8 +76,8 @@
         
         body { 
             font-family: 'Nunito', sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text); 
+            background-color: var(--color-cream); 
+            color: var(--color-slate); 
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
         }
@@ -142,8 +105,8 @@
         /* Sidebar */
         .sidebar {
             width: 280px;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             position: fixed;
@@ -156,7 +119,7 @@
 
         .sidebar-header {
             padding: 24px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border-color);
         }
 
         .logo {
@@ -179,12 +142,12 @@
         .logo-text {
             font-size: 1.4rem;
             font-weight: 800;
-            color: var(--text);
+            color: var(--color-slate);
         }
 
         .logo-sub {
             font-size: 0.7rem;
-            color: var(--muted);
+            color: var(--color-slate-light);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -251,13 +214,13 @@
 
         .sidebar-footer {
             padding: 16px;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--border-color);
         }
 
         /* Theme Toggle Button */
         .theme-toggle-container {
             padding: 12px 24px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border-color);
         }
 
         .theme-toggle {
@@ -270,10 +233,10 @@
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 600;
-            color: var(--text);
+            color: var(--text-primary);
             text-decoration: none;
-            background: var(--surface-2);
-            border: 2px solid var(--border);
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
             width: 100%;
             text-align: left;
             font-family: inherit;
@@ -282,8 +245,8 @@
 
         .theme-toggle:hover {
             background: var(--color-sage-pale);
-            border-color: var(--primary);
-            color: var(--text);
+            border-color: var(--color-sage);
+            color: var(--color-slate);
         }
 
         .theme-toggle-left {
@@ -362,28 +325,28 @@
         .page-title {
             font-size: 1.8rem;
             font-weight: 800;
-            color: var(--text);
+            color: var(--color-slate);
             margin-bottom: 4px;
         }
 
         .page-subtitle {
             font-size: 1rem;
-            color: var(--muted);
+            color: var(--color-slate-light);
         }
 
         /* ============================================
            CARDS
            ============================================ */
         .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 24px;
             transition: all 0.2s;
         }
 
         .card:hover {
-            box-shadow: 0 8px 24px -8px var(--shadow);
+            box-shadow: 0 8px 24px -8px rgba(0,0,0,0.08);
         }
 
         .card-header {
@@ -396,19 +359,19 @@
         .card-title {
             font-size: 1.1rem;
             font-weight: 700;
-            color: var(--text);
+            color: var(--color-slate);
         }
 
         .card-action {
             font-size: 0.85rem;
             font-weight: 600;
-            color: var(--primary);
+            color: var(--color-sage);
             cursor: pointer;
             transition: color 0.2s;
         }
 
         .card-action:hover {
-            color: var(--accent);
+            color: var(--color-sage-dark);
         }
 
         /* ============================================
@@ -422,8 +385,8 @@
         }
 
         .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 24px;
             position: relative;
@@ -461,14 +424,14 @@
         .stat-value {
             font-size: 2rem;
             font-weight: 800;
-            color: var(--text);
+            color: var(--color-slate);
             line-height: 1;
             margin-bottom: 4px;
         }
 
         .stat-label {
             font-size: 0.85rem;
-            color: var(--muted);
+            color: var(--color-slate-light);
             font-weight: 600;
         }
 
@@ -497,9 +460,9 @@
            START SESSION CARD
            ============================================ */
         .start-session-card {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
             border: none;
-            color: var(--primary-contrast);
+            color: white;
             padding: 32px;
             display: flex;
             align-items: center;
@@ -510,7 +473,7 @@
 
         .start-session-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 16px 40px -8px var(--shadow);
+            box-shadow: 0 16px 40px -8px rgba(135, 168, 120, 0.4);
         }
 
         .start-session-icon {
@@ -836,17 +799,17 @@
         .form-input {
             width: 100%;
             padding: 14px 18px;
-            border: 2px solid var(--border);
+            border: 2px solid var(--border-color);
             border-radius: 14px;
             font-size: 1rem;
             font-family: inherit;
             transition: all 0.2s;
-            background: var(--surface);
-            color: var(--text);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         .form-input:focus {
-            border-color: var(--primary);
+            border-color: var(--color-sage);
             outline: none;
         }
 
@@ -942,25 +905,25 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            color: var(--primary-contrast);
-            box-shadow: 0 8px 24px -4px var(--shadow);
+            background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%);
+            color: white;
+            box-shadow: 0 8px 24px -4px rgba(135, 168, 120, 0.4);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 28px -4px var(--shadow);
+            box-shadow: 0 12px 28px -4px rgba(135, 168, 120, 0.5);
         }
 
         .btn-secondary {
-            background: var(--surface);
-            color: var(--text);
-            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
         }
 
         .btn-secondary:hover {
-            background: var(--surface-2);
-            border-color: var(--primary);
+            background: var(--bg-tertiary);
+            border-color: var(--color-sage);
         }
 
         .btn-danger {
@@ -981,16 +944,17 @@
             align-items: center;
             justify-content: center;
             padding: 24px;
-            background: linear-gradient(135deg, var(--color-cream) 0%, var(--color-sage-pale) 100%);
+            background: linear-gradient(135deg, var(--bg) 0%, var(--color-sage-pale) 100%);
         }
 
         .auth-card {
-            background: var(--bg-secondary);
+            background: var(--surface);
             border-radius: 28px;
             padding: 48px;
             width: 100%;
             max-width: 440px;
-            box-shadow: 0 20px 60px -10px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 60px -10px var(--shadow);
+            border: 1px solid var(--border);
         }
 
         .auth-logo {
@@ -1023,7 +987,7 @@
 
         .auth-tabs {
             display: flex;
-            background: var(--bg-tertiary);
+            background: var(--surface-2);
             border-radius: 12px;
             padding: 4px;
             margin-bottom: 28px;
@@ -1037,13 +1001,18 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
-            color: var(--color-slate-light);
+            color: var(--muted);
+            user-select: none;
+        }
+
+        .auth-tab:hover {
+            color: var(--text);
         }
 
         .auth-tab.active {
-            background: var(--bg-secondary);
-            color: var(--color-sage);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: var(--surface);
+            color: var(--primary);
+            box-shadow: 0 2px 8px var(--shadow);
         }
 
         .auth-form {
@@ -1086,6 +1055,75 @@
 
         .auth-footer a:hover {
             text-decoration: underline;
+        }
+
+        /* Social Login Buttons */
+        .social-login {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn-social {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            width: 100%;
+        }
+
+        .btn-social:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: var(--color-sage);
+        }
+
+        .btn-social.google {
+            background: white;
+            color: #4285f4;
+            border-color: #dadce0;
+        }
+
+        .btn-social.google:hover {
+            background: #f8f9fa;
+            border-color: #4285f4;
+        }
+
+        .btn-social.github {
+            background: #24292e;
+            color: white;
+            border-color: #24292e;
+        }
+
+        .btn-social.github:hover {
+            background: #2f363d;
+        }
+
+        .btn-social.demo {
+            background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-light) 100%);
+            color: white;
+            border: none;
+        }
+
+        .btn-social.demo:hover {
+            background: linear-gradient(135deg, var(--color-gold-light) 0%, var(--color-gold) 100%);
+        }
+
+        .social-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
         }
 
         /* ============================================
@@ -1293,6 +1331,25 @@
 
             <!-- Login Form -->
             <form id="login-form" class="auth-form active">
+                <div class="social-login">
+                    <button type="button" class="btn-social google" onclick="signInWithGoogle()">
+                        <span class="social-icon">🔵</span>
+                        <span>Continue with Google</span>
+                    </button>
+                    <button type="button" class="btn-social github" onclick="signInWithGitHub()">
+                        <span class="social-icon">⚫</span>
+                        <span>Continue with GitHub</span>
+                    </button>
+                    <button type="button" class="btn-social demo" onclick="signInAsGuest()">
+                        <span class="social-icon">👤</span>
+                        <span>Continue as Guest</span>
+                    </button>
+                </div>
+
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Email</label>
                     <input type="email" class="form-input" id="login-email" placeholder="your@email.com" required>
@@ -1303,12 +1360,31 @@
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
                 <div class="auth-footer">
-                    <a href="#" onclick="showForgotPassword()">Forgot password?</a>
+                    <a href="#" onclick="showForgotPassword(); return false;">Forgot password?</a>
                 </div>
             </form>
 
             <!-- Signup Form -->
             <form id="signup-form" class="auth-form">
+                <div class="social-login">
+                    <button type="button" class="btn-social google" onclick="signInWithGoogle()">
+                        <span class="social-icon">🔵</span>
+                        <span>Sign up with Google</span>
+                    </button>
+                    <button type="button" class="btn-social github" onclick="signInWithGitHub()">
+                        <span class="social-icon">⚫</span>
+                        <span>Sign up with GitHub</span>
+                    </button>
+                    <button type="button" class="btn-social demo" onclick="signInAsGuest()">
+                        <span class="social-icon">👤</span>
+                        <span>Continue as Guest</span>
+                    </button>
+                </div>
+
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Your Name</label>
                     <input type="text" class="form-input" id="signup-name" placeholder="Enter your name" required>
@@ -1319,7 +1395,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" class="form-input" id="signup-password" placeholder="Create a password" required minlength="6">
+                    <input type="password" class="form-input" id="signup-password" placeholder="Create a password (min. 6 characters)" required minlength="6">
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
                 <p style="font-size: 0.8rem; color: var(--color-slate-light); margin-top: 16px; text-align: center;">
@@ -1659,24 +1735,6 @@
                     </div>
 
                     <div class="profile-section">
-                        <div class="profile-section-title">🌓 Appearance</div>
-                        <div class="form-group">
-                            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 12px 0;">
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text);">Theme</div>
-                                    <div style="font-size: 0.8rem; color: var(--muted); margin-top: 2px;">Light or Dark mode</div>
-                                </div>
-                                <button id="settings-theme-toggle" type="button" class="theme-toggle" onclick="toggleTheme()" style="width: auto; min-width: 140px; justify-content: center;">
-                                    <div class="theme-toggle-left">
-                                        <span class="theme-toggle-icon" id="settings-theme-icon">🌙</span>
-                                        <span id="settings-theme-text">Dark Mode</span>
-                                    </div>
-                                </button>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="profile-section">
                         <div class="profile-section-title">📊 Data</div>
                         <button class="btn btn-secondary" onclick="exportAllData()">📥 Export All Data</button>
                         <button class="btn btn-danger mt-4" onclick="clearAllData()">🗑️ Clear All Data</button>
@@ -1771,64 +1829,170 @@
             showAuth();
         }
 
-        // Auth tabs
+        // Auth tabs - Fixed: Use proper event delegation
         document.querySelectorAll('.auth-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetTab = tab.dataset.tab;
+                
+                // Update tab states
                 document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
                 tab.classList.add('active');
-                document.getElementById(tab.dataset.tab + '-form').classList.add('active');
+                
+                // Update form visibility
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                const targetForm = document.getElementById(targetTab + '-form');
+                if (targetForm) {
+                    targetForm.classList.add('active');
+                } else {
+                    console.error('Form not found:', targetTab + '-form');
+                }
             });
         });
 
         // Login form
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            // Check stored users
-            const users = Store.get('users', {});
-            if (users[email] && users[email].password === password) {
-                currentUser = users[email];
-                delete currentUser.password;
-                Store.set('currentUser', currentUser);
-                showApp();
-            } else {
-                showToast('Invalid email or password. Try creating an account!', '❌');
-            }
-        });
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value.trim();
+                const password = document.getElementById('login-password').value;
+                
+                if (!email || !password) {
+                    showToast('Please fill in all fields', '⚠️');
+                    return;
+                }
+                
+                // Check stored users
+                const users = Store.get('users', {});
+                if (users[email] && users[email].password === password) {
+                    currentUser = { ...users[email] };
+                    delete currentUser.password;
+                    Store.set('currentUser', currentUser);
+                    showApp();
+                    showToast('Welcome back, ' + (currentUser.name || 'User') + '!', '✅');
+                } else {
+                    showToast('Invalid email or password. Try creating an account!', '❌');
+                }
+            });
+        }
 
         // Signup form
-        document.getElementById('signup-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            
-            const users = Store.get('users', {});
-            if (users[email]) {
-                showToast('An account with this email already exists.', '⚠️');
-                return;
-            }
+        const signupForm = document.getElementById('signup-form');
+        if (signupForm) {
+            signupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('signup-name').value.trim();
+                const email = document.getElementById('signup-email').value.trim();
+                const password = document.getElementById('signup-password').value;
+                
+                if (!name || !email || !password) {
+                    showToast('Please fill in all fields', '⚠️');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showToast('Password must be at least 6 characters', '⚠️');
+                    return;
+                }
+                
+                const users = Store.get('users', {});
+                if (users[email]) {
+                    showToast('An account with this email already exists. Try signing in instead.', '⚠️');
+                    // Switch to login tab
+                    document.querySelector('.auth-tab[data-tab="login"]').click();
+                    document.getElementById('login-email').value = email;
+                    return;
+                }
 
-            // Create new user
+                // Create new user
+                currentUser = getDefaultUser();
+                currentUser.name = name;
+                currentUser.email = email;
+
+                // Store user with password
+                users[email] = { ...currentUser, password };
+                Store.set('users', users);
+
+                // Store current user (without password)
+                Store.set('currentUser', currentUser);
+
+                // Initialize stats
+                Store.set('stats_' + currentUser.id, getDefaultStats());
+
+                showApp();
+                showToast('Account created successfully! Welcome, ' + name + '!', '🎉');
+            });
+        }
+    }
+
+    // Social Login Functions
+    function signInWithGoogle() {
+        // For demo purposes, create a Google-style user
+        showToast('Google sign-in would be implemented here. Using demo account for now.', 'ℹ️');
+        
+        const demoEmail = 'demo@gmail.com';
+        const users = Store.get('users', {});
+        
+        if (!users[demoEmail]) {
             currentUser = getDefaultUser();
-            currentUser.name = name;
-            currentUser.email = email;
-
-            // Store user with password
-            users[email] = { ...currentUser, password };
+            currentUser.name = 'Google User';
+            currentUser.email = demoEmail;
+            currentUser.avatar = '🔵';
+            users[demoEmail] = { ...currentUser, password: 'google_oauth' };
             Store.set('users', users);
-
-            // Store current user (without password)
-            Store.set('currentUser', currentUser);
-
-            // Initialize stats
             Store.set('stats_' + currentUser.id, getDefaultStats());
+        } else {
+            currentUser = { ...users[demoEmail] };
+            delete currentUser.password;
+        }
+        
+        Store.set('currentUser', currentUser);
+        showApp();
+        showToast('Signed in with Google!', '✅');
+    }
 
-            showApp();
-        });
+    function signInWithGitHub() {
+        // For demo purposes, create a GitHub-style user
+        showToast('GitHub sign-in would be implemented here. Using demo account for now.', 'ℹ️');
+        
+        const demoEmail = 'demo@github.com';
+        const users = Store.get('users', {});
+        
+        if (!users[demoEmail]) {
+            currentUser = getDefaultUser();
+            currentUser.name = 'GitHub User';
+            currentUser.email = demoEmail;
+            currentUser.avatar = '⚫';
+            users[demoEmail] = { ...currentUser, password: 'github_oauth' };
+            Store.set('users', users);
+            Store.set('stats_' + currentUser.id, getDefaultStats());
+        } else {
+            currentUser = { ...users[demoEmail] };
+            delete currentUser.password;
+        }
+        
+        Store.set('currentUser', currentUser);
+        showApp();
+        showToast('Signed in with GitHub!', '✅');
+    }
+
+    function signInAsGuest() {
+        // Create a guest user
+        currentUser = getDefaultUser();
+        currentUser.name = 'Guest User';
+        currentUser.email = 'guest@handhero.app';
+        currentUser.avatar = '👤';
+        
+        Store.set('currentUser', currentUser);
+        Store.set('stats_' + currentUser.id, getDefaultStats());
+        
+        showApp();
+        showToast('Signed in as guest. Your data will be stored locally.', 'ℹ️');
+    }
+
+    function showForgotPassword() {
+        showToast('Password reset feature coming soon! For now, you can create a new account.', 'ℹ️');
     }
 
     function showAuth() {
@@ -2385,58 +2549,46 @@
     // ============================================
     // THEME TOGGLE
     // ============================================
-    // THEME: Single source of truth - localStorage key 'handhero_theme'
-    const THEME_STORAGE_KEY = 'handhero_theme';
+    const themeStorageKey = 'handhero-theme';
 
     function getPreferredTheme() {
-        const stored = localStorage.getItem(THEME_STORAGE_KEY);
+        const stored = localStorage.getItem(themeStorageKey);
         if (stored === 'light' || stored === 'dark') return stored;
-        // Optional: respect system preference if no saved preference
+        const legacy = Store.get('theme', null);
+        if (legacy === 'light' || legacy === 'dark') return legacy;
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
     function applyTheme(theme) {
-        // THEME: Set dataset.theme on root element
-        document.documentElement.dataset.theme = theme;
-        localStorage.setItem(THEME_STORAGE_KEY, theme);
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem(themeStorageKey, theme);
+        Store.set('theme', theme);
         updateThemeUI(theme);
     }
 
     function toggleTheme() {
-        const currentTheme = document.documentElement.dataset.theme || getPreferredTheme();
+        const currentTheme = document.documentElement.getAttribute('data-theme') || getPreferredTheme();
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
         applyTheme(newTheme);
-        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', newTheme === 'dark' ? '🌙' : '☀️');
+        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', newTheme === 'dark' ? 'dYOT' : '?~??,?');
     }
 
     function updateThemeUI(theme) {
-        // Update sidebar toggle
-        const sidebarIcon = document.getElementById('theme-icon');
-        const sidebarText = document.getElementById('theme-text');
-        const sidebarButton = document.getElementById('theme-toggle-btn');
-        
-        // Update settings page toggle
-        const settingsIcon = document.getElementById('settings-theme-icon');
-        const settingsText = document.getElementById('settings-theme-text');
-        const settingsButton = document.getElementById('settings-theme-toggle');
+        const icon = document.getElementById('theme-icon');
+        const text = document.getElementById('theme-text');
+        const button = document.getElementById('theme-toggle-btn');
 
         if (theme === 'dark') {
-            if (sidebarIcon) sidebarIcon.textContent = '☀️';
-            if (sidebarText) sidebarText.textContent = 'Light Mode';
-            if (settingsIcon) settingsIcon.textContent = '☀️';
-            if (settingsText) settingsText.textContent = 'Light Mode';
+            icon.textContent = '?~??,?';
+            text.textContent = 'Light Mode';
         } else {
-            if (sidebarIcon) sidebarIcon.textContent = '🌙';
-            if (sidebarText) sidebarText.textContent = 'Dark Mode';
-            if (settingsIcon) settingsIcon.textContent = '🌙';
-            if (settingsText) settingsText.textContent = 'Dark Mode';
+            icon.textContent = 'dYOT';
+            text.textContent = 'Dark Mode';
         }
 
-        if (sidebarButton) {
-            sidebarButton.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
-        }
-        if (settingsButton) {
-            settingsButton.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+        if (button) {
+            button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
         }
     }
 
@@ -2450,5 +2602,9 @@
     // ============================================
     // Initialize theme before anything else
     initTheme();
-
-    document.addEvent
+    
+    // Initialize authentication
+    initAuth();
+    
+    // Check if returning from session
+    checkSessionReturn();
