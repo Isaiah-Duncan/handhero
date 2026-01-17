@@ -220,50 +220,58 @@
         /* Theme Toggle Button */
         .theme-toggle-container {
             padding: 12px 24px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
         }
 
         .theme-toggle {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 12px;
+            justify-content: center;
+            gap: 10px;
             padding: 12px 16px;
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 600;
-            color: var(--text-primary);
+            color: var(--text);
             text-decoration: none;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
+            background: var(--surface-2);
+            border: 2px solid var(--border);
             width: 100%;
-            text-align: left;
+            text-align: center;
             font-family: inherit;
             font-size: 0.95rem;
+            min-height: 44px;
         }
 
         .theme-toggle:hover {
             background: var(--color-sage-pale);
-            border-color: var(--color-sage);
-            color: var(--color-slate);
+            border-color: var(--primary);
+            color: var(--text);
+            transform: translateY(-1px);
+        }
+
+        .theme-toggle:active {
+            transform: translateY(0);
         }
 
         .theme-toggle-left {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
         }
 
         .theme-toggle-icon {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             width: 24px;
             text-align: center;
+            line-height: 1;
+            display: inline-block;
         }
 
         .theme-toggle-arrow {
-            font-size: 1rem;
-            opacity: 0.5;
+            display: none;
         }
 
         .user-card {
@@ -1435,12 +1443,11 @@
 
             <!-- Theme Toggle at top -->
             <div class="theme-toggle-container">
-                <button id="theme-toggle-btn" type="button" class="theme-toggle" onclick="toggleTheme()" aria-pressed="false">
+                <button id="theme-toggle-btn" type="button" class="theme-toggle" onclick="toggleTheme()" aria-pressed="false" aria-label="Toggle theme">
                     <div class="theme-toggle-left">
                         <span class="theme-toggle-icon" id="theme-icon">🌙</span>
                         <span id="theme-text">Dark Mode</span>
                     </div>
-                    <span class="theme-toggle-arrow">→</span>
                 </button>
             </div>
 
@@ -1735,6 +1742,24 @@
                     </div>
 
                     <div class="profile-section">
+                        <div class="profile-section-title">🌓 Appearance</div>
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 12px 0;">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text);">Theme</div>
+                                    <div style="font-size: 0.8rem; color: var(--muted); margin-top: 2px;">Switch between light and dark mode</div>
+                                </div>
+                                <button id="settings-theme-toggle" type="button" class="theme-toggle" onclick="toggleTheme()" style="width: auto; min-width: 140px; justify-content: center; padding: 10px 16px;">
+                                    <div class="theme-toggle-left">
+                                        <span class="theme-toggle-icon" id="settings-theme-icon">🌙</span>
+                                        <span id="settings-theme-text">Dark Mode</span>
+                                    </div>
+                                </button>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
                         <div class="profile-section-title">📊 Data</div>
                         <button class="btn btn-secondary" onclick="exportAllData()">📥 Export All Data</button>
                         <button class="btn btn-danger mt-4" onclick="clearAllData()">🗑️ Clear All Data</button>
@@ -1823,11 +1848,11 @@
     function initAuth() {
         try {
             // Bypass authentication - automatically log in as Admin
-            currentUser = Store.get('currentUser');
+        currentUser = Store.get('currentUser');
             
             // Create Admin user if it doesn't exist
             if (!currentUser || currentUser.name !== 'Admin') {
-                currentUser = getDefaultUser();
+            currentUser = getDefaultUser();
                 currentUser.name = 'Admin';
                 currentUser.email = 'admin@handhero.app';
                 currentUser.avatar = '👑';
@@ -1835,15 +1860,15 @@
                 currentUser.goal = '';
                 
                 // Store Admin user
-                Store.set('currentUser', currentUser);
-                
+            Store.set('currentUser', currentUser);
+
                 // Initialize stats if they don't exist
                 const existingStats = Store.get('stats_' + currentUser.id);
                 if (!existingStats) {
-                    Store.set('stats_' + currentUser.id, getDefaultStats());
+            Store.set('stats_' + currentUser.id, getDefaultStats());
                 }
             }
-            
+
             // Always show app (bypass auth screen)
             showApp();
         } catch (error) {
@@ -1877,7 +1902,7 @@
         // Initialize dashboard after a small delay to ensure DOM is ready
         setTimeout(() => {
             try {
-                initDashboard();
+        initDashboard();
             } catch (error) {
                 console.error('Error initializing dashboard:', error);
             }
@@ -2437,35 +2462,50 @@
     }
 
     function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
+        // THEME: Set dataset.theme on root element
+        document.documentElement.dataset.theme = theme;
         localStorage.setItem(themeStorageKey, theme);
-        Store.set('theme', theme);
         updateThemeUI(theme);
     }
 
     function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || getPreferredTheme();
+        const currentTheme = document.documentElement.dataset.theme || getPreferredTheme();
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
         applyTheme(newTheme);
-        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', newTheme === 'dark' ? 'dYOT' : '?~??,?');
+        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', newTheme === 'dark' ? '🌙' : '☀️');
     }
 
     function updateThemeUI(theme) {
-        const icon = document.getElementById('theme-icon');
-        const text = document.getElementById('theme-text');
-        const button = document.getElementById('theme-toggle-btn');
+        // Update sidebar toggle
+        const sidebarIcon = document.getElementById('theme-icon');
+        const sidebarText = document.getElementById('theme-text');
+        const sidebarButton = document.getElementById('theme-toggle-btn');
+        
+        // Update settings toggle
+        const settingsIcon = document.getElementById('settings-theme-icon');
+        const settingsText = document.getElementById('settings-theme-text');
+        const settingsButton = document.getElementById('settings-theme-toggle');
 
         if (theme === 'dark') {
-            icon.textContent = '?~??,?';
-            text.textContent = 'Light Mode';
+            // Dark mode active - show sun icon (to switch to light)
+            if (sidebarIcon) sidebarIcon.textContent = '☀️';
+            if (sidebarText) sidebarText.textContent = 'Light Mode';
+            if (settingsIcon) settingsIcon.textContent = '☀️';
+            if (settingsText) settingsText.textContent = 'Light Mode';
         } else {
-            icon.textContent = 'dYOT';
-            text.textContent = 'Dark Mode';
+            // Light mode active - show moon icon (to switch to dark)
+            if (sidebarIcon) sidebarIcon.textContent = '🌙';
+            if (sidebarText) sidebarText.textContent = 'Dark Mode';
+            if (settingsIcon) settingsIcon.textContent = '🌙';
+            if (settingsText) settingsText.textContent = 'Dark Mode';
         }
 
-        if (button) {
-            button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+        if (sidebarButton) {
+            sidebarButton.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+        }
+        if (settingsButton) {
+            settingsButton.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
         }
     }
 
@@ -2488,9 +2528,9 @@
     function initializeApp() {
         console.log('Initializing HandHero Dashboard...');
         
-        // Initialize theme before anything else
+    // Initialize theme before anything else
         try {
-            initTheme();
+    initTheme();
         } catch (error) {
             console.error('Error initializing theme:', error);
         }
