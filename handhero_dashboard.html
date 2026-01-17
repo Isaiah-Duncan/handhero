@@ -1314,9 +1314,9 @@
         <span id="toast-message" style="font-weight: 600; color: #4a5568;">Message</span>
     </div>
     <!-- ============================================
-         AUTH SCREEN
+         AUTH SCREEN (HIDDEN - BYPASSED)
          ============================================ -->
-    <div id="auth-screen" class="auth-container">
+    <div id="auth-screen" class="auth-container hidden">
         <div class="auth-card">
             <div class="auth-logo">
                 <div class="auth-logo-icon">🌱</div>
@@ -1818,199 +1818,55 @@
     }
 
     // ============================================
-    // AUTH FUNCTIONS
+    // AUTH FUNCTIONS - BYPASSED: Auto-login as Admin
     // ============================================
     function initAuth() {
-        // Check if user is logged in
+        // Bypass authentication - automatically log in as Admin
         currentUser = Store.get('currentUser');
-        if (currentUser) {
-            showApp();
-        } else {
-            showAuth();
-        }
-
-        // Auth tabs - Fixed: Use proper event delegation
-        document.querySelectorAll('.auth-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetTab = tab.dataset.tab;
-                
-                // Update tab states
-                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                // Update form visibility
-                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-                const targetForm = document.getElementById(targetTab + '-form');
-                if (targetForm) {
-                    targetForm.classList.add('active');
-                } else {
-                    console.error('Form not found:', targetTab + '-form');
-                }
-            });
-        });
-
-        // Login form
-        const loginForm = document.getElementById('login-form');
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const email = document.getElementById('login-email').value.trim();
-                const password = document.getElementById('login-password').value;
-                
-                if (!email || !password) {
-                    showToast('Please fill in all fields', '⚠️');
-                    return;
-                }
-                
-                // Check stored users
-                const users = Store.get('users', {});
-                if (users[email] && users[email].password === password) {
-                    currentUser = { ...users[email] };
-                    delete currentUser.password;
-                    Store.set('currentUser', currentUser);
-                    showApp();
-                    showToast('Welcome back, ' + (currentUser.name || 'User') + '!', '✅');
-                } else {
-                    showToast('Invalid email or password. Try creating an account!', '❌');
-                }
-            });
-        }
-
-        // Signup form
-        const signupForm = document.getElementById('signup-form');
-        if (signupForm) {
-            signupForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const name = document.getElementById('signup-name').value.trim();
-                const email = document.getElementById('signup-email').value.trim();
-                const password = document.getElementById('signup-password').value;
-                
-                if (!name || !email || !password) {
-                    showToast('Please fill in all fields', '⚠️');
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    showToast('Password must be at least 6 characters', '⚠️');
-                    return;
-                }
-                
-                const users = Store.get('users', {});
-                if (users[email]) {
-                    showToast('An account with this email already exists. Try signing in instead.', '⚠️');
-                    // Switch to login tab
-                    document.querySelector('.auth-tab[data-tab="login"]').click();
-                    document.getElementById('login-email').value = email;
-                    return;
-                }
-
-                // Create new user
-                currentUser = getDefaultUser();
-                currentUser.name = name;
-                currentUser.email = email;
-
-                // Store user with password
-                users[email] = { ...currentUser, password };
-                Store.set('users', users);
-
-                // Store current user (without password)
-                Store.set('currentUser', currentUser);
-
-                // Initialize stats
+        
+        // Create Admin user if it doesn't exist
+        if (!currentUser || currentUser.name !== 'Admin') {
+            currentUser = getDefaultUser();
+            currentUser.name = 'Admin';
+            currentUser.email = 'admin@handhero.app';
+            currentUser.avatar = '👑';
+            currentUser.hand = 'right';
+            currentUser.goal = '';
+            
+            // Store Admin user
+            Store.set('currentUser', currentUser);
+            
+            // Initialize stats if they don't exist
+            const existingStats = Store.get('stats_' + currentUser.id);
+            if (!existingStats) {
                 Store.set('stats_' + currentUser.id, getDefaultStats());
-
-                showApp();
-                showToast('Account created successfully! Welcome, ' + name + '!', '🎉');
-            });
-        }
-    }
-
-    // Social Login Functions
-    function signInWithGoogle() {
-        // For demo purposes, create a Google-style user
-        showToast('Google sign-in would be implemented here. Using demo account for now.', 'ℹ️');
-        
-        const demoEmail = 'demo@gmail.com';
-        const users = Store.get('users', {});
-        
-        if (!users[demoEmail]) {
-            currentUser = getDefaultUser();
-            currentUser.name = 'Google User';
-            currentUser.email = demoEmail;
-            currentUser.avatar = '🔵';
-            users[demoEmail] = { ...currentUser, password: 'google_oauth' };
-            Store.set('users', users);
-            Store.set('stats_' + currentUser.id, getDefaultStats());
-        } else {
-            currentUser = { ...users[demoEmail] };
-            delete currentUser.password;
+            }
         }
         
-        Store.set('currentUser', currentUser);
+        // Always show app (bypass auth screen)
         showApp();
-        showToast('Signed in with Google!', '✅');
-    }
-
-    function signInWithGitHub() {
-        // For demo purposes, create a GitHub-style user
-        showToast('GitHub sign-in would be implemented here. Using demo account for now.', 'ℹ️');
-        
-        const demoEmail = 'demo@github.com';
-        const users = Store.get('users', {});
-        
-        if (!users[demoEmail]) {
-            currentUser = getDefaultUser();
-            currentUser.name = 'GitHub User';
-            currentUser.email = demoEmail;
-            currentUser.avatar = '⚫';
-            users[demoEmail] = { ...currentUser, password: 'github_oauth' };
-            Store.set('users', users);
-            Store.set('stats_' + currentUser.id, getDefaultStats());
-        } else {
-            currentUser = { ...users[demoEmail] };
-            delete currentUser.password;
-        }
-        
-        Store.set('currentUser', currentUser);
-        showApp();
-        showToast('Signed in with GitHub!', '✅');
-    }
-
-    function signInAsGuest() {
-        // Create a guest user
-        currentUser = getDefaultUser();
-        currentUser.name = 'Guest User';
-        currentUser.email = 'guest@handhero.app';
-        currentUser.avatar = '👤';
-        
-        Store.set('currentUser', currentUser);
-        Store.set('stats_' + currentUser.id, getDefaultStats());
-        
-        showApp();
-        showToast('Signed in as guest. Your data will be stored locally.', 'ℹ️');
-    }
-
-    function showForgotPassword() {
-        showToast('Password reset feature coming soon! For now, you can create a new account.', 'ℹ️');
     }
 
     function showAuth() {
-        document.getElementById('auth-screen').classList.remove('hidden');
-        document.getElementById('app-screen').classList.add('hidden');
+        // Auth screen is bypassed - this function is kept for compatibility but does nothing
+        showApp();
     }
 
     function showApp() {
-        document.getElementById('auth-screen').classList.add('hidden');
-        document.getElementById('app-screen').classList.remove('hidden');
+        // Hide auth screen and show app
+        const authScreen = document.getElementById('auth-screen');
+        const appScreen = document.getElementById('app-screen');
+        
+        if (authScreen) authScreen.classList.add('hidden');
+        if (appScreen) appScreen.classList.remove('hidden');
+        
         initDashboard();
     }
 
     function logout() {
-        if (confirm('Are you sure you want to sign out?')) {
-            Store.remove('currentUser');
-            currentUser = null;
-            showAuth();
+        // Logout is disabled - just refresh to stay as Admin
+        if (confirm('You are logged in as Admin. Refresh the page?')) {
+            location.reload();
         }
     }
 
