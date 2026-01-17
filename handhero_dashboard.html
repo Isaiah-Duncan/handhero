@@ -27,6 +27,49 @@
             --color-success: #68b37a;
             --color-warning: #e8b44d;
             --color-danger: #d97b7b;
+
+            /* Light mode colors (default) */
+            --bg-primary: #fdfbf7;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #faf8f5;
+            --text-primary: #4a5568;
+            --text-secondary: #718096;
+            --border-color: #e8e4df;
+            --scrollbar-track: transparent;
+            --scrollbar-thumb: #d4d0c8;
+            --scrollbar-thumb-hover: #b8b4ac;
+        }
+
+        [data-theme="dark"] {
+            --color-cream: #1a1a1a;
+            --color-warm-white: #2a2a2a;
+            --color-sage: #87a878;
+            --color-sage-dark: #6b9960;
+            --color-sage-light: #a8c99b;
+            --color-sage-pale: #2d3a28;
+            --color-coral: #e8998d;
+            --color-coral-light: #f2b5ad;
+            --color-coral-pale: #3a2d2b;
+            --color-gold: #d4a574;
+            --color-gold-light: #e8c9a8;
+            --color-gold-pale: #3a3228;
+            --color-slate: #e5e7eb;
+            --color-slate-light: #d1d5db;
+            --color-slate-pale: #9ca3af;
+            --color-success: #68b37a;
+            --color-warning: #e8b44d;
+            --color-danger: #d97b7b;
+
+            /* Dark mode colors */
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2a2a2a;
+            --bg-tertiary: #333333;
+            --text-primary: #e5e7eb;
+            --text-secondary: #d1d5db;
+            --border-color: #404040;
+            --scrollbar-track: transparent;
+            --scrollbar-thumb: #4a4a4a;
+            --scrollbar-thumb-hover: #5a5a5a;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,9 +90,9 @@
 
         /* Scrollbar styling */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d4d0c8; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #b8b4ac; }
+        ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
         /* ============================================
            LAYOUT
@@ -62,8 +105,8 @@
         /* Sidebar */
         .sidebar {
             width: 280px;
-            background: white;
-            border-right: 1px solid #e8e4df;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             position: fixed;
@@ -76,7 +119,7 @@
 
         .sidebar-header {
             padding: 24px;
-            border-bottom: 1px solid #f0ece6;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .logo {
@@ -171,7 +214,38 @@
 
         .sidebar-footer {
             padding: 16px;
-            border-top: 1px solid #f0ece6;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: var(--color-slate-light);
+            text-decoration: none;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .theme-toggle:hover {
+            background: var(--color-sage-pale);
+            color: var(--color-slate);
+        }
+
+        .theme-toggle-icon {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
         }
 
         .user-card {
@@ -185,7 +259,7 @@
         }
 
         .user-card:hover {
-            background: var(--color-warm-white);
+            background: var(--bg-tertiary);
         }
 
         .user-avatar {
@@ -246,8 +320,8 @@
            CARDS
            ============================================ */
         .card {
-            background: white;
-            border: 1px solid #e8e4df;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 24px;
             transition: all 0.2s;
@@ -293,8 +367,8 @@
         }
 
         .stat-card {
-            background: white;
-            border: 1px solid #e8e4df;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 24px;
             position: relative;
@@ -484,7 +558,7 @@
             align-items: center;
             gap: 16px;
             padding: 16px;
-            background: var(--color-warm-white);
+            background: var(--bg-tertiary);
             border-radius: 14px;
             transition: all 0.2s;
             cursor: pointer;
@@ -548,8 +622,8 @@
         }
 
         .exercise-card {
-            background: white;
-            border: 1px solid #e8e4df;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 24px;
             cursor: pointer;
@@ -707,12 +781,13 @@
         .form-input {
             width: 100%;
             padding: 14px 18px;
-            border: 2px solid #e8e4df;
+            border: 2px solid var(--border-color);
             border-radius: 14px;
             font-size: 1rem;
             font-family: inherit;
             transition: all 0.2s;
-            background: white;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         .form-input:focus {
@@ -747,7 +822,7 @@
             cursor: pointer;
             border: 3px solid transparent;
             transition: all 0.2s;
-            background: var(--color-warm-white);
+            background: var(--bg-tertiary);
         }
 
         .avatar-option:hover {
@@ -767,7 +842,7 @@
         .hand-option {
             flex: 1;
             padding: 20px;
-            border: 2px solid #e8e4df;
+            border: 2px solid var(--border-color);
             border-radius: 14px;
             text-align: center;
             cursor: pointer;
@@ -823,13 +898,13 @@
         }
 
         .btn-secondary {
-            background: white;
-            color: var(--color-slate);
-            border: 2px solid #e8e4df;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
         }
 
         .btn-secondary:hover {
-            background: var(--color-warm-white);
+            background: var(--bg-tertiary);
             border-color: var(--color-sage);
         }
 
@@ -855,7 +930,7 @@
         }
 
         .auth-card {
-            background: white;
+            background: var(--bg-secondary);
             border-radius: 28px;
             padding: 48px;
             width: 100%;
@@ -893,7 +968,7 @@
 
         .auth-tabs {
             display: flex;
-            background: var(--color-warm-white);
+            background: var(--bg-tertiary);
             border-radius: 12px;
             padding: 4px;
             margin-bottom: 28px;
@@ -911,7 +986,7 @@
         }
 
         .auth-tab.active {
-            background: white;
+            background: var(--bg-secondary);
             color: var(--color-sage);
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
@@ -938,7 +1013,7 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: #e8e4df;
+            background: var(--border-color);
         }
 
         .auth-footer {
@@ -1024,7 +1099,7 @@
         }
 
         .calendar-day.empty {
-            background: var(--color-warm-white);
+            background: var(--bg-tertiary);
             color: var(--color-slate-pale);
         }
 
@@ -1038,8 +1113,8 @@
             left: 0;
             right: 0;
             height: 64px;
-            background: white;
-            border-bottom: 1px solid #e8e4df;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
             padding: 0 16px;
             align-items: center;
             justify-content: space-between;
@@ -1140,6 +1215,11 @@
     </style>
 </head>
 <body>
+    <!-- Toast Notification -->
+    <div id="toast" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: white; padding: 14px 24px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; z-index: 1000; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <span id="toast-icon" style="font-size: 1.3rem;">✅</span>
+        <span id="toast-message" style="font-weight: 600; color: #4a5568;">Message</span>
+    </div>
     <!-- ============================================
          AUTH SCREEN
          ============================================ -->
@@ -1253,6 +1333,10 @@
                         <span class="nav-item-icon">⚙️</span>
                         Settings
                     </a>
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <span class="theme-toggle-icon" id="theme-icon">🌙</span>
+                        <span id="theme-text">Dark Mode</span>
+                    </button>
                 </div>
             </nav>
 
@@ -1418,7 +1502,7 @@
                         <div class="profile-avatar-large" id="profile-avatar">👤</div>
                         <div class="profile-info">
                             <h2 id="profile-name">User</h2>
-                            <p id="profile-email">user@example.com</p>
+                            <p id="profile-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9ce9eff9eedcf9e4fdf1ecf0f9b2fff3f1">[email&#160;protected]</a></p>
                         </div>
                     </div>
 
@@ -1522,7 +1606,7 @@
         </main>
     </div>
 
-    <script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // ============================================
     // DATA STORE (localStorage-backed)
     // ============================================
@@ -1542,6 +1626,23 @@
             localStorage.removeItem('handhero_' + key);
         }
     };
+
+    // ============================================
+    // TOAST NOTIFICATION
+    // ============================================
+    function showToast(message, icon = '✅') {
+        const toast = document.getElementById('toast');
+        const toastIcon = document.getElementById('toast-icon');
+        const toastMsg = document.getElementById('toast-message');
+        toastIcon.textContent = icon;
+        toastMsg.textContent = message;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(100px)';
+        }, 3000);
+    }
 
     // ============================================
     // USER STATE
@@ -1614,7 +1715,7 @@
                 Store.set('currentUser', currentUser);
                 showApp();
             } else {
-                showToast('Invalid email or password. Try creating an account!', 'error');
+                showToast('Invalid email or password. Try creating an account!', '❌');
             }
         });
 
@@ -1627,7 +1728,7 @@
             
             const users = Store.get('users', {});
             if (users[email]) {
-                showToast('An account with this email already exists.', 'error');
+                showToast('An account with this email already exists.', '⚠️');
                 return;
             }
 
@@ -1662,17 +1763,11 @@
     }
 
     function logout() {
-        showConfirm({
-            title: 'Sign out?',
-            body: 'You can sign back in anytime.',
-            okText: 'Sign out',
-            cancelText: 'Cancel',
-            onOk: () => {
-                Store.remove('currentUser');
-                currentUser = null;
-                showAuth();
-            }
-        });
+        if (confirm('Are you sure you want to sign out?')) {
+            Store.remove('currentUser');
+            currentUser = null;
+            showAuth();
+        }
     }
 
     // ============================================
@@ -1889,7 +1984,7 @@
 
     function practiceExercise(exerciseId) {
         // Would open the session with just this exercise
-        showToast(`Practice mode for "${exerciseId}" coming soon! For now, start a full session.`, 'info');
+        showToast('Practice mode coming soon! Start a full session instead.', '🔜');
     }
 
     // ============================================
@@ -2048,7 +2143,7 @@
 
         Store.set('currentUser', currentUser);
         updateUserDisplay();
-        showToast('Profile saved!', 'success');
+        showToast('Profile saved!', '✅');
     }
 
     // ============================================
@@ -2140,7 +2235,7 @@
         Store.set('stats_' + currentUser.id, stats);
     }
 
-    // Check if returning from a session
+    // Check if returning from a session (no alert - toast handled by session page)
     function checkSessionReturn() {
         const sessionResult = Store.get('lastSessionResult');
         if (sessionResult) {
@@ -2150,7 +2245,10 @@
             renderWeeklyChart();
             renderRecentSessions();
             renderHistoryList();
-            showToast(`Session recorded! You completed ${sessionResult.completed} exercises with a ${sessionResult.grade} grade.`, 'success');
+            renderActivityCalendar();
+            renderMilestones();
+            // Silent save - user already saw toast on session page
+            console.log('Session recorded:', sessionResult);
         }
     }
 
@@ -2172,12 +2270,8 @@
     }
 
     function clearAllData() {
-        showConfirm({
-            title: 'Delete all data?',
-            body: 'This will delete all your session history and reset stats. This cannot be undone.',
-            okText: 'Delete',
-            cancelText: 'Cancel',
-            onOk: () => {
+        if (confirm('This will delete ALL your data including session history. This cannot be undone. Are you sure?')) {
+            if (confirm('Really delete everything?')) {
                 Store.remove('stats_' + currentUser?.id);
                 Store.set('stats_' + currentUser?.id, getDefaultStats());
                 updateStats();
@@ -2186,95 +2280,14 @@
                 renderHistoryList();
                 renderActivityCalendar();
                 renderMilestones();
-                showToast('All data cleared.', 'success');
+                showToast('All data cleared.', '🗑️');
             }
-        });
+        }
     }
 
     // ============================================
     // UTILITIES
     // ============================================
-    // UI overlays (avoid browser alert/confirm)
-    function initUiOverlays() {
-        if (document.getElementById('ui-toast')) return;
-        const style = document.createElement('style');
-        style.textContent = `
-            .ui-toast{position:fixed;z-index:9999;top:20px;left:50%;transform:translateX(-50%);background:rgba(20,20,20,0.92);color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,0.22);font-weight:600;max-width:min(520px,92vw);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease}
-            .ui-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-            .ui-toast.info{background:rgba(20,20,20,0.92)}
-            .ui-toast.error{background:rgba(153,27,27,0.92)}
-            .ui-toast.success{background:rgba(20,83,45,0.92)}
-            .ui-modal-backdrop{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:18px}
-            .ui-modal-backdrop.hidden{display:none}
-            .ui-modal{width:min(420px,92vw);background:rgba(255,255,255,0.96);border:1px solid rgba(0,0,0,0.10);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,0.22);padding:18px}
-            .ui-modal h3{margin:0 0 8px;font-size:1.05rem;font-weight:800;color:#2c3e50}
-            .ui-modal p{margin:0 0 14px;color:#6b7280;line-height:1.35;font-weight:500}
-            .ui-modal .actions{display:flex;gap:10px;justify-content:flex-end}
-            .ui-modal .actions button{border-radius:14px;padding:12px 16px;font-weight:700;border:1px solid rgba(0,0,0,0.10);cursor:pointer}
-            .ui-modal .actions .cancel{background:#fff}
-            .ui-modal .actions .ok{background:#87a878;color:#fff;border-color:transparent}
-        `;
-        document.head.appendChild(style);
-
-        const toast = document.createElement('div');
-        toast.id = 'ui-toast';
-        toast.className = 'ui-toast';
-        toast.setAttribute('aria-live','polite');
-        toast.setAttribute('aria-atomic','true');
-        document.body.appendChild(toast);
-
-        const modal = document.createElement('div');
-        modal.id = 'ui-modal-backdrop';
-        modal.className = 'ui-modal-backdrop hidden';
-        modal.innerHTML = `
-            <div class="ui-modal" role="dialog" aria-modal="true" aria-labelledby="ui-modal-title">
-                <h3 id="ui-modal-title">Confirm</h3>
-                <p id="ui-modal-body">Are you sure?</p>
-                <div class="actions">
-                    <button id="ui-modal-cancel" class="cancel">Cancel</button>
-                    <button id="ui-modal-ok" class="ok">OK</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    function showToast(msg, type = 'info', ms = 3600) {
-        initUiOverlays();
-        const t = document.getElementById('ui-toast');
-        t.className = `ui-toast ${type}`;
-        t.textContent = msg;
-        t.classList.add('show');
-        clearTimeout(window.__toastTimer);
-        window.__toastTimer = setTimeout(() => t.classList.remove('show'), ms);
-    }
-
-    function showConfirm({ title = 'Confirm', body = 'Are you sure?', okText = 'OK', cancelText = 'Cancel', onOk = null, onCancel = null } = {}) {
-        initUiOverlays();
-        const backdrop = document.getElementById('ui-modal-backdrop');
-        const titleEl = document.getElementById('ui-modal-title');
-        const bodyEl = document.getElementById('ui-modal-body');
-        const okBtn = document.getElementById('ui-modal-ok');
-        const cancelBtn = document.getElementById('ui-modal-cancel');
-
-        titleEl.textContent = title;
-        bodyEl.textContent = body;
-        okBtn.textContent = okText;
-        cancelBtn.textContent = cancelText;
-        backdrop.classList.remove('hidden');
-
-        const cleanup = () => {
-            backdrop.classList.add('hidden');
-            okBtn.onclick = null;
-            cancelBtn.onclick = null;
-            backdrop.onclick = null;
-        };
-        okBtn.onclick = () => { cleanup(); onOk && onOk(); };
-        cancelBtn.onclick = () => { cleanup(); onCancel && onCancel(); };
-        backdrop.onclick = (e) => { if (e.target === backdrop) cancelBtn.click(); };
-        okBtn.focus();
-    }
-
     function getTimeAgo(date) {
         const now = new Date();
         const diffMs = now - date;
@@ -2290,14 +2303,42 @@
     }
 
     // ============================================
+    // THEME TOGGLE
+    // ============================================
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        document.documentElement.setAttribute('data-theme', newTheme);
+        Store.set('theme', newTheme);
+
+        updateThemeUI(newTheme);
+        showToast(newTheme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', newTheme === 'dark' ? '🌙' : '☀️');
+    }
+
+    function updateThemeUI(theme) {
+        const icon = document.getElementById('theme-icon');
+        const text = document.getElementById('theme-text');
+
+        if (theme === 'dark') {
+            icon.textContent = '☀️';
+            text.textContent = 'Light Mode';
+        } else {
+            icon.textContent = '🌙';
+            text.textContent = 'Dark Mode';
+        }
+    }
+
+    function initTheme() {
+        const savedTheme = Store.get('theme', 'light');
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeUI(savedTheme);
+    }
+
+    // ============================================
     // INITIALIZE
     // ============================================
-    document.addEventListener('DOMContentLoaded', () => {
-        initAuth();
-        checkSessionReturn();
-    });
+    // Initialize theme before anything else
+    initTheme();
 
-    console.log('%c🌱 HandHero Dashboard', 'font-size: 20px; font-weight: bold; color: #87a878;');
-    </script>
-</body>
-</html>
+    document.addEvent
