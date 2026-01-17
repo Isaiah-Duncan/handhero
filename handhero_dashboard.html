@@ -1821,30 +1821,36 @@
     // AUTH FUNCTIONS - BYPASSED: Auto-login as Admin
     // ============================================
     function initAuth() {
-        // Bypass authentication - automatically log in as Admin
-        currentUser = Store.get('currentUser');
-        
-        // Create Admin user if it doesn't exist
-        if (!currentUser || currentUser.name !== 'Admin') {
-            currentUser = getDefaultUser();
-            currentUser.name = 'Admin';
-            currentUser.email = 'admin@handhero.app';
-            currentUser.avatar = '👑';
-            currentUser.hand = 'right';
-            currentUser.goal = '';
+        try {
+            // Bypass authentication - automatically log in as Admin
+            currentUser = Store.get('currentUser');
             
-            // Store Admin user
-            Store.set('currentUser', currentUser);
-            
-            // Initialize stats if they don't exist
-            const existingStats = Store.get('stats_' + currentUser.id);
-            if (!existingStats) {
-                Store.set('stats_' + currentUser.id, getDefaultStats());
+            // Create Admin user if it doesn't exist
+            if (!currentUser || currentUser.name !== 'Admin') {
+                currentUser = getDefaultUser();
+                currentUser.name = 'Admin';
+                currentUser.email = 'admin@handhero.app';
+                currentUser.avatar = '👑';
+                currentUser.hand = 'right';
+                currentUser.goal = '';
+                
+                // Store Admin user
+                Store.set('currentUser', currentUser);
+                
+                // Initialize stats if they don't exist
+                const existingStats = Store.get('stats_' + currentUser.id);
+                if (!existingStats) {
+                    Store.set('stats_' + currentUser.id, getDefaultStats());
+                }
             }
+            
+            // Always show app (bypass auth screen)
+            showApp();
+        } catch (error) {
+            console.error('Error in initAuth:', error);
+            // Still try to show app even if there's an error
+            showApp();
         }
-        
-        // Always show app (bypass auth screen)
-        showApp();
     }
 
     function showAuth() {
@@ -1857,10 +1863,25 @@
         const authScreen = document.getElementById('auth-screen');
         const appScreen = document.getElementById('app-screen');
         
-        if (authScreen) authScreen.classList.add('hidden');
-        if (appScreen) appScreen.classList.remove('hidden');
+        if (!appScreen) {
+            console.error('app-screen element not found');
+            return;
+        }
         
-        initDashboard();
+        if (authScreen) {
+            authScreen.classList.add('hidden');
+        }
+        
+        appScreen.classList.remove('hidden');
+        
+        // Initialize dashboard after a small delay to ensure DOM is ready
+        setTimeout(() => {
+            try {
+                initDashboard();
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+            }
+        }, 0);
     }
 
     function logout() {
@@ -2456,11 +2477,43 @@
     // ============================================
     // INITIALIZE
     // ============================================
-    // Initialize theme before anything else
-    initTheme();
+    // Wait for DOM to be ready before initializing
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    } else {
+        // DOM is already ready
+        initializeApp();
+    }
     
-    // Initialize authentication
-    initAuth();
-    
-    // Check if returning from session
-    checkSessionReturn();
+    function initializeApp() {
+        console.log('Initializing HandHero Dashboard...');
+        
+        // Initialize theme before anything else
+        try {
+            initTheme();
+        } catch (error) {
+            console.error('Error initializing theme:', error);
+        }
+        
+        // Initialize authentication
+        try {
+            initAuth();
+        } catch (error) {
+            console.error('Error initializing auth:', error);
+            // Fallback: show app screen even if auth fails
+            const appScreen = document.getElementById('app-screen');
+            if (appScreen) {
+                appScreen.classList.remove('hidden');
+            }
+        }
+        
+        // Check if returning from session
+        try {
+            checkSessionReturn();
+        } catch (error) {
+            console.error('Error checking session return:', error);
+        }
+    }
+    </script>
+</body>
+</html>
