@@ -6,6 +6,15 @@
     <title>HandHero | Hand Therapy Companion</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        // THEME: FOUC prevention snippet
+        (function() {
+            const theme = localStorage.getItem('handhero_theme') ||
+                          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.dataset.theme = theme;
+            document.body.setAttribute('data-theme', theme);
+        })();
+    </script>
     <style>
         :root {
             --color-cream: #fdfbf7;
@@ -267,16 +276,6 @@
         [data-theme="dark"] #btn-theme { background: linear-gradient(135deg, #f0c864, #e0b050); }
         #btn-theme svg { fill: white; }
         
-        /* Settings button */
-        #btn-settings {
-            top: 20px;
-            left: 194px;
-            background: white;
-            border: 2px solid #e8e4df;
-        }
-        [data-theme="dark"] #btn-settings { background: #16213e; border-color: rgba(80, 100, 120, 0.4); }
-        #btn-settings svg { stroke: var(--color-slate-light); stroke-width: 2; fill: none; }
-        
         /* Skip button - Blue */
         #btn-skip { 
             top: 20px; 
@@ -284,38 +283,6 @@
             background: linear-gradient(135deg, #64b4e6, #5090c0);
         }
         #btn-skip svg { fill: white; }
-        
-        /* Settings Panel */
-        .settings-panel {
-            position: fixed;
-            top: 80px;
-            left: 20px;
-            width: 300px;
-            background: white;
-            border: 1px solid #e8e4df;
-            border-radius: 20px;
-            padding: 20px;
-            z-index: 60;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s;
-        }
-        [data-theme="dark"] .settings-panel { background: #16213e; border-color: rgba(80, 100, 120, 0.4); }
-        .settings-panel.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        .settings-title { font-size: 1.1rem; font-weight: 800; color: var(--color-slate); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
-        [data-theme="dark"] .setting-row { border-color: rgba(255,255,255,0.06); }
-        .setting-row:last-child { border-bottom: none; }
-        .setting-label { font-size: 0.9rem; font-weight: 600; color: var(--color-slate); }
-        .setting-desc { font-size: 0.75rem; color: var(--color-slate-light); }
-        .toggle-switch { width: 50px; height: 28px; background: #e0e0e0; border-radius: 14px; position: relative; cursor: pointer; transition: background 0.3s; }
-        .toggle-switch.on { background: var(--color-sage); }
-        .toggle-switch::after { content: ''; position: absolute; width: 22px; height: 22px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .toggle-switch.on::after { transform: translateX(22px); }
-        .setting-select { padding: 8px 12px; border-radius: 10px; border: 1px solid #e8e4df; background: white; font-family: inherit; font-weight: 600; color: var(--color-slate); }
-        [data-theme="dark"] .setting-select { background: #0f1525; border-color: rgba(80, 100, 120, 0.4); color: #e8e8e8; }
         
         /* Skip Suggestion Toast */
         .skip-toast {
@@ -628,12 +595,6 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
     </button>
-    <button id="btn-settings" class="float-btn hidden" aria-label="Settings" title="Settings">
-        <svg viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-    </button>
     <button id="btn-skip" class="float-btn hidden" aria-label="Skip exercise" title="Skip Exercise">
         <svg viewBox="0 0 24 24">
             <path d="M5 4l10 8-10 8V4z"/>
@@ -641,42 +602,6 @@
         </svg>
     </button>
     
-    <!-- Settings Panel -->
-    <div id="settings-panel" class="settings-panel">
-        <div class="settings-title">⚙️ Settings</div>
-        <div class="setting-row">
-            <div>
-                <div class="setting-label">Auto-advance</div>
-                <div class="setting-desc">Automatically start next exercise</div>
-            </div>
-            <div class="toggle-switch on" id="toggle-autoadvance" onclick="toggleSetting('autoAdvance')"></div>
-        </div>
-        <div class="setting-row">
-            <div>
-                <div class="setting-label">Voice Coach</div>
-                <div class="setting-desc">Spoken exercise instructions</div>
-            </div>
-            <div class="toggle-switch on" id="toggle-voice" onclick="toggleSetting('voice')"></div>
-        </div>
-        <div class="setting-row">
-            <div>
-                <div class="setting-label">Sound Effects</div>
-                <div class="setting-desc">Success and feedback sounds</div>
-            </div>
-            <div class="toggle-switch on" id="toggle-sounds" onclick="toggleSetting('sounds')"></div>
-        </div>
-        <div class="setting-row">
-            <div>
-                <div class="setting-label">Countdown Timer</div>
-                <div class="setting-desc">Seconds between exercises</div>
-            </div>
-            <select class="setting-select" id="select-countdown" onchange="updateCountdown(this.value)">
-                <option value="2">2 sec</option>
-                <option value="3" selected>3 sec</option>
-                <option value="4">4 sec</option>
-            </select>
-        </div>
-    </div>
 
     <!-- Toast Notification (replaces browser alert) -->
     <div id="toast" class="toast">
@@ -916,7 +841,7 @@
 // ============================================
 const CONFIG = {
     EXERCISES_PER_SESSION: 8,
-    REST_SECONDS: 8,
+    REST_SECONDS: 2.5,  // Shorter rest, must not break tracking
     PAIN_CHECK_EVERY: 4,
     READY_COUNTDOWN_SECONDS: 3,  // Default, can be overridden by settings
     
@@ -943,6 +868,225 @@ const CONFIG = {
     
     // Boundary margin for invisible detection
     BOUNDARY_MARGIN: 0.03,
+    
+    // Debug mode for boundary visualization (default: false, no UI toggle)
+    DEBUG_BOUNDARIES: false,
+};
+
+// ============================================
+// BOUNDARY ENGINE (Inline)
+// ============================================
+/**
+ * HandHero Boundary-Based Detection Engine
+ * Philosophy: Human logic measures human accuracy.
+ * We don't calculate precise angles - we check if fingers are within acceptable zones.
+ */
+const BoundaryEngine = {
+    FINGERS: {
+        THUMB:  { base: 1, mid: 2, dip: 3, tip: 4, name: 'Thumb' },
+        INDEX:  { base: 5, mid: 6, dip: 7, tip: 8, name: 'Index' },
+        MIDDLE: { base: 9, mid: 10, dip: 11, tip: 12, name: 'Middle' },
+        RING:   { base: 13, mid: 14, dip: 15, tip: 16, name: 'Ring' },
+        PINKY:  { base: 17, mid: 18, dip: 19, tip: 20, name: 'Pinky' }
+    },
+    FINGER_ORDER: ['THUMB', 'INDEX', 'MIDDLE', 'RING', 'PINKY'],
+    TIPS: [4, 8, 12, 16, 20],
+    BASES: [1, 5, 9, 13, 17],
+    ZONES: {
+        GREEN_THRESHOLD: 0.15,
+        YELLOW_THRESHOLD: 0.05,
+        RED_THRESHOLD: 0.0,
+    },
+    THUMB_BOUNDARY: 0.1,
+    getHandFrame(landmarks) {
+        const wrist = landmarks[0];
+        const middleBase = landmarks[9];
+        const middleTip = landmarks[12];
+        const indexBase = landmarks[5];
+        const pinkyBase = landmarks[17];
+        const handHeight = Math.sqrt(
+            Math.pow(middleTip.x - wrist.x, 2) + 
+            Math.pow(middleTip.y - wrist.y, 2) +
+            Math.pow(middleTip.z - wrist.z, 2)
+        );
+        const handWidth = Math.sqrt(
+            Math.pow(pinkyBase.x - indexBase.x, 2) + 
+            Math.pow(pinkyBase.y - indexBase.y, 2)
+        );
+        const palmCenter = {
+            x: (landmarks[0].x + landmarks[5].x + landmarks[9].x + landmarks[13].x + landmarks[17].x) / 5,
+            y: (landmarks[0].y + landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 5,
+            z: (landmarks[0].z + landmarks[5].z + landmarks[9].z + landmarks[13].z + landmarks[17].z) / 5
+        };
+        const baseLineY = (landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 4;
+        return { handHeight, handWidth, palmCenter, baseLineY, wrist, landmarks };
+    },
+    checkNonTargetFinger(fingerIndex, landmarks, handFrame) {
+        const finger = this.FINGERS[this.FINGER_ORDER[fingerIndex]];
+        const tip = landmarks[finger.tip];
+        const base = landmarks[finger.base];
+        const tipBelowBase = tip.y - base.y;
+        const normalizedDistance = tipBelowBase / handFrame.handHeight;
+        if (normalizedDistance >= this.ZONES.GREEN_THRESHOLD) {
+            return { zone: 'GREEN', score: 1.0 };
+        } else if (normalizedDistance >= this.ZONES.YELLOW_THRESHOLD) {
+            const progress = (normalizedDistance - this.ZONES.YELLOW_THRESHOLD) / 
+                           (this.ZONES.GREEN_THRESHOLD - this.ZONES.YELLOW_THRESHOLD);
+            return { zone: 'YELLOW', score: 0.65 + (progress * 0.20) };
+        } else if (normalizedDistance >= this.ZONES.RED_THRESHOLD) {
+            const progress = (normalizedDistance - this.ZONES.RED_THRESHOLD) / 
+                           (this.ZONES.YELLOW_THRESHOLD - this.ZONES.RED_THRESHOLD);
+            return { zone: 'ORANGE', score: 0.40 + (progress * 0.25) };
+        } else {
+            return { zone: 'RED', score: Math.max(0, 0.40 + normalizedDistance) };
+        }
+    },
+    checkTargetFinger(fingerIndex, landmarks, handFrame) {
+        const finger = this.FINGERS[this.FINGER_ORDER[fingerIndex]];
+        const tip = landmarks[finger.tip];
+        const base = landmarks[finger.base];
+        const wrist = landmarks[0];
+        const tipAboveBase = base.y - tip.y;
+        const normalizedExtension = tipAboveBase / handFrame.handHeight;
+        const tipToWrist = Math.sqrt(
+            Math.pow(tip.x - wrist.x, 2) + 
+            Math.pow(tip.y - wrist.y, 2)
+        );
+        const baseToWrist = Math.sqrt(
+            Math.pow(base.x - wrist.x, 2) + 
+            Math.pow(base.y - wrist.y, 2)
+        );
+        const extensionRatio = tipToWrist / baseToWrist;
+        if (normalizedExtension > 0.10 && extensionRatio > 1.3) {
+            return { zone: 'GREEN', score: 1.0 };
+        } else if (normalizedExtension > 0.05 && extensionRatio > 1.15) {
+            return { zone: 'BLUE', score: 0.85 };
+        } else if (normalizedExtension > 0 && extensionRatio > 1.0) {
+            return { zone: 'YELLOW', score: 0.65 };
+        } else {
+            const score = Math.max(0.20, 0.40 + normalizedExtension);
+            return { zone: 'RED', score };
+        }
+    },
+    checkThumbBoundary(landmarks, handFrame) {
+        const thumbTip = landmarks[4];
+        const indexBase = landmarks[5];
+        const pinkyBase = landmarks[17];
+        const handAxisX = pinkyBase.x - indexBase.x;
+        const thumbRelativeX = thumbTip.x - indexBase.x;
+        const thumbOnCorrectSide = (handAxisX > 0) ? (thumbRelativeX < this.THUMB_BOUNDARY * handFrame.handWidth) :
+                                                     (thumbRelativeX > -this.THUMB_BOUNDARY * handFrame.handWidth);
+        if (thumbOnCorrectSide) {
+            return { zone: 'GREEN', score: 1.0 };
+        } else {
+            const violation = Math.abs(thumbRelativeX) / handFrame.handWidth;
+            return { zone: 'RED', score: Math.max(0.3, 1.0 - violation) };
+        }
+    },
+    evaluateIsolation(landmarks, targetFingers) {
+        const handFrame = this.getHandFrame(landmarks);
+        const fingerResults = [];
+        let totalScore = 0;
+        let fingerCount = 0;
+        let worstZone = 'GREEN';
+        const zoneRank = { 'GREEN': 4, 'BLUE': 3, 'YELLOW': 2, 'ORANGE': 1, 'RED': 0 };
+        for (let i = 0; i < 5; i++) {
+            const isTarget = targetFingers.includes(i);
+            let result;
+            if (i === 0) {
+                if (isTarget) {
+                    result = this.checkTargetFinger(i, landmarks, handFrame);
+                } else {
+                    result = this.checkThumbBoundary(landmarks, handFrame);
+                }
+            } else if (isTarget) {
+                result = this.checkTargetFinger(i, landmarks, handFrame);
+            } else {
+                result = this.checkNonTargetFinger(i, landmarks, handFrame);
+            }
+            result.isTarget = isTarget;
+            result.fingerName = this.FINGER_ORDER[i];
+            fingerResults.push(result);
+            totalScore += result.score;
+            fingerCount++;
+            if (zoneRank[result.zone] < zoneRank[worstZone]) {
+                worstZone = result.zone;
+            }
+        }
+        const accuracy = totalScore / fingerCount;
+        let overallZone;
+        if (accuracy >= 0.85) overallZone = 'GREEN';
+        else if (accuracy >= 0.65) overallZone = 'BLUE';
+        else if (accuracy >= 0.40) overallZone = 'YELLOW';
+        else overallZone = 'RED';
+        const passed = accuracy >= 0.65;
+        return { accuracy, overallZone, worstZone, fingerResults, passed, handFrame };
+    },
+    evaluatePinch(landmarks, pinchTarget) {
+        const handFrame = this.getHandFrame(landmarks);
+        const thumbTip = landmarks[4];
+        const targetTip = landmarks[this.TIPS[pinchTarget]];
+        const distance = Math.sqrt(
+            Math.pow(thumbTip.x - targetTip.x, 2) +
+            Math.pow(thumbTip.y - targetTip.y, 2) +
+            Math.pow(thumbTip.z - targetTip.z, 2)
+        );
+        const normalizedDistance = distance / handFrame.handWidth;
+        const otherFingers = [1, 2, 3, 4].filter(f => f !== pinchTarget);
+        let nonTargetScore = 0;
+        for (const finger of otherFingers) {
+            const result = this.checkNonTargetFinger(finger, landmarks, handFrame);
+            nonTargetScore += result.score;
+        }
+        nonTargetScore /= otherFingers.length;
+        let pinchScore;
+        if (normalizedDistance < 0.15) {
+            pinchScore = 1.0;
+        } else if (normalizedDistance < 0.25) {
+            pinchScore = 0.85;
+        } else if (normalizedDistance < 0.40) {
+            pinchScore = 0.65;
+        } else {
+            pinchScore = Math.max(0.2, 0.65 - (normalizedDistance - 0.40));
+        }
+        const accuracy = (pinchScore * 0.6) + (nonTargetScore * 0.4);
+        let overallZone;
+        if (accuracy >= 0.85) overallZone = 'GREEN';
+        else if (accuracy >= 0.65) overallZone = 'BLUE';
+        else if (accuracy >= 0.40) overallZone = 'YELLOW';
+        else overallZone = 'RED';
+        return { accuracy, overallZone, pinchDistance: normalizedDistance, pinchScore, nonTargetScore, passed: accuracy >= 0.65, handFrame };
+    },
+    evaluateSpread(landmarks) {
+        const handFrame = this.getHandFrame(landmarks);
+        const tips = this.TIPS.map(i => landmarks[i]);
+        let extensionScore = 0;
+        for (let i = 0; i < 5; i++) {
+            const result = this.checkTargetFinger(i, landmarks, handFrame);
+            extensionScore += result.score;
+        }
+        extensionScore /= 5;
+        let gapScore = 0;
+        for (let i = 0; i < tips.length - 1; i++) {
+            const gap = Math.sqrt(
+                Math.pow(tips[i + 1].x - tips[i].x, 2) +
+                Math.pow(tips[i + 1].y - tips[i].y, 2)
+            );
+            const normalizedGap = gap / handFrame.handWidth;
+            if (normalizedGap > 0.20) gapScore += 1.0;
+            else if (normalizedGap > 0.12) gapScore += 0.75;
+            else if (normalizedGap > 0.06) gapScore += 0.50;
+            else gapScore += 0.25;
+        }
+        gapScore /= 4;
+        const accuracy = (extensionScore * 0.5) + (gapScore * 0.5);
+        let overallZone;
+        if (accuracy >= 0.85) overallZone = 'GREEN';
+        else if (accuracy >= 0.65) overallZone = 'BLUE';
+        else if (accuracy >= 0.40) overallZone = 'YELLOW';
+        else overallZone = 'RED';
+        return { accuracy, overallZone, extensionScore, gapScore, passed: accuracy >= 0.65, handFrame };
+    }
 };
 
 // ============================================
@@ -989,15 +1133,22 @@ function updateCountdown(val) {
 }
 
 function toggleTheme() {
-    settings.theme = settings.theme === 'light' ? 'dark' : 'light';
-    document.body.setAttribute('data-theme', settings.theme);
-    saveSettings();
+    const currentTheme = document.documentElement.dataset.theme || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = newTheme;
+    document.body.setAttribute('data-theme', newTheme);
+    localStorage.setItem('handhero_theme', newTheme);
+    
+    // Update button icon
+    const themeBtn = document.getElementById('btn-theme');
+    if (themeBtn) {
+        themeBtn.innerHTML = newTheme === 'dark' ? 
+            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.11-1.36a5.5 5.5 0 0 1-7.24-7.24A9.001 9.001 0 0 0 12 3z"/></svg>' :
+            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+        themeBtn.title = newTheme === 'dark' ? 'Toggle Light Mode' : 'Toggle Dark Mode';
+    }
 }
 
-function toggleSettingsPanel() {
-    const panel = document.getElementById('settings-panel');
-    panel.classList.toggle('show');
-}
 
 function updateAudioButtonState() {
     const audioEnabled = settings.sounds || settings.voice;
@@ -1282,8 +1433,6 @@ const el = {
     btnAudio: $('btn-audio'),
     btnSkip: $('btn-skip'),
     btnTheme: $('btn-theme'),
-    btnSettings: $('btn-settings'),
-    settingsPanel: $('settings-panel'),
     skipToast: $('skip-toast'),
     
     icon: $('instruction-icon'),
@@ -1431,14 +1580,9 @@ function showControls() {
     el.btnAudio.classList.remove('hidden');
     el.btnSkip.classList.remove('hidden');
     el.btnTheme.classList.remove('hidden');
-    el.btnSettings.classList.remove('hidden');
     
     // Apply saved settings to UI
     updateAudioButtonState();
-    $('toggle-autoadvance').classList.toggle('on', settings.autoAdvance);
-    $('toggle-voice').classList.toggle('on', settings.voice);
-    $('toggle-sounds').classList.toggle('on', settings.sounds);
-    $('select-countdown').value = settings.countdownTime.toString();
 }
 
 function hideControls() {
@@ -1446,14 +1590,13 @@ function hideControls() {
     el.btnAudio.classList.add('hidden');
     el.btnSkip.classList.add('hidden');
     el.btnTheme.classList.add('hidden');
-    el.btnSettings.classList.add('hidden');
-    el.settingsPanel.classList.remove('show');
 }
 
 // ============================================
 // SESSION MANAGEMENT
 // ============================================
 function beginSession() {
+    // Reset session state completely
     state.exercises = selectExercises();
     state.exIdx = 0;
     state.completed = 0;
@@ -1462,6 +1605,17 @@ function beginSession() {
     state.startTime = Date.now();
     state.log = [];
     state.painLevels = [];
+    state.cooldown = false;
+    state.phase = 'RESET';
+    state.resetComplete = false;
+    state.resetStartTime = 0;
+    state.holding = false;
+    state.holdStart = 0;
+    state.progress = 0;
+    state.currentAcc = 0;
+    state.peakAcc = 0;
+    state.exerciseStartTime = 0;
+    state.skipToastShown = false;
     
     showReadyScreen(0);
 }
@@ -1478,7 +1632,8 @@ function showReadyScreen(exerciseIndex) {
     el.frame.className = 'ready';
     el.ready.classList.remove('hidden');
     
-    let count = settings.countdownTime;  // Use settings instead of CONFIG
+    // Fixed countdown (2 seconds minimum for ready gate)
+    let count = Math.max(2, CONFIG.READY_COUNTDOWN_SECONDS);
     el.readyCountdown.textContent = count;
     
     const countdownInterval = setInterval(() => {
@@ -1518,10 +1673,10 @@ function startExercise(index) {
     state.currentAcc = 0;
     state.peakAcc = 0;
     
-    // Initialize struggle tracking
+    // Initialize struggle tracking and ready gate
     state.exerciseStartTime = Date.now();
     state.skipToastShown = false;
-    el.skipToast.classList.remove('show');
+    if (el.skipToast) el.skipToast.classList.remove('show');
     
     updatePhaseUI();
     
@@ -1532,6 +1687,7 @@ function startExercise(index) {
     el.resetInstruction.classList.add('show');
     el.resetText.textContent = 'Make a fist to begin';
     
+    // Ensure game loop is running
     if (!state.animationFrameId) {
         gameLoop();
     }
@@ -1697,76 +1853,63 @@ function checkResetPhase() {
 // ============================================
 function updateExecutePhase() {
     if (state.cooldown) return;
+    if (!state.landmarks) return;
+    
+    // READY GATE: Don't count tracking until 2 seconds after exercise starts
+    const readyGateElapsed = Date.now() - state.exerciseStartTime;
+    if (readyGateElapsed < 2000) {
+        updateAccuracyDisplay(0);
+        return;
+    }
     
     const ex = state.exercises[state.exIdx];
     
-    // Calculate accuracy based on exercise type
+    // Use BoundaryEngine for accuracy calculation
+    let result;
     let accuracy = 0;
     let isolationValid = true;
     
     if (ex.type === 'isolation') {
-        // Check target fingers are extended AND non-targets are curled
-        const targetExtended = ex.targetFingers.every(i => state.curls[i] < 0.35);
-        const nonTargetsCurled = state.curls.every((curl, i) => {
-            if (ex.targetFingers.includes(i)) return true; // Skip targets
-            return curl >= CONFIG.NON_TARGET_MAX_EXTENSION;
-        });
-        
-        if (!nonTargetsCurled) {
-    isolationValid = false;
-    // Keep accuracy based on target fingers only.
-    // Non-target fingers simply block "completion" when they're clearly too extended.
-} else if (targetExtended) {
-
-            // Calculate how well the target fingers are extended
-            const targetScore = ex.targetFingers.map(i => {
-                const curl = state.curls[i];
-                if (curl < 0.15) return 1;
-                if (curl < 0.25) return 0.9;
-                if (curl < 0.35) return 0.75;
-                return 0.5;
-            });
-            accuracy = targetScore.reduce((a, b) => a + b, 0) / targetScore.length;
-        } else {
-            // Partial extension
-            const targetScore = ex.targetFingers.map(i => Math.max(0, 1 - state.curls[i] * 1.5));
-            accuracy = targetScore.reduce((a, b) => a + b, 0) / targetScore.length * 0.6;
-        }
+        result = BoundaryEngine.evaluateIsolation(state.landmarks, ex.targetFingers);
+        accuracy = result.accuracy;
+        // Check non-target relaxation: yellow is acceptable, only fail on hard boundary violations
+        const nonTargetResults = result.fingerResults.filter((r, i) => !ex.targetFingers.includes(i));
+        const hasHardViolation = nonTargetResults.some(r => r.zone === 'RED' && r.score < 0.4);
+        isolationValid = !hasHardViolation; // Yellow is OK, only red violations block
         
     } else if (ex.type === 'pinch') {
-        const [p1, p2] = ex.pinchPair;
-        const key = `${p1}-${p2}`;
-        const dist = state.pinchDistances[key] || 1;
+        // Map pinchPair indices to finger indices (4=thumb tip, 8=index tip, etc.)
+        const thumbTipIdx = 4;
+        const targetTipIdx = ex.pinchPair[1]; // e.g., 8, 12, 16, 20
+        // Map tip indices to finger indices: 8->1, 12->2, 16->3, 20->4
+        const fingerMap = { 8: 1, 12: 2, 16: 3, 20: 4 };
+        const pinchTarget = fingerMap[targetTipIdx] || 1;
         
-        if (dist < 0.03) accuracy = 1;
-        else if (dist < 0.05) accuracy = 0.9;
-        else if (dist < 0.08) accuracy = 0.75;
-        else if (dist < 0.12) accuracy = 0.55;
-        else if (dist < 0.18) accuracy = 0.35;
-        else accuracy = 0.15;
+        result = BoundaryEngine.evaluatePinch(state.landmarks, pinchTarget);
+        accuracy = result.accuracy;
+        // For pinch: check non-target relaxation (yellow allowed)
+        const nonTargetScore = result.nonTargetScore;
+        isolationValid = nonTargetScore >= 0.40; // Yellow (0.40+) is acceptable
         
     } else if (ex.type === 'spread') {
-        const avgSpread = state.fingerSpread;
-        const extended = state.curls.every(c => c < 0.30);
-        
-        if (extended && avgSpread > 0.14) accuracy = 1;
-        else if (extended && avgSpread > 0.10) accuracy = 0.85;
-        else if (extended && avgSpread > 0.07) accuracy = 0.65;
-        else if (extended) accuracy = 0.45;
-        else accuracy = Math.max(0.2, 1 - avg(state.curls));
+        result = BoundaryEngine.evaluateSpread(state.landmarks);
+        accuracy = result.accuracy;
+        isolationValid = true; // Spread doesn't have non-target interference
         
     } else if (ex.type === 'flat') {
+        // Flat hand: all extended, together
         const extended = state.curls.every(c => c < 0.20);
         const together = state.fingerSpread < 0.06;
-        
         if (extended && together) accuracy = 1;
         else if (extended) accuracy = 0.7;
         else accuracy = Math.max(0.2, 1 - avg(state.curls));
+        isolationValid = true;
         
     } else if (ex.type === 'fist') {
         const curled = state.curls.every(c => c > 0.65);
         if (curled) accuracy = 1;
         else accuracy = avg(state.curls);
+        isolationValid = true;
     }
     
     state.currentAcc = accuracy;
@@ -1774,14 +1917,14 @@ function updateExecutePhase() {
     
     updateAccuracyDisplay(accuracy);
     
-    // Check for struggle - show skip suggestion after 8 seconds in yellow or below
+    // Check for struggle - show skip modal after 8 seconds in yellow or below
     const elapsed = Date.now() - state.exerciseStartTime;
     if (state.phase === 'EXECUTE' && elapsed > CONFIG.STRUGGLE_TIME_MS && state.peakAcc < CONFIG.ZONE_BLUE && !state.skipToastShown) {
         state.skipToastShown = true;
-        el.skipToast.classList.add('show');
+        showSkipModal();
     }
     
-    // Hold logic
+    // Hold logic with soft decay
     const meetsThreshold = accuracy >= CONFIG.ZONE_YELLOW && isolationValid;
     
     if (meetsThreshold) {
@@ -1800,7 +1943,7 @@ function updateExecutePhase() {
         }
     } else {
         state.holding = false;
-        // SLOW decay - doesn't reset progress completely on small mistakes
+        // SOFT decay - slow decay instead of hard reset
         state.progress = Math.max(0, state.progress - CONFIG.PROGRESS_DECAY_RATE);
     }
     
@@ -1928,7 +2071,8 @@ function renderVisuals(lm) {
             if (ex.type === 'isolation') {
                 renderIsolationZone(lm, ex);
             } else if (ex.type === 'pinch') {
-                renderPinchZone(lm, ex);
+                // Pinch exercises: NO visible boundaries/shaded zones (invisible scoring)
+                renderBasicSkeleton(lm);
             } else if (ex.type === 'spread') {
                 renderSpreadZone(lm, ex);
             } else {
@@ -2352,9 +2496,15 @@ function continuePain() {
 let restInterval = null;
 function showRest() {
     state.screen = 'REST';
-    let remaining = CONFIG.REST_SECONDS;
+    let remaining = Math.ceil(CONFIG.REST_SECONDS);
     el.restTimer.textContent = remaining;
     el.rest.classList.remove('hidden');
+    
+    // Ensure tracking continues (don't break hand tracking)
+    if (!state.animationFrameId) {
+        gameLoop();
+    }
+    
     restInterval = setInterval(() => {
         remaining--;
         el.restTimer.textContent = remaining;
@@ -2366,8 +2516,13 @@ function skipRest() {
     if (restInterval) { clearInterval(restInterval); restInterval = null; }
     el.rest.classList.add('hidden');
     const nextIdx = state.exIdx + 1;
-    if (nextIdx >= state.exercises.length) endSession();
-    else { showReadyScreen(nextIdx); state.cooldown = false; }
+    if (nextIdx >= state.exercises.length) {
+        endSession();
+    } else {
+        // Ensure tracking continues after rest
+        state.cooldown = false;
+        showReadyScreen(nextIdx);
+    }
 }
 
 // ============================================
@@ -2537,15 +2692,12 @@ function speak(text) {
     speechSynthesis.speak(u);
 }
 
-// Skip suggestion helpers
-function acceptSkipSuggestion() {
-    el.skipToast.classList.remove('show');
-    skipExercise();
-}
-
-function dismissSkipSuggestion() {
-    el.skipToast.classList.remove('show');
-    state.skipToastShown = true; // Don't show again for this exercise
+// Skip modal (in-app, not browser confirm)
+function showSkipModal() {
+    showModal('Skip Exercise?', 'Having trouble? You can skip this exercise and continue.', () => {
+        closeModal();
+        skipExercise();
+    });
 }
 
 // ============================================
@@ -2555,14 +2707,6 @@ el.btnHome.addEventListener('click', handleHomeClick);
 el.btnAudio.addEventListener('click', toggleAllAudio);
 el.btnSkip.addEventListener('click', skipExercise);
 el.btnTheme.addEventListener('click', toggleTheme);
-el.btnSettings.addEventListener('click', toggleSettingsPanel);
-
-// Close settings panel when clicking outside
-document.addEventListener('click', (e) => {
-    if (!el.settingsPanel.contains(e.target) && !el.btnSettings.contains(e.target)) {
-        el.settingsPanel.classList.remove('show');
-    }
-});
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') handleHomeClick();
