@@ -392,10 +392,11 @@
         .onboarding-image { font-size: 5rem; margin-bottom: 24px; }
         .onboarding-title { font-size: 1.9rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
         .onboarding-desc { font-size: 1.05rem; color: var(--color-slate-light); line-height: 1.6; margin-bottom: 32px; }
-        .onboarding-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
-        .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: #e8e4df; transition: all 0.3s; }
-        .onboarding-dot.active { background: var(--color-sage); width: 28px; border-radius: 5px; }
+        .onboarding-dots { position: relative; display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; height: 16px; align-items: center; }
+        .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: #e8e4df; transition: background 0.25s, transform 0.25s; z-index: 2; }
+        .onboarding-dot.active { transform: scale(1.05); }
         .onboarding-dot.completed { background: var(--color-success); }
+        .onboarding-dots .pill { position: absolute; left: 0; top: 50%; width: 28px; height: 10px; border-radius: 999px; background: var(--color-sage); transform: translate(0, -50%); transition: transform 260ms cubic-bezier(.2,.8,.2,1); will-change: transform; pointer-events: none; box-shadow: 0 6px 14px rgba(0,0,0,0.10); z-index: 1; }
         
         /* Disclaimer */
         .disclaimer-box { background: white; border: 1px solid #e8e4df; border-radius: 16px; padding: 20px; text-align: left; margin-bottom: 24px; max-height: 180px; overflow-y: auto; }
@@ -1216,7 +1217,34 @@ function updateStepUI() {
         d.classList.toggle('active', i + 1 === state.step);
         d.classList.toggle('completed', i + 1 < state.step);
     });
+    // Move the pill indicator in the visible stepper
+    setStepperPill(state.step - 1);
 }
+
+function setStepperPill(stepIndex) {
+    const stepper = document.querySelector('.onboarding-step.active .onboarding-dots');
+    if (!stepper) return;
+    let pill = stepper.querySelector('.pill');
+    if (!pill) {
+        pill = document.createElement('div');
+        pill.className = 'pill';
+        stepper.appendChild(pill);
+    }
+
+    const dots = Array.from(stepper.querySelectorAll('.onboarding-dot'));
+    if (dots.length === 0) return;
+
+    dots.forEach((d, i) => d.classList.toggle('completed', i < stepIndex));
+
+    const target = dots[Math.max(0, Math.min(stepIndex, dots.length - 1))];
+    const stepperRect = stepper.getBoundingClientRect();
+    const dotRect = target.getBoundingClientRect();
+    const x = (dotRect.left - stepperRect.left) + (dotRect.width / 2) - (pill.offsetWidth / 2 || 14);
+    pill.style.transform = `translate(${x}px, -50%)`;
+}
+
+window.addEventListener('load', () => setStepperPill(state.step - 1));
+window.addEventListener('resize', () => setStepperPill(state.step - 1));
 
 el.disclaimerCheck.addEventListener('change', e => {
     el.btnStart.disabled = !e.target.checked;
@@ -1784,7 +1812,10 @@ function project(pt) {
 }
 
 function renderVisuals(lm) {
-    if (!lm) return;
+    if (!lm || !ctx) {
+        if (!ctx) console.warn('Canvas context (ctx) not initialized');
+        return;
+    }
     
     const ex = state.exercises && state.exercises[state.exIdx] ? state.exercises[state.exIdx] : null;
     
@@ -1835,7 +1866,7 @@ function renderFingerTargets(lm, ex) {
 }
 
 function renderNeutralSkeleton(lm, ex) {
-    if (!lm || lm.length === 0) return;
+    if (!lm || lm.length === 0 || !ctx) return;
     
     const color = 'rgba(120, 220, 180, 0.9)'; // Neutral mint
     
@@ -1866,7 +1897,7 @@ function renderNeutralSkeleton(lm, ex) {
     lm.forEach((pt, idx) => {
         const p = project(pt);
         const isTip = FINGER_TIPS.includes(idx);
-        const isTarget = ex.targetFingers && ex.targetFingers.includes(getFingerIdx(idx)) && isTip;
+        const isTarget = ex && ex.targetFingers && ex.targetFingers.includes(getFingerIdx(idx)) && isTip;
         
         const size = isTarget ? 10 : isTip ? 7 : 5;
         
