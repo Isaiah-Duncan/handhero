@@ -220,6 +220,9 @@
         #btn-home { top: 20px; left: 20px; }
         #btn-audio { top: 20px; left: 80px; }
         #btn-skip { top: 20px; right: 20px; background: #fef7ed; border-color: var(--color-gold); }
+        #btn-ibe { top: 20px; right: 80px; }
+
+        .float-btn.active { background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%); color: white; border-color: transparent; }
         
         /* Progress Bar */
         #progress-bar-container { 
@@ -473,6 +476,7 @@
     <button id="btn-home" class="float-btn hidden" aria-label="Go home" title="Go Home">🏠</button>
     <button id="btn-audio" class="float-btn hidden" aria-label="Toggle audio" title="Toggle Audio">🔊</button>
     <button id="btn-skip" class="float-btn hidden" aria-label="Skip exercise" title="Skip">⏭️</button>
+    <button id="btn-ibe" class="float-btn" aria-label="Toggle InvisibleBoundaryEngine" title="Toggle InvisibleBoundaryEngine">IBE</button>
 
     <!-- Toast Notification -->
     <div id="toast" class="toast">
@@ -740,6 +744,8 @@ const CONFIG = {
     
     // Soft decay rate (instead of hard reset)
     SOFT_DECAY_RATE: 0.015,
+    // Skeleton smoothing (0-0.95). Higher = smoother but more lag.
+    SKELETON_SMOOTHING: 0.6,
     
     // Skip suggestion triggers
     SKIP_SUGGEST_AFTER_SECONDS: 10,
@@ -1054,6 +1060,8 @@ const state = {
     peakAcc: 0,
     
     landmarks: null,
+    // Smoothed landmarks for rendering + stable scoring
+    smoothedLandmarks: null,
     
     // Ready gate tracking
     readyGateActive: false,
@@ -1075,6 +1083,8 @@ const state = {
     
     animTime: 0,
     modalAction: null,
+    // InvisibleBoundaryEngine toggle
+    invisibleEnabled: true,
 };
 
 // ============================================
@@ -1098,6 +1108,7 @@ const el = {
     btnHome: $('btn-home'),
     btnAudio: $('btn-audio'),
     btnSkip: $('btn-skip'),
+    btnIbe: $('btn-ibe'),
     
     icon: $('instruction-icon'),
     text: $('instruction-text'),
@@ -1154,6 +1165,27 @@ const el = {
 const ctx = el.canvas.getContext('2d');
 let audioCtx = null;
 
+// Initialize IBE toggle button
+function updateIbeButton() {
+    if (!el.btnIbe) return;
+    el.btnIbe.classList.toggle('active', !!state.invisibleEnabled);
+    el.btnIbe.textContent = state.invisibleEnabled ? 'IBE ON' : 'IBE OFF';
+}
+
+if (el.btnIbe) {
+    el.btnIbe.addEventListener('click', () => {
+        state.invisibleEnabled = !state.invisibleEnabled;
+        updateIbeButton();
+        const msg = state.invisibleEnabled ? 'InvisibleBoundaryEngine enabled' : 'InvisibleBoundaryEngine disabled';
+        el.toast.querySelector('.toast-message').textContent = msg;
+        el.toast.querySelector('.toast-icon').textContent = state.invisibleEnabled ? '🟢' : '⚪';
+        el.toast.classList.add('show');
+        setTimeout(() => el.toast.classList.remove('show'), 1800);
+    });
+}
+
+updateIbeButton();
+
 // ============================================
 // TOAST NOTIFICATION
 // ============================================
@@ -1168,8 +1200,18 @@ function showToast(message, icon = '✅') {
 // ONBOARDING
 // ============================================
 function nextStep() {
-    state.step++;
-    updateStepUI();
+    const welcomeVisible = el.welcome && !el.welcome.classList.contains('hidden');
+    const activeCard = document.querySelector('.onboarding-step.active');
+
+    if (welcomeVisible && activeCard) {
+        animateIntoProgressBar(activeCard, () => {
+            state.step++;
+            updateStepUI();
+        });
+    } else {
+        state.step++;
+        updateStepUI();
+    }
 }
 
 function prevStep() {
@@ -1184,6 +1226,73 @@ function updateStepUI() {
         d.classList.toggle('active', i + 1 === state.step);
         d.classList.toggle('completed', i + 1 < state.step);
     });
+}
+
+// Animate a source element into the progress bar rectangle, then call done()
+function animateIntoProgressBar(sourceEl, done) {
+    try {
+        const target = document.getElementById('progress-bar-container');
+        if (!target) { done(); return; }
+
+        const srcRect = sourceEl.getBoundingClientRect();
+        const tgtRect = target.getBoundingClientRect();
+
+        const clone = sourceEl.cloneNode(true);
+        clone.style.position = 'fixed';
+        clone.style.left = srcRect.left + 'px';
+        clone.style.top = srcRect.top + 'px';
+        clone.style.width = srcRect.width + 'px';
+        clone.style.height = srcRect.height + 'px';
+        clone.style.margin = '0';
+        clone.style.zIndex = 9999;
+        clone.style.pointerEvents = 'none';
+        clone.style.transition = 'transform 520ms cubic-bezier(0.22, 0.9, 0.32, 1), width 520ms ease, height 520ms ease, border-radius 520ms ease, opacity 320ms ease';
+        clone.style.transformOrigin = 'center center';
+        clone.style.boxShadow = '0 12px 40px rgba(0,0,0,0.12)';
+
+        document.body.appendChild(clone);
+
+        // force reflow
+        clone.getBoundingClientRect();
+
+        const scaleX = tgtRect.width / srcRect.width;
+        const scaleY = tgtRect.height / srcRect.height;
+        const srcCenterX = srcRect.left + srcRect.width / 2;
+        const srcCenterY = srcRect.top + srcRect.height / 2;
+        const tgtCenterX = tgtRect.left + tgtRect.width / 2;
+        const tgtCenterY = tgtRect.top + tgtRect.height / 2;
+        const transX = tgtCenterX - srcCenterX;
+        const transY = tgtCenterY - srcCenterY;
+
+        // Slightly reduce scale to keep rounded feel
+        const finalScaleX = Math.max(0.18, scaleX);
+        const finalScaleY = Math.max(0.12, scaleY);
+
+        requestAnimationFrame(() => {
+            clone.style.transform = `translate(${transX}px, ${transY}px) scale(${finalScaleX}, ${finalScaleY})`;
+            clone.style.borderRadius = '28px';
+            clone.style.opacity = '0.98';
+        });
+
+        const cleanup = () => {
+            clone.removeEventListener('transitionend', cleanup);
+            if (clone.parentNode) clone.parentNode.removeChild(clone);
+            if (typeof done === 'function') done();
+        };
+
+        clone.addEventListener('transitionend', cleanup);
+
+        // Safety fallback: if transition doesn't fire
+        setTimeout(() => {
+            if (clone.parentNode) {
+                clone.parentNode.removeChild(clone);
+            }
+            if (typeof done === 'function') done();
+        }, 700);
+    } catch (e) {
+        console.warn('Animation failed', e);
+        done();
+    }
 }
 
 el.disclaimerCheck.addEventListener('change', e => {
@@ -1393,17 +1502,32 @@ function gameLoop() {
             
             if (hasHand) {
                 state.landmarks = results.landmarks[0];
-                
+
+                // Update smoothed landmarks for more stable visuals and scoring
+                const newLm = state.landmarks;
+                if (!state.smoothedLandmarks) {
+                    state.smoothedLandmarks = newLm.map(p => ({ x: p.x, y: p.y, z: p.z || 0 }));
+                } else {
+                    const a = CONFIG.SKELETON_SMOOTHING;
+                    for (let i = 0; i < newLm.length; i++) {
+                        const p = newLm[i];
+                        const s = state.smoothedLandmarks[i];
+                        s.x = s.x * a + p.x * (1 - a);
+                        s.y = s.y * a + p.y * (1 - a);
+                        if (p.z !== undefined) s.z = (s.z || 0) * a + (p.z || 0) * (1 - a);
+                    }
+                }
+
                 // Check if ready gate has passed
                 const gateActive = Date.now() < state.readyGateEndTime;
-                
+
                 if (state.phase === 'RESET') {
                     checkResetPhase();
                 } else if (!gateActive) {
                     updateExecutePhase();
                 }
-                
-                renderVisuals(state.landmarks);
+
+                renderVisuals(state.smoothedLandmarks || state.landmarks);
             } else {
                 state.landmarks = null;
                 if (state.phase === 'EXECUTE') {
@@ -1411,7 +1535,8 @@ function gameLoop() {
                     state.progress = Math.max(0, state.progress - CONFIG.SOFT_DECAY_RATE);
                     el.bar.style.width = (50 + state.progress * 50) + '%';
                 }
-                updateZoneIndicator(InvisibleBoundaryEngine.ZONE.RED);
+                const zoneVal = (state.invisibleEnabled && typeof InvisibleBoundaryEngine !== 'undefined') ? InvisibleBoundaryEngine.ZONE.RED : 0;
+                updateZoneIndicator(zoneVal);
             }
             
             // Check for skip suggestion
@@ -1492,10 +1617,17 @@ const RESET_BUFFER_SIZE = 6;
 const MAX_RELAXED_FINGERS = 1;
 
 function checkResetPhase() {
-    if (!state.landmarks) return;
-    
-    const result = BoundaryEngine.evaluateFist(state.landmarks);
-    const relaxedCurled = result.accuracy >= 0.55;
+    const lm = state.smoothedLandmarks || state.landmarks;
+    if (!lm) return;
+
+    // Prefer InvisibleBoundaryEngine fist check if available
+    let relaxedCurled = false;
+    if (typeof InvisibleBoundaryEngine !== 'undefined' && typeof InvisibleBoundaryEngine.isValidFist === 'function') {
+        relaxedCurled = InvisibleBoundaryEngine.isValidFist(lm);
+    } else {
+        const result = BoundaryEngine.evaluateFist(lm);
+        relaxedCurled = result && result.accuracy >= 0.55;
+    }
     
     relaxedResetBuffer.push(relaxedCurled);
     if (relaxedResetBuffer.length > RESET_BUFFER_SIZE) relaxedResetBuffer.shift();
@@ -1546,11 +1678,33 @@ function checkResetPhase() {
 // EXECUTE PHASE
 // ============================================
 function updateExecutePhase() {
-    if (state.cooldown || !state.landmarks) return;
+    if (state.cooldown || !(state.smoothedLandmarks || state.landmarks)) return;
     
     const ex = state.exercises[state.exIdx];
     // Single call to evaluate the exercise using InvisibleBoundaryEngine
-    const result = InvisibleBoundaryEngine.evaluate(state.landmarks, ex);
+    const evalLm = state.smoothedLandmarks || state.landmarks;
+    if (!evalLm) return;
+
+    let result;
+    const useIBE = state.invisibleEnabled && typeof InvisibleBoundaryEngine !== 'undefined' && typeof InvisibleBoundaryEngine.evaluate === 'function';
+    if (useIBE) {
+        result = InvisibleBoundaryEngine.evaluate(evalLm, ex);
+    } else {
+        // Fallback to BoundaryEngine evaluators and normalize shape
+        let r;
+        if (ex.type === 'isolation') r = BoundaryEngine.evaluateIsolation(evalLm, ex.targetFingers);
+        else if (ex.type === 'pinch') r = BoundaryEngine.evaluatePinch(evalLm, ex.pinchPair);
+        else if (ex.type === 'spread') r = BoundaryEngine.evaluateSpread(evalLm);
+        else if (ex.type === 'fist') r = BoundaryEngine.evaluateFist(evalLm);
+        else if (ex.type === 'flat') {
+            r = BoundaryEngine.evaluateSpread(evalLm);
+            const avgGap = r.gaps ? r.gaps.reduce((a,b) => a+b, 0) / r.gaps.length : 0;
+            if (avgGap < 0.06) r.accuracy = Math.min(1, (r.accuracy || 0) + 0.2);
+        } else {
+            r = { accuracy: 0.5, passed: false };
+        }
+        result = { score: r.accuracy || 0, passed: !!r.passed, zone: r.accuracy || 0 };
+    }
     
     // Update state
     state.currentAcc = result.score;
@@ -1603,12 +1757,23 @@ function updateExecutePhase() {
     }
 }
 
-function updateZoneIndicator(zone) {
-    const { ZONE } = InvisibleBoundaryEngine;
+function updateZoneIndicator(zoneOrAcc) {
     el.zoneIndicator.classList.remove('green', 'blue', 'yellow', 'red');
-    if (zone === ZONE.GREEN) el.zoneIndicator.classList.add('green');
-    else if (zone === ZONE.BLUE) el.zoneIndicator.classList.add('blue');
-    else if (zone === ZONE.YELLOW) el.zoneIndicator.classList.add('yellow');
+    // If a numeric accuracy was passed, map to zone thresholds
+    if (typeof zoneOrAcc === 'number') {
+        const acc = zoneOrAcc;
+        if (acc >= CONFIG.ZONE_GREEN) el.zoneIndicator.classList.add('green');
+        else if (acc >= CONFIG.ZONE_BLUE) el.zoneIndicator.classList.add('blue');
+        else if (acc >= CONFIG.ZONE_YELLOW) el.zoneIndicator.classList.add('yellow');
+        else el.zoneIndicator.classList.add('red');
+        return;
+    }
+
+    // Otherwise assume an InvisibleBoundaryEngine.ZONE constant
+    const { ZONE } = typeof InvisibleBoundaryEngine !== 'undefined' ? InvisibleBoundaryEngine : {};
+    if (ZONE && zoneOrAcc === ZONE.GREEN) el.zoneIndicator.classList.add('green');
+    else if (ZONE && zoneOrAcc === ZONE.BLUE) el.zoneIndicator.classList.add('blue');
+    else if (ZONE && zoneOrAcc === ZONE.YELLOW) el.zoneIndicator.classList.add('yellow');
     else el.zoneIndicator.classList.add('red');
 }
 
@@ -1696,6 +1861,8 @@ function renderVisuals(lm) {
     
     // Always render neutral skeleton
     renderNeutralSkeleton(lm, ex);
+    // Draw per-finger targets (glow when selected)
+    renderFingerTargets(lm, ex);
     
     // For spread exercises, show shaded zones
     if (ex.type === 'spread' && state.phase === 'EXECUTE') {
@@ -1706,6 +1873,36 @@ function renderVisuals(lm) {
     if (DEBUG && state.phase === 'EXECUTE') {
         renderDebugBoundaries(lm, ex);
     }
+}
+
+function renderFingerTargets(lm, ex) {
+    if (!lm) return;
+    const fingerColors = ['#e8998d','#68c896','#64b4e6','#d4a574','#c9a8d9'];
+    const tips = FINGER_TIPS.map(i => project(lm[i]));
+
+    tips.forEach((pt, fi) => {
+        const isPinch = ex && ex.type === 'pinch' && ex.pinchPair && ex.pinchPair.includes(FINGER_TIPS[fi]);
+        const isTarget = ex && ((ex.targetFingers && ex.targetFingers.includes(fi)) || ex.type === 'spread' || isPinch);
+
+        const base = fingerColors[fi] || '#cccccc';
+        // ring
+        ctx.beginPath();
+        ctx.lineWidth = isTarget ? 4 : 2;
+        ctx.strokeStyle = isTarget ? base : 'rgba(120,120,120,0.18)';
+        ctx.shadowColor = isTarget ? base : 'transparent';
+        ctx.shadowBlur = isTarget ? 18 : 0;
+        ctx.globalAlpha = isTarget ? 1 : 0.7;
+        ctx.arc(pt.x, pt.y, isTarget ? 22 : 12, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // center dot
+        ctx.beginPath();
+        ctx.fillStyle = isTarget ? base : 'white';
+        ctx.shadowBlur = 0;
+        ctx.arc(pt.x, pt.y, isTarget ? 7 : 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    });
 }
 
 function renderNeutralSkeleton(lm, ex) {
