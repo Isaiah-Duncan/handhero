@@ -1233,18 +1233,23 @@ function setStepperPill(stepIndex) {
 
     const dots = Array.from(stepper.querySelectorAll('.onboarding-dot'));
     if (dots.length === 0) return;
-
     dots.forEach((d, i) => d.classList.toggle('completed', i < stepIndex));
 
     const target = dots[Math.max(0, Math.min(stepIndex, dots.length - 1))];
     const stepperRect = stepper.getBoundingClientRect();
     const dotRect = target.getBoundingClientRect();
-    const x = (dotRect.left - stepperRect.left) + (dotRect.width / 2) - (pill.offsetWidth / 2 || 14);
-    pill.style.transform = `translate(${x}px, -50%)`;
+
+    // Ensure pill has a measured width (force layout) before centering
+    const pillRect = pill.getBoundingClientRect();
+    const pillW = pillRect.width || 28;
+
+    // Center pill over the dot
+    const x = (dotRect.left - stepperRect.left) + (dotRect.width / 2) - (pillW / 2);
+    pill.style.transform = `translate(${Math.round(x)}px, -50%)`;
 }
 
-window.addEventListener('load', () => setStepperPill(state.step - 1));
-window.addEventListener('resize', () => setStepperPill(state.step - 1));
+window.addEventListener('load', () => requestAnimationFrame(() => setStepperPill(state.step - 1)));
+window.addEventListener('resize', () => requestAnimationFrame(() => setStepperPill(state.step - 1)));
 
 el.disclaimerCheck.addEventListener('change', e => {
     el.btnStart.disabled = !e.target.checked;
