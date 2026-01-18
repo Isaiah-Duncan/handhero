@@ -710,9 +710,9 @@
                 <button class="btn btn-primary" id="modal-confirm-btn" onclick="confirmModalAction()">Confirm</button>
             </div>
         </div>
-        </div>
+    </div>
 
-        <script src="Handheroexercises.js"></script>
+    <script src="Handheroexercises.js"></script>
 
     <script>
 // ============================================
@@ -1406,28 +1406,25 @@ function gameLoop() {
     
     state.animTime = Date.now() / 1000;
     
-    if (state.screen === 'SESSION') {
-        try {
-            const results = state.handLandmarker.detectForVideo(el.video, performance.now());
-            
-            resizeCanvas();
-            ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
-            
-            // Check for flickering (hand detection instability)
-            const hasHand = results.landmarks && results.landmarks.length > 0;
-            if (state.lastLandmarkState !== null && state.lastLandmarkState !== hasHand) {
-                state.flickerCount++;
-            }
-            state.lastLandmarkState = hasHand;
-            
-            // Low light detection
-            checkLowLight();
-            
-            if (hasHand) {
-                state.landmarks = results.landmarks[0];
+    // Always detect and render hand if webcam is running (for all screens)
+    try {
+        const results = state.handLandmarker.detectForVideo(el.video, performance.now());
+        
+        resizeCanvas();
+        ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+        
+        // Check for flickering (hand detection instability)
+        const hasHand = results.landmarks && results.landmarks.length > 0;
+        if (state.lastLandmarkState !== null && state.lastLandmarkState !== hasHand) {
+            state.flickerCount++;
+        }
+        state.lastLandmarkState = hasHand;
+        
+        if (hasHand) {
+            state.landmarks = results.landmarks[0];
 
-                // Update smoothed landmarks for more stable visuals and scoring
-                const newLm = state.landmarks;
+            // Update smoothed landmarks for more stable visuals and scoring
+            const newLm = state.landmarks;
                 if (!state.smoothedLandmarks) {
                     state.smoothedLandmarks = newLm.map(p => ({ x: p.x, y: p.y, z: p.z || 0 }));
                 } else {
@@ -1441,19 +1438,28 @@ function gameLoop() {
                     }
                 }
 
-                // Check if ready gate has passed
-                const gateActive = Date.now() < state.readyGateEndTime;
+                // Only process phase logic during SESSION
+                if (state.screen === 'SESSION') {
+                    // Low light detection
+                    checkLowLight();
+                    
+                    // Check if ready gate has passed
+                    const gateActive = Date.now() < state.readyGateEndTime;
 
-                if (state.phase === 'RESET') {
-                    checkResetPhase();
-                } else if (!gateActive) {
-                    updateExecutePhase();
+                    if (state.phase === 'RESET') {
+                        checkResetPhase();
+                    } else if (!gateActive) {
+                        updateExecutePhase();
+                    }
+                    
+                    // Check for skip suggestion
+                    checkSkipSuggestion();
                 }
 
                 renderVisuals(state.smoothedLandmarks || state.landmarks);
             } else {
                 state.landmarks = null;
-                if (state.phase === 'EXECUTE') {
+                if (state.screen === 'SESSION' && state.phase === 'EXECUTE') {
                     // Soft decay instead of hard reset
                     state.progress = Math.max(0, state.progress - CONFIG.SOFT_DECAY_RATE);
                     el.bar.style.width = (50 + state.progress * 50) + '%';
@@ -1462,11 +1468,9 @@ function gameLoop() {
                 updateZoneIndicator(zoneVal);
             }
             
-            // Check for skip suggestion
-            checkSkipSuggestion();
-            
-        } catch (e) {}
-    }
+        } catch (e) {
+            console.error('Hand detection error:', e);
+        }
     
     updateTimer();
     state.animationFrameId = requestAnimationFrame(gameLoop);
@@ -1780,7 +1784,9 @@ function project(pt) {
 }
 
 function renderVisuals(lm) {
-    const ex = state.exercises[state.exIdx];
+    if (!lm) return;
+    
+    const ex = state.exercises && state.exercises[state.exIdx] ? state.exercises[state.exIdx] : null;
     
     // Always render neutral skeleton
     renderNeutralSkeleton(lm, ex);
@@ -1829,6 +1835,8 @@ function renderFingerTargets(lm, ex) {
 }
 
 function renderNeutralSkeleton(lm, ex) {
+    if (!lm || lm.length === 0) return;
+    
     const color = 'rgba(120, 220, 180, 0.9)'; // Neutral mint
     
     // Draw connections
