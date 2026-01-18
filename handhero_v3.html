@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HandHero | Hand Therapy Companion</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="InvisibleBoundaryEngine.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -705,9 +706,11 @@
                 <button class="btn btn-primary" id="modal-confirm-btn" onclick="confirmModalAction()">Confirm</button>
             </div>
         </div>
-    </div>
+        </div>
 
-<script>
+        <script src="Handheroexercises.js"></script>
+
+    <script>
 // ============================================
 // DEBUG FLAG (set to true to see boundary lines)
 // ============================================
@@ -1002,6 +1005,15 @@ const ALL_EXERCISES = [
 ];
 
 function selectExercises() {
+    // Prefer using HandHeroExercises module when available
+    if (typeof window !== 'undefined' && window.HandHeroExercises && typeof HandHeroExercises.buildSession === 'function') {
+        try {
+            return HandHeroExercises.buildSession(CONFIG.EXERCISES_PER_SESSION || 8);
+        } catch (e) {
+            console.warn('HandHeroExercises.buildSession failed, falling back to local library', e);
+        }
+    }
+
     const shuffle = a => [...a].sort(() => Math.random() - 0.5);
     const byDiff = d => ALL_EXERCISES.filter(e => e.difficulty === d);
     const selected = [
@@ -1399,7 +1411,7 @@ function gameLoop() {
                     state.progress = Math.max(0, state.progress - CONFIG.SOFT_DECAY_RATE);
                     el.bar.style.width = (50 + state.progress * 50) + '%';
                 }
-                updateZoneIndicator(0);
+                updateZoneIndicator(InvisibleBoundaryEngine.ZONE.RED);
             }
             
             // Check for skip suggestion
@@ -1526,7 +1538,8 @@ function checkResetPhase() {
         el.bar.style.width = '0%';
     }
     
-    updateZoneIndicator(stableRelaxed ? 0.5 : 0);
+    const { ZONE } = InvisibleBoundaryEngine || {};
+    updateZoneIndicator(stableRelaxed ? (ZONE ? ZONE.YELLOW : 0.5) : (ZONE ? ZONE.RED : 0));
 }
 
 // ============================================
@@ -1536,47 +1549,31 @@ function updateExecutePhase() {
     if (state.cooldown || !state.landmarks) return;
     
     const ex = state.exercises[state.exIdx];
-    let result;
+    // Single call to evaluate the exercise using InvisibleBoundaryEngine
+    const result = InvisibleBoundaryEngine.evaluate(state.landmarks, ex);
     
-    // Use BoundaryEngine for evaluation
-    if (ex.type === 'isolation') {
-        result = BoundaryEngine.evaluateIsolation(state.landmarks, ex.targetFingers);
-    } else if (ex.type === 'pinch') {
-        result = BoundaryEngine.evaluatePinch(state.landmarks, ex.pinchPair);
-    } else if (ex.type === 'spread') {
-        result = BoundaryEngine.evaluateSpread(state.landmarks);
-    } else if (ex.type === 'fist') {
-        result = BoundaryEngine.evaluateFist(state.landmarks);
-    } else if (ex.type === 'flat') {
-        // Flat hand - all extended, close together
-        result = BoundaryEngine.evaluateSpread(state.landmarks);
-        // Adjust for flat (fingers together)
-        const avgGap = result.gaps ? result.gaps.reduce((a,b) => a+b, 0) / result.gaps.length : 0;
-        if (avgGap < 0.06) result.accuracy = Math.min(1, result.accuracy + 0.2);
-    } else {
-        result = { accuracy: 0.5, passed: false };
-    }
+    // Update state
+    state.currentAcc = result.score;
+    if (result.score > state.peakAcc) state.peakAcc = result.score;
     
-    state.currentAcc = result.accuracy;
-    if (result.accuracy > state.peakAcc) state.peakAcc = result.accuracy;
-    
-    updateZoneIndicator(result.accuracy);
+    // Update zone indicator
+    updateZoneIndicator(result.zone);
     
     // Hold logic with soft decay
-    const meetsThreshold = result.passed;
-    
-    if (meetsThreshold) {
+    if (result.passed) {
         if (!state.holding) {
             state.holding = true;
             state.holdStart = Date.now();
         }
         
-        const multiplier = 0.5 + result.accuracy * 0.5;
+        // Progress faster with higher accuracy
+        const multiplier = 0.5 + result.score * 0.5;
         const holdTime = Date.now() - state.holdStart;
         state.progress = Math.min(1, (holdTime / CONFIG.HOLD_DURATION_MS) * multiplier);
         
-        if (state.progress >= 1 && result.accuracy >= CONFIG.ZONE_BLUE) {
-            exerciseSuccess(result.accuracy);
+        // Check for success
+        if (state.progress >= 1 && result.score >= 0.65) {
+            exerciseSuccess(result.score);
         }
     } else {
         state.holding = false;
@@ -1584,8 +1581,10 @@ function updateExecutePhase() {
         state.progress = Math.max(0, state.progress - CONFIG.SOFT_DECAY_RATE);
     }
     
+    // Update UI
     el.bar.style.width = (50 + state.progress * 50) + '%';
     
+    // Frame color feedback
     if (state.progress >= 1) {
         el.frame.className = 'success';
     } else if (state.holding) {
@@ -1594,6 +1593,7 @@ function updateExecutePhase() {
         el.frame.className = '';
     }
     
+    // Timer display
     if (state.holding && state.progress < 1) {
         const remaining = Math.ceil((1 - state.progress) * (CONFIG.HOLD_DURATION_MS / 1000));
         el.holdTimer.textContent = remaining;
@@ -1603,11 +1603,12 @@ function updateExecutePhase() {
     }
 }
 
-function updateZoneIndicator(acc) {
+function updateZoneIndicator(zone) {
+    const { ZONE } = InvisibleBoundaryEngine;
     el.zoneIndicator.classList.remove('green', 'blue', 'yellow', 'red');
-    if (acc >= CONFIG.ZONE_GREEN) el.zoneIndicator.classList.add('green');
-    else if (acc >= CONFIG.ZONE_BLUE) el.zoneIndicator.classList.add('blue');
-    else if (acc >= CONFIG.ZONE_YELLOW) el.zoneIndicator.classList.add('yellow');
+    if (zone === ZONE.GREEN) el.zoneIndicator.classList.add('green');
+    else if (zone === ZONE.BLUE) el.zoneIndicator.classList.add('blue');
+    else if (zone === ZONE.YELLOW) el.zoneIndicator.classList.add('yellow');
     else el.zoneIndicator.classList.add('red');
 }
 
