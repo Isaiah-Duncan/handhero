@@ -387,8 +387,8 @@
         .btn-ghost:hover { color: var(--color-slate); background: rgba(0,0,0,0.03); }
         
         /* Onboarding */
-        .onboarding-step { display: none; }
-        .onboarding-step.active { display: block; }
+        .onboarding-step { display: none; opacity: 0; transition: opacity 0.4s ease; }
+        .onboarding-step.active { display: block; opacity: 1; }
         .onboarding-image { font-size: 5rem; margin-bottom: 24px; }
         .onboarding-title { font-size: 1.9rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
         .onboarding-desc { font-size: 1.05rem; color: var(--color-slate-light); line-height: 1.6; margin-bottom: 32px; }
@@ -1200,18 +1200,8 @@ function showToast(message, icon = '✅') {
 // ONBOARDING
 // ============================================
 function nextStep() {
-    const welcomeVisible = el.welcome && !el.welcome.classList.contains('hidden');
-    const activeCard = document.querySelector('.onboarding-step.active');
-
-    if (welcomeVisible && activeCard) {
-        animateIntoProgressBar(activeCard, () => {
-            state.step++;
-            updateStepUI();
-        });
-    } else {
-        state.step++;
-        updateStepUI();
-    }
+    state.step++;
+    updateStepUI();
 }
 
 function prevStep() {
@@ -1226,73 +1216,6 @@ function updateStepUI() {
         d.classList.toggle('active', i + 1 === state.step);
         d.classList.toggle('completed', i + 1 < state.step);
     });
-}
-
-// Animate a source element into the progress bar rectangle, then call done()
-function animateIntoProgressBar(sourceEl, done) {
-    try {
-        const target = document.getElementById('progress-bar-container');
-        if (!target) { done(); return; }
-
-        const srcRect = sourceEl.getBoundingClientRect();
-        const tgtRect = target.getBoundingClientRect();
-
-        const clone = sourceEl.cloneNode(true);
-        clone.style.position = 'fixed';
-        clone.style.left = srcRect.left + 'px';
-        clone.style.top = srcRect.top + 'px';
-        clone.style.width = srcRect.width + 'px';
-        clone.style.height = srcRect.height + 'px';
-        clone.style.margin = '0';
-        clone.style.zIndex = 9999;
-        clone.style.pointerEvents = 'none';
-        clone.style.transition = 'transform 520ms cubic-bezier(0.22, 0.9, 0.32, 1), width 520ms ease, height 520ms ease, border-radius 520ms ease, opacity 320ms ease';
-        clone.style.transformOrigin = 'center center';
-        clone.style.boxShadow = '0 12px 40px rgba(0,0,0,0.12)';
-
-        document.body.appendChild(clone);
-
-        // force reflow
-        clone.getBoundingClientRect();
-
-        const scaleX = tgtRect.width / srcRect.width;
-        const scaleY = tgtRect.height / srcRect.height;
-        const srcCenterX = srcRect.left + srcRect.width / 2;
-        const srcCenterY = srcRect.top + srcRect.height / 2;
-        const tgtCenterX = tgtRect.left + tgtRect.width / 2;
-        const tgtCenterY = tgtRect.top + tgtRect.height / 2;
-        const transX = tgtCenterX - srcCenterX;
-        const transY = tgtCenterY - srcCenterY;
-
-        // Slightly reduce scale to keep rounded feel
-        const finalScaleX = Math.max(0.18, scaleX);
-        const finalScaleY = Math.max(0.12, scaleY);
-
-        requestAnimationFrame(() => {
-            clone.style.transform = `translate(${transX}px, ${transY}px) scale(${finalScaleX}, ${finalScaleY})`;
-            clone.style.borderRadius = '28px';
-            clone.style.opacity = '0.98';
-        });
-
-        const cleanup = () => {
-            clone.removeEventListener('transitionend', cleanup);
-            if (clone.parentNode) clone.parentNode.removeChild(clone);
-            if (typeof done === 'function') done();
-        };
-
-        clone.addEventListener('transitionend', cleanup);
-
-        // Safety fallback: if transition doesn't fire
-        setTimeout(() => {
-            if (clone.parentNode) {
-                clone.parentNode.removeChild(clone);
-            }
-            if (typeof done === 'function') done();
-        }, 700);
-    } catch (e) {
-        console.warn('Animation failed', e);
-        done();
-    }
 }
 
 el.disclaimerCheck.addEventListener('change', e => {
