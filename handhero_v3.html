@@ -774,6 +774,12 @@ const CONFIG = {
     // Skip suggestion triggers
     SKIP_SUGGEST_AFTER_SECONDS: 10,
     SKIP_SUGGEST_AFTER_FLICKERS: 15,
+
+    // Accuracy gating + guidance
+    GOOD_ZONE_GRACE_MS: 1500,
+    RED_GUIDANCE_MS: 2500,
+    RED_PAUSE_MS: 1000,
+    SKIP_RED_MS: 15000,
     
     // Low light detection
     LOW_LIGHT_THRESHOLD: 50,
@@ -1136,6 +1142,41 @@ function drawPalmHud(lm, hud) {
         ctx.fillText('✓', palm.x, palm.y);
     }
 
+    if (hud.message) {
+        const msg = hud.message;
+        ctx.font = '600 13px system-ui';
+        const paddingX = 12;
+        const paddingY = 8;
+        const textW = ctx.measureText(msg).width;
+        const boxW = textW + paddingX * 2;
+        const boxH = 26 + paddingY;
+        const boxX = palm.x - boxW / 2;
+        const boxY = palm.y - radius - boxH - 10;
+        const r = 10;
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(boxX + r, boxY);
+        ctx.lineTo(boxX + boxW - r, boxY);
+        ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + r);
+        ctx.lineTo(boxX + boxW, boxY + boxH - r);
+        ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - r, boxY + boxH);
+        ctx.lineTo(boxX + r, boxY + boxH);
+        ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - r);
+        ctx.lineTo(boxX, boxY + r);
+        ctx.quadraticCurveTo(boxX, boxY, boxX + r, boxY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(msg, palm.x, boxY + boxH / 2 + 1);
+    }
+
     ctx.restore();
 }
 
@@ -1221,6 +1262,11 @@ const state = {
     flickerCount: 0,
     lastLandmarkState: null,
     skipSuggestionShown: false,
+    goodZoneStart: 0,
+    redZoneStart: 0,
+    pauseHoldUntil: 0,
+    guidanceUntil: 0,
+    guidanceMessage: '',
     
     // Low light tracking
     lowLightDetected: false,
@@ -1625,6 +1671,11 @@ function startExercise(index) {
     state.exerciseStartTime = Date.now();
     state.flickerCount = 0;
     state.skipSuggestionShown = false;
+    state.goodZoneStart = 0;
+    state.redZoneStart = 0;
+    state.pauseHoldUntil = 0;
+    state.guidanceUntil = 0;
+    state.guidanceMessage = '';
     
     // Ready gate - delay before tracking counts
     state.readyGateActive = true;
@@ -1777,11 +1828,11 @@ function checkLowLight() {
 
 function checkSkipSuggestion() {
     if (state.skipSuggestionShown || state.cooldown || state.phase !== 'EXECUTE') return;
-    
-    const elapsed = (Date.now() - state.exerciseStartTime) / 1000;
-    
-    // Only show after 10 seconds OR 15+ flickers
-    if (elapsed >= CONFIG.SKIP_SUGGEST_AFTER_SECONDS || state.flickerCount >= CONFIG.SKIP_SUGGEST_AFTER_FLICKERS) {
+
+    const redDurationMs = state.redZoneStart ? (Date.now() - state.redZoneStart) : 0;
+
+    // Only show after sustained red for long duration
+    if (redDurationMs >= CONFIG.SKIP_RED_MS) {
         state.skipSuggestionShown = true;
         el.modalSkip.classList.add('show');
     }
@@ -1871,6 +1922,41 @@ function checkResetPhase() {
     updateZoneIndicator(stableRelaxed ? (ZONE ? ZONE.YELLOW : 0.5) : (ZONE ? ZONE.RED : 0));
 }
 
+function resolveZoneLabel(zoneOrAcc) {
+    if (typeof zoneOrAcc === 'number') {
+        if (zoneOrAcc >= CONFIG.ZONE_GREEN) return 'GREEN';
+        if (zoneOrAcc >= CONFIG.ZONE_BLUE) return 'BLUE';
+        if (zoneOrAcc >= CONFIG.ZONE_YELLOW) return 'YELLOW';
+        return 'RED';
+    }
+    return zoneOrAcc || 'RED';
+}
+
+function getTargetTipNodesForExercise(ex) {
+    if (!ex) return [];
+    if (ex.type === 'pinch' && Array.isArray(ex.pinchPair)) return ex.pinchPair;
+    if (Array.isArray(ex.targetFingers) && ex.targetFingers.length) {
+        return ex.targetFingers.map(i => FINGER_TIPS[i]).filter(Boolean);
+    }
+    if (ex.type === 'spread' || ex.type === 'flat' || ex.type === 'fist') {
+        return [...FINGER_TIPS];
+    }
+    return [];
+}
+
+function getGuidanceMessage(ex) {
+    if (!ex) return 'Adjust your hand position';
+    if (ex.type === 'pinch') return ex.desc || 'Touch thumb to the target finger';
+    if (ex.type === 'spread') return 'Spread all fingers wide';
+    if (ex.type === 'flat') return 'Extend fingers and keep them together';
+    if (ex.type === 'fist') return 'Curl all fingers into a fist';
+    if (Array.isArray(ex.targetFingers) && ex.targetFingers.length) {
+        const names = ex.targetFingers.map(i => FINGER_NAMES[i]).join(' and ');
+        return `Lift ${names}`;
+    }
+    return ex.desc || 'Adjust your hand';
+}
+
 // ============================================
 // EXECUTE PHASE
 // ============================================
@@ -1926,8 +2012,36 @@ function updateExecutePhase() {
     // Update zone indicator
     updateZoneIndicator(result.zone);
     
+    const now = Date.now();
+    const zoneLabel = resolveZoneLabel(result.zone);
+    const inGoodZone = zoneLabel === 'GREEN' || zoneLabel === 'BLUE';
+
+    if (inGoodZone) {
+        if (!state.goodZoneStart) state.goodZoneStart = now;
+    } else {
+        state.goodZoneStart = 0;
+    }
+
+    if (zoneLabel === 'RED') {
+        if (!state.redZoneStart) state.redZoneStart = now;
+    } else {
+        state.redZoneStart = 0;
+    }
+
+    const goodZoneStable = state.goodZoneStart && (now - state.goodZoneStart) >= CONFIG.GOOD_ZONE_GRACE_MS;
+    const effectivePass = !!goodZoneStable;
+
+    if (state.redZoneStart && (now - state.redZoneStart) >= CONFIG.RED_GUIDANCE_MS && now > state.guidanceUntil) {
+        state.guidanceUntil = now + CONFIG.RED_PAUSE_MS;
+        state.pauseHoldUntil = state.guidanceUntil;
+        state.guidanceMessage = getGuidanceMessage(ex);
+        if (state.holding) state.holdStart += CONFIG.RED_PAUSE_MS;
+    }
+
+    const isPaused = now < state.pauseHoldUntil;
+
     // Hold logic with soft decay
-    if (result.passed) {
+    if (!isPaused && effectivePass) {
         if (!state.holding) {
             state.holding = true;
             state.holdStart = Date.now();
@@ -1942,7 +2056,7 @@ function updateExecutePhase() {
         if (state.progress >= 1 && result.score >= 0.65) {
             exerciseSuccess(result.score);
         }
-    } else {
+    } else if (!isPaused) {
         state.holding = false;
         // Soft decay instead of hard reset
         state.progress = Math.max(0, state.progress - CONFIG.SOFT_DECAY_RATE);
@@ -2074,6 +2188,16 @@ function updatePalmHudFromSession() {
     const isHolding = !!state.holding;
     const holdTargetSec = CONFIG.HOLD_DURATION_MS / 1000;
     const elapsedSec = (state.holdStart ? (Date.now() - state.holdStart) / 1000 : 0);
+    const guidanceActive = state.guidanceUntil && now < state.guidanceUntil;
+
+    state.hud.message = guidanceActive ? state.guidanceMessage : '';
+
+    if (guidanceActive) {
+        state.hud.mode = 'fail';
+        state.hud.progress = state.progress || 0;
+        state.hud.remaining = Math.max(0, holdTargetSec - elapsedSec);
+        return;
+    }
 
     if (state.phase === 'EXECUTE' && isHolding) {
         const remaining = Math.max(0, holdTargetSec - elapsedSec);
@@ -2275,6 +2399,30 @@ function renderIDEOverlay(lm, mode) {
     }
 }
 
+function renderGuidanceOverlay(lm, ex) {
+    if (!lm || !ex) return;
+    const now = performance.now();
+    const pulse = 0.6 + 0.4 * Math.sin(now / 180);
+    const targets = getTargetTipNodesForExercise(ex);
+
+    ideDrawCurvedBoundaryLine(lm, BOUNDARY_NODES.PIP, IDE_COLORS.green, 4, 0.85);
+    ideDrawCurvedBoundaryLine(lm, BOUNDARY_NODES.DIP, IDE_COLORS.blue, 4, 0.85);
+    ideDrawCurvedBoundaryLine(lm, BOUNDARY_NODES.TIP, IDE_COLORS.purple, 4, 0.85);
+
+    targets.forEach((idx) => {
+        const p = project(lm[idx]);
+        const r = 18 + pulse * 6;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(96, 165, 250, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    });
+}
+
 function renderVisuals(lm) {
     if (!lm || !ctx) {
         if (!ctx) console.warn('Canvas context (ctx) not initialized');
@@ -2287,17 +2435,22 @@ function renderVisuals(lm) {
     const useIbeVisuals = !!state.invisibleEnabled;
     const ideMode = state.ideMode || 'quiet';
     const showDevExtras = ideMode === 'dev';
+    const guidanceActive = state.guidanceUntil && performance.now() < state.guidanceUntil;
     
     // Always render neutral skeleton (no targets when IBE is off)
     renderNeutralSkeleton(lm, useIbeVisuals && showDevExtras ? ex : null);
     
     if (useIbeVisuals) {
         renderIDEOverlay(lm, ideMode);
-        
+
+        if (guidanceActive) {
+            renderGuidanceOverlay(lm, ex);
+        }
+
+        // Draw per-finger targets (glow when selected)
+        renderFingerTargets(lm, ex);
+
         if (showDevExtras) {
-            // Draw per-finger targets (glow when selected)
-            renderFingerTargets(lm, ex);
-            
             // For spread exercises, show shaded zones
             if (ex.type === 'spread' && state.phase === 'EXECUTE') {
                 renderSpreadZones(lm);
