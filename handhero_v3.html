@@ -394,7 +394,12 @@
         .onboarding-desc { font-size: 1.05rem; color: var(--color-slate-light); line-height: 1.6; margin-bottom: 32px; }
         .onboarding-dots { position: relative; display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; height: 16px; align-items: center; }
         .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: #e8e4df; transition: background 0.35s, transform 0.35s; z-index: 3; display: inline-block; }
-        .onboarding-dot.active { background: white; transform: scale(1.05); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        /* Active dot is hidden because the pill is the active indicator */
+        .onboarding-dot.active {
+          background: transparent;
+          box-shadow: none;
+          transform: none;
+        }
         .onboarding-dot.completed { background: #d8d8d8; }
         .onboarding-dots .pill {
           position: absolute;
@@ -403,7 +408,7 @@
           width: 28px;
           height: 10px;
           border-radius: 999px;
-          background: #cfd3d8;
+          background: var(--color-sage);
           transform: translate(0, -50%);
           transition: transform 780ms cubic-bezier(0.16, 1, 0.3, 1);
           will-change: transform;
@@ -1225,14 +1230,32 @@ function prevStep() {
 }
 
 function updateStepUI() {
-    document.querySelectorAll('.onboarding-step').forEach((s, i) => 
-        s.classList.toggle('active', i + 1 === state.step));
-    document.querySelectorAll('.onboarding-dot').forEach((d, i) => {
-        d.classList.toggle('active', i + 1 === state.step);
-        d.classList.toggle('completed', i + 1 < state.step);
+  // Activate the correct step panel
+  document.querySelectorAll('.onboarding-step').forEach((s, i) =>
+    s.classList.toggle('active', i + 1 === state.step)
+  );
+
+  // IMPORTANT: only touch dots inside the ACTIVE step
+  const activeStep = document.querySelector('.onboarding-step.active');
+  if (!activeStep) return;
+
+  // Reset dots in all steps so nothing "leaks" across panels
+  document.querySelectorAll('.onboarding-step').forEach(stepEl => {
+    stepEl.querySelectorAll('.onboarding-dot').forEach(d => {
+      d.classList.remove('active', 'completed');
     });
-    // Move the pill indicator in the visible stepper
-    setStepperPill(state.step - 1);
+  });
+
+  const dots = Array.from(activeStep.querySelectorAll('.onboarding-dot'));
+  const activeIndex = Math.max(0, Math.min(state.step - 1, dots.length - 1));
+
+  dots.forEach((d, i) => {
+    d.classList.toggle('active', i === activeIndex);
+    d.classList.toggle('completed', i < activeIndex);
+  });
+
+  // Move pill to active dot
+  setStepperPill(activeIndex);
 }
 
 function setStepperPill(stepIndex) {
@@ -1872,9 +1895,9 @@ function renderVisuals(lm) {
         renderSpreadZones(lm);
     }
     
-    // Debug boundary lines (only if DEBUG=true)
-    if (DEBUG && state.phase === 'EXECUTE') {
-        renderDebugBoundaries(lm, ex);
+    // InvisibleBoundaryEngine overlay (shows immediately when IBE is ON)
+    if (state.invisibleEnabled && state.phase === 'EXECUTE') {
+        renderIBEOverlay(lm, ex);
     }
 }
 
@@ -2038,6 +2061,163 @@ function renderDebugBoundaries(lm, ex) {
     }
     
     ctx.setLineDash([]);
+}
+
+function renderIBEOverlay(lm, ex) {
+    if (!lm || !ex) return;
+    if (typeof InvisibleBoundaryEngine === 'undefined') return;
+    if (typeof InvisibleBoundaryEngine._debugGetBoundaries !== 'function') return;
+
+    const targetFingers = getExerciseTargetFingersForIBE(ex);
+    if (!targetFingers || targetFingers.length === 0) return;
+
+    const b = InvisibleBoundaryEngine._debugGetBoundaries(lm, targetFingers);
+    if (!b || !b.greenBoundary || !b.acceptableBoundary || !b.lowBoundary) return;
+
+    const L1 = toLinePx(b.greenBoundary);
+    const L2 = toLinePx(b.acceptableBoundary);
+    const L3 = toLinePx(b.lowBoundary);
+
+    // === Filled zones (approximate the wireframe bands) ===
+    // Zone between GREEN and ACCEPTABLE (safe/high accuracy)
+    fillBetweenLines(L1, L2, 'rgba(72, 187, 120, 0.22)'); // green-ish
+
+    // Zone between ACCEPTABLE and LOW (acceptable/mid accuracy)
+    fillBetweenLines(L2, L3, 'rgba(59, 130, 246, 0.18)'); // blue-ish
+
+    // Above GREEN line (low accuracy / warning band)
+    fillCapAboveLine(L1, 'rgba(109, 40, 217, 0.12)'); // purple tint
+
+    // === Boundary lines ===
+    drawBoundaryLine(L1, 'rgba(34,197,94,0.95)', 5);     // GREEN
+    drawBoundaryLine(L2, 'rgba(59,130,246,0.95)', 5);    // ACCEPTABLE
+    drawBoundaryLine(L3, 'rgba(109,40,217,0.85)', 5);    // LOW
+
+    // === Optional: Thumb red guideline (visual cue, not "perfect" physics yet) ===
+    drawThumbRedLine(lm);
+
+    // Labels (small, unobtrusive)
+    drawZoneLabel('SAFE', midpoint(L1), 0, -10);
+    drawZoneLabel('ACCEPTABLE', midpoint(L2), 0, -10);
+    drawZoneLabel('LOW', midpoint(L3), 0, -10);
+}
+
+function getExerciseTargetFingersForIBE(ex) {
+    // ex.targetFingers uses 0..4 finger indices
+    if (Array.isArray(ex.targetFingers) && ex.targetFingers.length) return ex.targetFingers;
+
+    // Pinch: map pinchPair landmark tip indices to finger indices
+    if (ex.type === 'pinch' && Array.isArray(ex.pinchPair)) {
+        const tips = ex.pinchPair;
+        const fingerIdxs = tips.map(tipNode => {
+            // FINGER_TIPS is [4,8,12,16,20] in your file
+            const idx = FINGER_TIPS.indexOf(tipNode);
+            return idx >= 0 ? idx : null;
+        }).filter(v => v !== null);
+        return fingerIdxs.length ? fingerIdxs : [2]; // fallback to middle
+    }
+
+    // Spread / fist / flat: treat as all fingers
+    if (ex.type === 'spread' || ex.type === 'fist' || ex.type === 'flat') {
+        return [0,1,2,3,4];
+    }
+
+    // Fallback
+    return [2];
+}
+
+function toLinePx(line) {
+    const a = project(line.start);
+    const b = project(line.end);
+    return { a, b };
+}
+
+function drawBoundaryLine(L, strokeStyle, lineWidth = 4) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = strokeStyle;
+    ctx.setLineDash([10, 8]);
+    ctx.lineCap = 'round';
+    ctx.moveTo(L.a.x, L.a.y);
+    ctx.lineTo(L.b.x, L.b.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+}
+
+function fillBetweenLines(Ltop, Lbottom, fillStyle) {
+    ctx.save();
+    ctx.fillStyle = fillStyle;
+    ctx.beginPath();
+    ctx.moveTo(Ltop.a.x, Ltop.a.y);
+    ctx.lineTo(Ltop.b.x, Ltop.b.y);
+    ctx.lineTo(Lbottom.b.x, Lbottom.b.y);
+    ctx.lineTo(Lbottom.a.x, Lbottom.a.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+}
+
+function fillCapAboveLine(L, fillStyle) {
+    // Fill from the line up to the top of the canvas (simple "cap")
+    ctx.save();
+    ctx.fillStyle = fillStyle;
+    ctx.beginPath();
+    ctx.moveTo(L.a.x, 0);
+    ctx.lineTo(L.b.x, 0);
+    ctx.lineTo(L.b.x, L.b.y);
+    ctx.lineTo(L.a.x, L.a.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+}
+
+function drawThumbRedLine(lm) {
+    // Visual guideline along thumb edge (approx)
+    const wrist = project(lm[0]);
+    const thumbTip = project(lm[4]);
+    const thumbMcp = project(lm[2]);
+
+    // Extend line a bit past thumb tip for the wireframe feel
+    const dx = thumbTip.x - thumbMcp.x;
+    const dy = thumbTip.y - thumbMcp.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ex = (dx / len) * 80;
+    const ey = (dy / len) * 80;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = 'rgba(239,68,68,0.9)'; // red
+    ctx.lineCap = 'round';
+    ctx.moveTo(wrist.x, wrist.y);
+    ctx.lineTo(thumbTip.x + ex, thumbTip.y + ey);
+    ctx.stroke();
+
+    // red translucent zone near thumb
+    ctx.globalAlpha = 0.18;
+    ctx.beginPath();
+    ctx.moveTo(wrist.x, wrist.y);
+    ctx.lineTo(thumbTip.x + ex, thumbTip.y + ey);
+    ctx.lineTo(thumbTip.x + ex + 30, thumbTip.y + ey + 30);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(239,68,68,1)';
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function midpoint(L) {
+    return { x: (L.a.x + L.b.x) / 2, y: (L.a.y + L.b.y) / 2 };
+}
+
+function drawZoneLabel(text, p, ox = 0, oy = 0) {
+    ctx.save();
+    ctx.font = '12px system-ui';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillText(text, p.x + ox + 8, p.y + oy - 8);
+    ctx.restore();
 }
 
 // ============================================
