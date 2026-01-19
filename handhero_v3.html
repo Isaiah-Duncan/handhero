@@ -1026,6 +1026,118 @@ const IDE_COLORS = {
     purple: '#8b5cf6',
     red: '#ef4444',
 };
+const palmHudSmooth = { x: null, y: null };
+
+function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+
+function smoothPoint(target, alpha = 0.7) {
+    if (palmHudSmooth.x == null) {
+        palmHudSmooth.x = target.x;
+        palmHudSmooth.y = target.y;
+        return { x: target.x, y: target.y };
+    }
+    palmHudSmooth.x = palmHudSmooth.x * alpha + target.x * (1 - alpha);
+    palmHudSmooth.y = palmHudSmooth.y * alpha + target.y * (1 - alpha);
+    return { x: palmHudSmooth.x, y: palmHudSmooth.y };
+}
+
+function getPalmCenterPx(lm) {
+    const ids = [0, 5, 9, 13, 17];
+    let sx = 0, sy = 0;
+    for (const i of ids) {
+        const p = project(lm[i]);
+        sx += p.x;
+        sy += p.y;
+    }
+    return { x: sx / ids.length, y: sy / ids.length };
+}
+
+function estimateHandSizePx(lm) {
+    const a = project(lm[5]);
+    const b = project(lm[17]);
+    return Math.max(60, Math.hypot(b.x - a.x, b.y - a.y));
+}
+
+function drawPalmHud(lm, hud) {
+    if (!state.palmHudEnabled || !lm) return;
+
+    const palm = smoothPoint(getPalmCenterPx(lm), 0.75);
+    const handSize = estimateHandSizePx(lm);
+    const radius = handSize * 0.22;
+    const thickness = Math.max(6, handSize * 0.04);
+
+    const now = performance.now();
+    const isFlash = hud.mode === 'success' && now < hud.flashUntil;
+
+    let ring = 'rgba(255,255,255,0.25)';
+    let ringBg = 'rgba(255,255,255,0.10)';
+    let accent = 'rgba(245,158,11,0.95)';
+
+    if (hud.mode === 'holding') {
+        ring = 'rgba(245,158,11,0.95)';
+        ringBg = 'rgba(245,158,11,0.16)';
+    } else if (hud.mode === 'success' || isFlash) {
+        ring = 'rgba(34,197,94,0.95)';
+        ringBg = 'rgba(34,197,94,0.18)';
+        accent = ring;
+    } else if (hud.mode === 'fail') {
+        ring = 'rgba(239,68,68,0.92)';
+        ringBg = 'rgba(239,68,68,0.14)';
+        accent = ring;
+    }
+
+    const progress = clamp01(hud.progress);
+
+    ctx.save();
+    ctx.fillStyle = ringBg;
+    ctx.beginPath();
+    ctx.arc(palm.x, palm.y, radius + thickness * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = thickness;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(palm.x, palm.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const start = -Math.PI / 2;
+    const end = start + progress * Math.PI * 2;
+    ctx.strokeStyle = ring;
+    ctx.shadowColor = ring;
+    ctx.shadowBlur = 16;
+    ctx.lineWidth = thickness;
+    ctx.beginPath();
+    ctx.arc(palm.x, palm.y, radius, start, end);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(palm.x - radius * 0.55, palm.y);
+    ctx.lineTo(palm.x + radius * 0.55, palm.y);
+    ctx.moveTo(palm.x, palm.y - radius * 0.55);
+    ctx.lineTo(palm.x, palm.y + radius * 0.55);
+    ctx.stroke();
+
+    if (hud.mode === 'holding') {
+        const n = Math.max(1, Math.ceil(hud.remaining));
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.font = `800 ${Math.round(radius * 0.9)}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(n), palm.x, palm.y);
+    } else if (hud.mode === 'success' && isFlash) {
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.font = `900 ${Math.round(radius * 0.95)}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✓', palm.x, palm.y);
+    }
+
+    ctx.restore();
+}
 
 // ============================================
 // EXERCISE LIBRARY
@@ -1123,6 +1235,13 @@ const state = {
     // InvisibleBoundaryEngine toggle
     invisibleEnabled: true,
     ideMode: 'quiet',
+    palmHudEnabled: true,
+    hud: {
+        mode: 'positioning',
+        progress: 0,
+        remaining: 0,
+        flashUntil: 0,
+    },
 };
 
 // ============================================
@@ -1950,6 +2069,31 @@ function project(pt) {
     return { x: (w - sw) / 2 + (1 - pt.x) * sw, y: (h - sh) / 2 + pt.y * sh };
 }
 
+function updatePalmHudFromSession() {
+    const now = performance.now();
+    const isHolding = !!state.holding;
+    const holdTargetSec = CONFIG.HOLD_DURATION_MS / 1000;
+    const elapsedSec = (state.holdStart ? (Date.now() - state.holdStart) / 1000 : 0);
+
+    if (state.phase === 'EXECUTE' && isHolding) {
+        const remaining = Math.max(0, holdTargetSec - elapsedSec);
+        state.hud.mode = 'holding';
+        state.hud.progress = clamp01(elapsedSec / holdTargetSec);
+        state.hud.remaining = remaining;
+    } else {
+        state.hud.mode = 'positioning';
+        state.hud.progress = 0;
+        state.hud.remaining = 0;
+    }
+
+    if (state.progress >= 1) {
+        state.hud.mode = 'success';
+        state.hud.progress = 1;
+        state.hud.remaining = 0;
+        state.hud.flashUntil = now + 350;
+    }
+}
+
 function ideDrawCurvedBoundaryLine(lm, nodeIndices, color, lineWidth = 4, alpha = 1) {
     const points = nodeIndices.map(i => project(lm[i]));
     if (points.length < 2) return points;
@@ -2136,7 +2280,9 @@ function renderVisuals(lm) {
         if (!ctx) console.warn('Canvas context (ctx) not initialized');
         return;
     }
-    
+
+    updatePalmHudFromSession();
+
     const ex = state.exercises && state.exercises[state.exIdx] ? state.exercises[state.exIdx] : null;
     const useIbeVisuals = !!state.invisibleEnabled;
     const ideMode = state.ideMode || 'quiet';
@@ -2170,6 +2316,8 @@ function renderVisuals(lm) {
             }
         }
     }
+
+    drawPalmHud(lm, state.hud);
 }
 
 function renderFingerTargets(lm, ex) {
