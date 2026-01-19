@@ -222,6 +222,7 @@
         #btn-audio { top: 20px; left: 80px; }
         #btn-skip { top: 20px; right: 20px; background: #fef7ed; border-color: var(--color-gold); }
         #btn-ibe { top: 20px; right: 80px; }
+        #btn-ide { top: 20px; right: 140px; }
 
         .float-btn.active { background: linear-gradient(135deg, var(--color-sage) 0%, var(--color-sage-dark) 100%); color: white; border-color: transparent; }
         
@@ -393,7 +394,7 @@
         .onboarding-image { font-size: 5rem; margin-bottom: 24px; }
         .onboarding-title { font-size: 1.9rem; font-weight: 800; color: var(--color-slate); margin-bottom: 12px; }
         .onboarding-desc { font-size: 1.05rem; color: var(--color-slate-light); line-height: 1.6; margin-bottom: 32px; }
-        .onboarding-dots { position: relative; display: flex; justify-content: space-between; gap: 16px; margin-bottom: 24px; height: 16px; align-items: center; padding: 0 40px; }
+        .onboarding-dots { position: relative; display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; height: 16px; align-items: center; }
         .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: #e8e4df; transition: background 0.35s, transform 0.35s; z-index: 3; display: inline-block; }
         /* Active dot is hidden because the pill is the active indicator */
         .onboarding-dot.active {
@@ -497,6 +498,7 @@
     <button id="btn-home" class="float-btn hidden" aria-label="Go home" title="Go Home">🏠</button>
     <button id="btn-audio" class="float-btn hidden" aria-label="Toggle audio" title="Toggle Audio">🔊</button>
     <button id="btn-skip" class="float-btn hidden" aria-label="Skip exercise" title="Skip">⏭️</button>
+    <button id="btn-ide" class="float-btn" aria-label="Toggle IDE mode" title="Toggle IDE mode">IDE Q</button>
     <button id="btn-ibe" class="float-btn" aria-label="Toggle InvisibleBoundaryEngine" title="Toggle InvisibleBoundaryEngine">IBE</button>
     <button id="toggleBoundaryViz" class="float-btn" aria-label="Toggle Boundary Visualizer" title="Toggle Boundary Visualization" style="right: 20px;">⚙️</button>
 
@@ -1011,6 +1013,19 @@ const FINGER = {
 const FINGER_ARRAYS = [FINGER.THUMB, FINGER.INDEX, FINGER.MIDDLE, FINGER.RING, FINGER.PINKY];
 const FINGER_NAMES = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'];
 const FINGER_TIPS = [4, 8, 12, 16, 20];
+const BOUNDARY_NODES = {
+    PIP: [6, 10, 14, 18],
+    DIP: [7, 11, 15, 19],
+    TIP: [8, 12, 16, 20],
+    MCP: [5, 9, 13, 17],
+};
+const THUMB_NODES = [1, 2, 3, 4];
+const IDE_COLORS = {
+    green: '#22c55e',
+    blue: '#3b82f6',
+    purple: '#8b5cf6',
+    red: '#ef4444',
+};
 
 // ============================================
 // EXERCISE LIBRARY
@@ -1107,6 +1122,7 @@ const state = {
     modalAction: null,
     // InvisibleBoundaryEngine toggle
     invisibleEnabled: true,
+    ideMode: 'quiet',
 };
 
 // ============================================
@@ -1130,6 +1146,7 @@ const el = {
     btnHome: $('btn-home'),
     btnAudio: $('btn-audio'),
     btnSkip: $('btn-skip'),
+    btnIde: $('btn-ide'),
     btnIbe: $('btn-ibe'),
     
     icon: $('instruction-icon'),
@@ -1186,6 +1203,29 @@ const el = {
 
 const ctx = el.canvas.getContext('2d');
 let audioCtx = null;
+
+// Initialize IDE mode button
+function updateIdeButton() {
+    if (!el.btnIde) return;
+    const isDev = state.ideMode === 'dev';
+    el.btnIde.classList.toggle('active', isDev);
+    el.btnIde.textContent = isDev ? 'IDE D' : 'IDE Q';
+    el.btnIde.title = isDev ? 'IDE dev mode' : 'IDE quiet mode';
+}
+
+if (el.btnIde) {
+    el.btnIde.addEventListener('click', () => {
+        state.ideMode = state.ideMode === 'dev' ? 'quiet' : 'dev';
+        updateIdeButton();
+        const msg = state.ideMode === 'dev' ? 'IDE dev mode enabled' : 'IDE quiet mode enabled';
+        el.toast.querySelector('.toast-message').textContent = msg;
+        el.toast.querySelector('.toast-icon').textContent = state.ideMode === 'dev' ? '🛠️' : '🌿';
+        el.toast.classList.add('show');
+        setTimeout(() => el.toast.classList.remove('show'), 1800);
+    });
+}
+
+updateIdeButton();
 
 // Initialize IBE toggle button
 function updateIbeButton() {
@@ -1895,6 +1935,187 @@ function project(pt) {
     return { x: (w - sw) / 2 + (1 - pt.x) * sw, y: (h - sh) / 2 + pt.y * sh };
 }
 
+function ideDrawCurvedBoundaryLine(lm, nodeIndices, color, lineWidth = 4, alpha = 1) {
+    const points = nodeIndices.map(i => project(lm[i]));
+    if (points.length < 2) return points;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.setLineDash([10, 6]);
+
+    ctx.beginPath();
+    const firstDir = { x: points[0].x - points[1].x, y: points[0].y - points[1].y };
+    const firstLen = Math.hypot(firstDir.x, firstDir.y) || 1;
+    const extStart = {
+        x: points[0].x + (firstDir.x / firstLen) * 60,
+        y: points[0].y + (firstDir.y / firstLen) * 60,
+    };
+
+    ctx.moveTo(extStart.x, extStart.y);
+    ctx.lineTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+
+    const lastDir = {
+        x: points[points.length - 1].x - points[points.length - 2].x,
+        y: points[points.length - 1].y - points[points.length - 2].y,
+    };
+    const lastLen = Math.hypot(lastDir.x, lastDir.y) || 1;
+    const extEnd = {
+        x: points[points.length - 1].x + (lastDir.x / lastLen) * 60,
+        y: points[points.length - 1].y + (lastDir.y / lastLen) * 60,
+    };
+
+    ctx.lineTo(extEnd.x, extEnd.y);
+    ctx.stroke();
+    ctx.restore();
+
+    return points;
+}
+
+function ideDrawZoneFill(topPoints, bottomPoints, color, alpha = 1) {
+    if (!topPoints || !bottomPoints) return;
+    if (topPoints.length < 2 || bottomPoints.length < 2) return;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(topPoints[0].x, topPoints[0].y);
+    for (let i = 1; i < topPoints.length; i++) {
+        ctx.lineTo(topPoints[i].x, topPoints[i].y);
+    }
+    for (let i = bottomPoints.length - 1; i >= 0; i--) {
+        ctx.lineTo(bottomPoints[i].x, bottomPoints[i].y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+}
+
+function ideDrawSafeZoneBlob(lm, alpha = 0.2) {
+    const wrist = project(lm[0]);
+    const thumbCMC = project(lm[1]);
+    const thumbMCP = project(lm[2]);
+    const indexMCP = project(lm[5]);
+    const middleMCP = project(lm[9]);
+    const ringMCP = project(lm[13]);
+    const pinkyMCP = project(lm[17]);
+
+    const indexPIP = project(lm[6]);
+    const middlePIP = project(lm[10]);
+    const ringPIP = project(lm[14]);
+    const pinkyPIP = project(lm[18]);
+
+    ctx.save();
+    ctx.fillStyle = `rgba(34, 197, 94, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(wrist.x, wrist.y);
+    ctx.lineTo(pinkyMCP.x, pinkyMCP.y);
+    ctx.lineTo(pinkyPIP.x, pinkyPIP.y);
+    ctx.lineTo(ringPIP.x, ringPIP.y);
+    ctx.lineTo(middlePIP.x, middlePIP.y);
+    ctx.lineTo(indexPIP.x, indexPIP.y);
+    ctx.lineTo(indexMCP.x, indexMCP.y);
+    ctx.lineTo(thumbMCP.x, thumbMCP.y);
+    ctx.lineTo(thumbCMC.x, thumbCMC.y);
+    ctx.lineTo(wrist.x, wrist.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+}
+
+function ideGetRedLine(lm) {
+    const wrist = project(lm[0]);
+    const thumbCMC = project(lm[1]);
+    const thumbMCP = project(lm[2]);
+    const middleMCP = project(lm[9]);
+    const indexMCP = project(lm[5]);
+    const pinkyMCP = project(lm[17]);
+
+    const handSize = Math.max(60, Math.hypot(pinkyMCP.x - indexMCP.x, pinkyMCP.y - indexMCP.y));
+    const axisRaw = { x: middleMCP.x - wrist.x, y: middleMCP.y - wrist.y };
+    const axisLen = Math.hypot(axisRaw.x, axisRaw.y) || 1;
+    const axis = { x: axisRaw.x / axisLen, y: axisRaw.y / axisLen };
+
+    const base = {
+        x: thumbCMC.x + (thumbMCP.x - thumbCMC.x) * 1.5,
+        y: thumbCMC.y + (thumbMCP.y - thumbCMC.y) * 1.5,
+    };
+
+    const extendBefore = 0.35 * handSize;
+    const extendAfter = 1.25 * handSize;
+    const start = { x: base.x - axis.x * extendBefore, y: base.y - axis.y * extendBefore };
+    const end = { x: base.x + axis.x * extendAfter, y: base.y + axis.y * extendAfter };
+
+    return { start, end };
+}
+
+function ideDrawRedLine(redLine, alpha = 1) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = IDE_COLORS.red;
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(redLine.start.x, redLine.start.y);
+    ctx.lineTo(redLine.end.x, redLine.end.y);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function ideDrawNodes(lm) {
+    for (let i = 0; i < 21; i++) {
+        const p = project(lm[i]);
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 11, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 9px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(i), p.x, p.y);
+    }
+}
+
+function renderIDEOverlay(lm, mode) {
+    if (!lm || !ctx) return;
+    const quiet = mode !== 'dev';
+    const pipPoints = BOUNDARY_NODES.PIP.map(i => project(lm[i]));
+    const dipPoints = BOUNDARY_NODES.DIP.map(i => project(lm[i]));
+    const tipPoints = BOUNDARY_NODES.TIP.map(i => project(lm[i]));
+
+    if (!quiet) {
+        ideDrawSafeZoneBlob(lm, 0.2);
+        ideDrawZoneFill(pipPoints, dipPoints, 'rgba(59, 130, 246, 0.22)', 1);
+        ideDrawZoneFill(dipPoints, tipPoints, 'rgba(139, 92, 246, 0.18)', 1);
+    }
+
+    const lineAlpha = quiet ? 0.55 : 0.95;
+    const lineWidth = quiet ? 3 : 4;
+    ideDrawCurvedBoundaryLine(lm, BOUNDARY_NODES.PIP, IDE_COLORS.green, lineWidth, lineAlpha);
+    ideDrawCurvedBoundaryLine(lm, BOUNDARY_NODES.DIP, IDE_COLORS.blue, lineWidth, lineAlpha);
+    ideDrawCurvedBoundaryLine(lm, BOUNDARY_NODES.TIP, IDE_COLORS.purple, lineWidth, lineAlpha);
+
+    if (!quiet) {
+        const redLine = ideGetRedLine(lm);
+        ideDrawRedLine(redLine, 0.95);
+        ideDrawNodes(lm);
+    }
+}
+
 function renderVisuals(lm) {
     if (!lm || !ctx) {
         if (!ctx) console.warn('Canvas context (ctx) not initialized');
@@ -1902,27 +2123,37 @@ function renderVisuals(lm) {
     }
     
     const ex = state.exercises && state.exercises[state.exIdx] ? state.exercises[state.exIdx] : null;
+    const useIbeVisuals = !!state.invisibleEnabled;
+    const ideMode = state.ideMode || 'quiet';
+    const showDevExtras = ideMode === 'dev';
     
-    // Always render neutral skeleton
-    renderNeutralSkeleton(lm, ex);
-    // Draw per-finger targets (glow when selected)
-    renderFingerTargets(lm, ex);
+    // Always render neutral skeleton (no targets when IBE is off)
+    renderNeutralSkeleton(lm, useIbeVisuals && showDevExtras ? ex : null);
     
-    // For spread exercises, show shaded zones
-    if (ex.type === 'spread' && state.phase === 'EXECUTE') {
-        renderSpreadZones(lm);
-    }
-    
-    // InvisibleBoundaryEngine overlay (shows immediately when IBE is ON)
-    if (state.invisibleEnabled && state.phase === 'EXECUTE') {
-        renderIBEOverlay(lm, ex);
-    }
-    
-    // === BOUNDARY VISUALIZER ===
-    // Render boundary zones visualization (only draws if enabled)
-    if (typeof BoundaryVisualizer !== 'undefined') {
-        const targetFingers = ex?.targetFingers || [];
-        BoundaryVisualizer.render(ctx, el.canvas, lm, targetFingers, state.lastEvaluation || null);
+    if (useIbeVisuals) {
+        renderIDEOverlay(lm, ideMode);
+        
+        if (showDevExtras) {
+            // Draw per-finger targets (glow when selected)
+            renderFingerTargets(lm, ex);
+            
+            // For spread exercises, show shaded zones
+            if (ex.type === 'spread' && state.phase === 'EXECUTE') {
+                renderSpreadZones(lm);
+            }
+            
+            // InvisibleBoundaryEngine overlay (shows immediately when IBE is ON)
+            if (state.phase === 'EXECUTE') {
+                renderIBEOverlay(lm, ex);
+            }
+            
+            // === BOUNDARY VISUALIZER ===
+            // Render boundary zones visualization (only draws if enabled)
+            if (typeof BoundaryVisualizer !== 'undefined') {
+                const targetFingers = ex?.targetFingers || [];
+                BoundaryVisualizer.render(ctx, el.canvas, lm, targetFingers, state.lastEvaluation || null);
+            }
+        }
     }
 }
 
