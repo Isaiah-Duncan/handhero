@@ -491,6 +491,31 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
+
+        /* Guidance popup animation */
+        @keyframes guidance-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.02); opacity: 1; }
+        }
+
+        .guidance-active #portal-frame {
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Skip modal - make it more prominent after long red */
+        #modal-skip-suggest.urgent {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        #modal-skip-suggest.urgent .modal-content {
+            border: 2px solid var(--zone-red-solid);
+        }
+
+        /* Glowing finger effect keyframes */
+        @keyframes finger-glow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
+            50% { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.9)); }
+        }
     </style>
 </head>
 <body>
@@ -771,16 +796,25 @@ const CONFIG = {
     // Skeleton smoothing (0-0.95). Higher = smoother but more lag.
     SKELETON_SMOOTHING: 0.6,
     
-    // Skip suggestion triggers
-    SKIP_SUGGEST_AFTER_SECONDS: 10,
-    SKIP_SUGGEST_AFTER_FLICKERS: 15,
-
-    // Accuracy gating + guidance
-    GOOD_ZONE_GRACE_MS: 1000,
-    RED_GUIDANCE_MS: 2500,
-    RED_PAUSE_MS: 1000,
+    // === NEW UX TIMING CONSTANTS ===
+    // Skip suggestion only after 15 seconds of sustained red
     SKIP_RED_MS: 15000,
-    
+
+    // Zone stability timing
+    GOOD_ZONE_STABLE_MS: 1500,      // 1.5s in blue/green to start counting
+    GOOD_ZONE_GRACE_MS: 1000,       // 1s accumulator for zone stability
+
+    // Red zone handling
+    RED_GUIDANCE_TRIGGER_MS: 2500,  // 2.5s red triggers guidance (not restart)
+    RED_PAUSE_HOLD_MS: 1000,        // Pause timer for 1s during guidance
+
+    // Pinch proximity detection
+    PINCH_PROXIMITY_MS: 500,        // 0.5s proximity touch to trigger countdown
+    PINCH_TOUCH_THRESHOLD: 0.10,    // Normalized distance for "touching"
+
+    // Fist thumb tolerance
+    FIST_THUMB_NODES_ALLOWED: 2,    // Allow 1-2 thumb nodes past red line for fist
+
     // Low light detection
     LOW_LIGHT_THRESHOLD: 50,
 };
@@ -1269,7 +1303,15 @@ const state = {
     guidanceMessage: '',
     goodZoneAccum: 0,
     lastZoneTs: 0,
-    
+
+    // New UX improvement state variables
+    zoneStableStart: 0,       // When stable zone started
+    zoneStableAccum: 0,       // Time accumulated in good zone
+    redZoneDuration: 0,       // How long in red
+    guidanceActive: false,    // Guidance overlay showing
+    pinchProximityStart: 0,   // When pinch fingers started touching
+    lastZone: 'RED',          // Previous frame's zone
+
     // Low light tracking
     lowLightDetected: false,
     brightnessHistory: [],
@@ -1833,12 +1875,11 @@ function checkLowLight() {
 function checkSkipSuggestion() {
     if (state.skipSuggestionShown || state.cooldown || state.phase !== 'EXECUTE') return;
 
-    const redDurationMs = state.redZoneStart ? (Date.now() - state.redZoneStart) : 0;
-
-    // Only show after sustained red for long duration
-    if (redDurationMs >= CONFIG.SKIP_RED_MS) {
+    // Only show after 15 SECONDS of sustained red (not just any red)
+    if (state.redZoneDuration >= CONFIG.SKIP_RED_MS) {
         state.skipSuggestionShown = true;
         el.modalSkip.classList.add('show');
+        el.modalSkip.classList.add('urgent'); // More prominent styling
     }
 }
 
@@ -1859,6 +1900,53 @@ function updateTimer() {
 }
 
 // ============================================
+// RESET PHASE HELPER FUNCTIONS
+// ============================================
+
+function countThumbNodesPastRedLine(lm) {
+    // Simplified check - count how many thumb nodes are extended
+    const wrist = lm[0];
+    const indexMCP = lm[5];
+    const thumbNodes = [1, 2, 3, 4];
+
+    let count = 0;
+    for (const nodeIdx of thumbNodes) {
+        const node = lm[nodeIdx];
+        // Check if thumb node is significantly past the palm plane
+        const palmCenterY = (wrist.y + indexMCP.y) / 2;
+        if (node.y < palmCenterY - 0.05) {
+            count++;
+        }
+    }
+    return count;
+}
+
+function checkNonThumbFingersCurled(lm) {
+    // Check if index, middle, ring, pinky are curled (ignore thumb)
+    const frame = BoundaryEngine.getHandFrame(lm);
+    let curledCount = 0;
+
+    for (let i = 1; i <= 4; i++) { // Skip thumb (0)
+        if (typeof BoundaryEngine.checkFingerCurled === 'function') {
+            const result = BoundaryEngine.checkFingerCurled(i, lm, frame);
+            if (result && result.score >= 0.5) curledCount++;
+        } else {
+            // Fallback: simple distance check
+            const fingerBases = [[5, 8], [9, 12], [13, 16], [17, 20]];
+            const [baseIdx, tipIdx] = fingerBases[i - 1];
+            const base = lm[baseIdx];
+            const tip = lm[tipIdx];
+            const wrist = lm[0];
+            const baseToWrist = Math.hypot(base.x - wrist.x, base.y - wrist.y);
+            const tipToWrist = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
+            if (tipToWrist < baseToWrist * 1.1) curledCount++;
+        }
+    }
+
+    return curledCount >= 3; // At least 3 of 4 fingers curled
+}
+
+// ============================================
 // RESET PHASE
 // ============================================
 let relaxedResetBuffer = [];
@@ -1876,6 +1964,34 @@ function checkResetPhase() {
     } else {
         const result = BoundaryEngine.evaluateFist(lm);
         relaxedCurled = result && result.accuracy >= 0.55;
+    }
+
+    // Allow fist even if 1-2 thumb nodes cross the "red line"
+    // Thumb naturally sticks out slightly when making a fist
+    if (!relaxedCurled) {
+        // Check if other 4 fingers (index, middle, ring, pinky) are curled
+        // Accept if 3+ of the 4 fingers are curled
+        let curledFingerCount = 0;
+        const fingerBases = [[5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20]]; // Index, Middle, Ring, Pinky
+
+        for (const fingerNodes of fingerBases) {
+            const base = lm[fingerNodes[0]];
+            const tip = lm[fingerNodes[3]];
+            const wrist = lm[0];
+
+            // Calculate if finger is curled (tip closer to wrist than base)
+            const baseToWrist = Math.hypot(base.x - wrist.x, base.y - wrist.y);
+            const tipToWrist = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
+
+            if (tipToWrist < baseToWrist * 1.1) {
+                curledFingerCount++;
+            }
+        }
+
+        // If 3+ of 4 fingers are curled, accept as fist (thumb allowed to extend 1-2 nodes)
+        if (curledFingerCount >= 3) {
+            relaxedCurled = true;
+        }
     }
     
     relaxedResetBuffer.push(relaxedCurled);
@@ -2044,7 +2160,30 @@ function updateExecutePhase() {
     const zoneLabel = resolveZoneLabel(result.zone);
     let inGoodZone = zoneLabel === 'GREEN' || zoneLabel === 'BLUE';
     const pinchDist = getPinchDistanceNormalized(evalLm, ex);
-    if (pinchDist !== null && pinchDist <= 0.12) {
+
+    // Pinch proximity detection - 0.5s finger touch triggers countdown
+    let pinchProximityPass = false;
+    if (pinchDist !== null) {
+        if (pinchDist <= CONFIG.PINCH_TOUCH_THRESHOLD) {
+            // Fingers are touching
+            if (!state.pinchProximityStart) {
+                state.pinchProximityStart = now;
+            }
+            // After PINCH_PROXIMITY_MS of touching, count as good zone
+            if ((now - state.pinchProximityStart) >= CONFIG.PINCH_PROXIMITY_MS) {
+                pinchProximityPass = true;
+            }
+        } else {
+            state.pinchProximityStart = 0;
+        }
+        // Legacy compatibility: also pass if distance is very close
+        if (pinchDist <= 0.12) {
+            inGoodZone = true;
+        }
+    }
+
+    // Override inGoodZone if pinch proximity triggered
+    if (pinchProximityPass) {
         inGoodZone = true;
     }
 
@@ -2052,52 +2191,90 @@ function updateExecutePhase() {
     const dt = Math.max(0, now - lastTs);
     state.lastZoneTs = now;
 
+    // Track zone stability with accumulator (not instant pass/fail)
     if (inGoodZone) {
+        // Accumulate time in good zone
+        state.zoneStableAccum = Math.min(CONFIG.GOOD_ZONE_STABLE_MS, state.zoneStableAccum + dt);
         state.goodZoneAccum = Math.min(CONFIG.GOOD_ZONE_GRACE_MS, state.goodZoneAccum + dt);
-    } else {
-        state.goodZoneAccum = Math.max(0, state.goodZoneAccum - dt * 0.5);
-    }
-
-    if (zoneLabel === 'RED') {
-        if (!state.redZoneStart) state.redZoneStart = now;
-    } else {
+        // Reset red zone duration when in good zone
+        state.redZoneDuration = 0;
         state.redZoneStart = 0;
+        state.guidanceActive = false;
+    } else if (zoneLabel === 'YELLOW') {
+        // Yellow zone: slow decay, don't restart timer
+        state.zoneStableAccum = Math.max(0, state.zoneStableAccum - dt * 0.3);
+        state.goodZoneAccum = Math.max(0, state.goodZoneAccum - dt * 0.3);
+        state.redZoneDuration = 0;
+        state.redZoneStart = 0;
+        state.guidanceActive = false;
+    } else {
+        // Red zone: track duration but use slower decay for brief flickers
+        if (!state.redZoneStart) state.redZoneStart = now;
+        state.redZoneDuration = now - state.redZoneStart;
+
+        // Brief red flickers (<2.5s) don't restart timer, just slow decay
+        if (state.redZoneDuration < CONFIG.RED_GUIDANCE_TRIGGER_MS) {
+            state.zoneStableAccum = Math.max(0, state.zoneStableAccum - dt * 0.5);
+            state.goodZoneAccum = Math.max(0, state.goodZoneAccum - dt * 0.5);
+        } else {
+            // Sustained red: faster decay
+            state.zoneStableAccum = Math.max(0, state.zoneStableAccum - dt);
+            state.goodZoneAccum = Math.max(0, state.goodZoneAccum - dt);
+        }
     }
 
-    const goodZoneStable = state.goodZoneAccum >= CONFIG.GOOD_ZONE_GRACE_MS;
-    const effectivePass = !!goodZoneStable;
+    // Countdown starts after 1.5s stable in blue/green zone
+    const goodZoneStable = state.zoneStableAccum >= CONFIG.GOOD_ZONE_STABLE_MS;
+    const effectivePass = !!goodZoneStable || pinchProximityPass;
 
-    if (state.redZoneStart && (now - state.redZoneStart) >= CONFIG.RED_GUIDANCE_MS && now > state.guidanceUntil) {
-        state.guidanceUntil = now + CONFIG.RED_PAUSE_MS;
+    // 2.5s sustained red triggers guidance popup (doesn't reset timer)
+    if (state.redZoneDuration >= CONFIG.RED_GUIDANCE_TRIGGER_MS && !state.guidanceActive) {
+        state.guidanceActive = true;
+        state.guidanceUntil = now + CONFIG.RED_PAUSE_HOLD_MS;
         state.pauseHoldUntil = state.guidanceUntil;
         state.guidanceMessage = getGuidanceMessage(ex);
-        if (state.holding) state.holdStart += CONFIG.RED_PAUSE_MS;
+        // Pause timer during guidance, don't reset
+        if (state.holding) state.holdStart += CONFIG.RED_PAUSE_HOLD_MS;
+    }
+
+    // Clear guidance when returning to good zone
+    if (inGoodZone && state.guidanceActive) {
+        state.guidanceActive = false;
+        state.guidanceUntil = 0;
     }
 
     const isPaused = now < state.pauseHoldUntil;
 
-    // Hold logic with soft decay
+    // Hold logic with soft decay - timer keeps running with minor flickers
     if (!isPaused && effectivePass) {
         if (!state.holding) {
             state.holding = true;
             state.holdStart = Date.now();
         }
-        
+
         // Progress faster with higher accuracy
         const multiplier = 0.5 + result.score * 0.5;
         const holdTime = Date.now() - state.holdStart;
         state.progress = Math.min(1, (holdTime / CONFIG.HOLD_DURATION_MS) * multiplier);
-        
+
         // Check for success
         if (state.progress >= 1 && result.score >= 0.65) {
             exerciseSuccess(result.score);
         }
-    } else if (!isPaused) {
-        state.holding = false;
-        // Soft decay instead of hard reset
+    } else if (!isPaused && state.redZoneDuration < CONFIG.RED_GUIDANCE_TRIGGER_MS) {
+        // Only soft decay if NOT in prolonged red
+        // Timer keeps running with minor flickers
+        state.progress = Math.max(0, state.progress - CONFIG.SOFT_DECAY_RATE * 0.5);
+    } else if (isPaused) {
+        // Paused - don't decay, just wait
+    } else {
+        // Prolonged red - faster decay but don't reset holding
         state.progress = Math.max(0, state.progress - CONFIG.SOFT_DECAY_RATE);
     }
-    
+
+    // Track zone for next frame
+    state.lastZone = zoneLabel;
+
     // Update UI
     el.bar.style.width = (50 + state.progress * 50) + '%';
     
@@ -2109,6 +2286,9 @@ function updateExecutePhase() {
     } else {
         el.frame.className = '';
     }
+
+    // Toggle guidance-active class for CSS styling
+    document.body.classList.toggle('guidance-active', state.guidanceActive);
     
     // Timer display
     if (state.holding && state.progress < 1) {
@@ -2490,16 +2670,39 @@ function renderVisuals(lm) {
     const useIbeVisuals = !!state.invisibleEnabled;
     const ideMode = state.ideMode || 'quiet';
     const showDevExtras = ideMode === 'dev';
-    const guidanceActive = state.guidanceUntil && performance.now() < state.guidanceUntil;
-    
+    const guidanceActive = state.guidanceActive || (state.guidanceUntil && performance.now() < state.guidanceUntil);
+
     // Always render neutral skeleton (no targets when IBE is off)
     renderNeutralSkeleton(lm, useIbeVisuals && showDevExtras ? ex : null);
-    
+
     if (useIbeVisuals) {
         renderIDEOverlay(lm, ideMode);
 
+        // During EXECUTE phase, show glowing target fingers (orange)
+        if (state.phase === 'EXECUTE' && ex) {
+            const targetFingerIndices = getTargetFingerIndices(ex);
+            drawGlowingTargetFingers(lm, targetFingerIndices, '#f59e0b');
+        }
+
         if (guidanceActive) {
             renderGuidanceOverlay(lm, ex);
+
+            // Show additional guidance visuals when guidance is active
+            if (ex) {
+                // For pinch exercises, show the dotted line between target tips
+                if (ex.type === 'pinch') {
+                    drawGuidanceDottedLine(lm, ex);
+                }
+
+                // Show pulsing target nodes
+                const targetTipNodes = getTargetTipNodesForExercise(ex);
+                drawPulsingTargetNodes(lm, targetTipNodes, '#22c55e');
+
+                // Show HUD popup message
+                if (state.guidanceMessage) {
+                    drawHudPopupMessage(lm, state.guidanceMessage);
+                }
+            }
         }
 
         // Draw per-finger targets (glow when selected)
@@ -2510,12 +2713,12 @@ function renderVisuals(lm) {
             if (ex.type === 'spread' && state.phase === 'EXECUTE') {
                 renderSpreadZones(lm);
             }
-            
+
             // InvisibleBoundaryEngine overlay (shows immediately when IBE is ON)
             if (state.phase === 'EXECUTE') {
                 renderIBEOverlay(lm, ex);
             }
-            
+
             // === BOUNDARY VISUALIZER ===
             // Render boundary zones visualization (only draws if enabled)
             if (typeof BoundaryVisualizer !== 'undefined') {
@@ -2864,6 +3067,244 @@ function drawZoneLabel(text, p, ox = 0, oy = 0) {
     ctx.font = '12px system-ui';
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillText(text, p.x + ox + 8, p.y + oy - 8);
+    ctx.restore();
+}
+
+// ============================================
+// VISUAL EFFECT FUNCTIONS (UX Improvements)
+// ============================================
+
+/**
+ * A) Glowing Target Finger
+ * Draws thick glowing lines along finger bones with pulsing ring around fingertip
+ */
+function drawGlowingTargetFingers(lm, targetFingers, color = '#f59e0b') {
+    if (!lm || !ctx || !targetFingers || !targetFingers.length) return;
+
+    const now = performance.now();
+    const pulse = 0.7 + 0.3 * Math.sin(now / 200);
+    const pulseRing = 16 + 8 * Math.sin(now / 250);
+
+    ctx.save();
+
+    targetFingers.forEach(fi => {
+        const nodes = FINGER_ARRAYS[fi];
+        if (!nodes || nodes.length === 0) return;
+
+        // Draw glowing finger bones
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 20 * pulse;
+        ctx.globalAlpha = 0.85;
+
+        ctx.beginPath();
+        for (let i = 0; i < nodes.length - 1; i++) {
+            const a = project(lm[nodes[i]]);
+            const b = project(lm[nodes[i + 1]]);
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+        }
+        ctx.stroke();
+
+        // Draw pulsing ring around fingertip
+        const tipNode = nodes[nodes.length - 1];
+        const tip = project(lm[tipNode]);
+
+        ctx.beginPath();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = color;
+        ctx.shadowBlur = 25 * pulse;
+        ctx.globalAlpha = 0.9;
+        ctx.arc(tip.x, tip.y, pulseRing, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner ring
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.6;
+        ctx.arc(tip.x, tip.y, pulseRing * 0.6, 0, Math.PI * 2);
+        ctx.stroke();
+    });
+
+    ctx.restore();
+}
+
+/**
+ * B) Guidance Dotted Line (for pinch)
+ * Draws dashed line between two pinch target nodes with pulsing green circles
+ */
+function drawGuidanceDottedLine(lm, ex) {
+    if (!lm || !ctx || !ex || ex.type !== 'pinch' || !Array.isArray(ex.pinchPair)) return;
+
+    const now = performance.now();
+    const pulse = 0.6 + 0.4 * Math.sin(now / 200);
+    const [node1, node2] = ex.pinchPair;
+    const p1 = project(lm[node1]);
+    const p2 = project(lm[node2]);
+
+    ctx.save();
+
+    // Dashed line between tips
+    ctx.setLineDash([8, 6]);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(34, 197, 94, 0.8)';
+    ctx.shadowColor = '#22c55e';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Pulsing green circles on each tip
+    const ringRadius = 14 + 6 * pulse;
+    [p1, p2].forEach(p => {
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = `rgba(34, 197, 94, ${0.7 + 0.3 * pulse})`;
+        ctx.shadowBlur = 15 * pulse;
+        ctx.arc(p.x, p.y, ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner dot
+        ctx.beginPath();
+        ctx.fillStyle = '#22c55e';
+        ctx.shadowBlur = 0;
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // Text label "Touch tips together"
+    const midX = (p1.x + p2.x) / 2;
+    const midY = (p1.y + p2.y) / 2 - 25;
+    ctx.font = 'bold 14px Nunito, system-ui';
+    ctx.fillStyle = '#22c55e';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+    ctx.fillText('Touch tips together', midX, midY);
+
+    ctx.restore();
+}
+
+/**
+ * C) Pulsing Target Nodes
+ * Draws animated pulsing circles on specified nodes with crosshair pattern
+ */
+function drawPulsingTargetNodes(lm, nodes, color = '#22c55e') {
+    if (!lm || !ctx || !nodes || !nodes.length) return;
+
+    const now = performance.now();
+    const pulse = 0.6 + 0.4 * Math.sin(now / 180);
+    const ringRadius = 18 + 8 * pulse;
+
+    ctx.save();
+
+    nodes.forEach(nodeIdx => {
+        if (nodeIdx < 0 || nodeIdx >= lm.length) return;
+        const p = project(lm[nodeIdx]);
+
+        // Outer pulsing ring
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 15 * pulse;
+        ctx.globalAlpha = 0.7 + 0.3 * pulse;
+        ctx.arc(p.x, p.y, ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Crosshair pattern
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 0.6;
+        const cross = ringRadius * 0.6;
+        ctx.moveTo(p.x - cross, p.y);
+        ctx.lineTo(p.x + cross, p.y);
+        ctx.moveTo(p.x, p.y - cross);
+        ctx.lineTo(p.x, p.y + cross);
+        ctx.stroke();
+
+        // Center dot
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 1;
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.restore();
+}
+
+/**
+ * D) HUD Popup Message
+ * Positioned above palm HUD circle with black rounded rect, orange border, white text
+ */
+function drawHudPopupMessage(lm, message) {
+    if (!lm || !ctx || !message) return;
+
+    const palm = getPalmCenterPx(lm);
+    const handSize = estimateHandSizePx(lm);
+    const now = performance.now();
+
+    // Position above palm
+    const boxX = palm.x;
+    const boxY = palm.y - handSize * 0.8;
+
+    // Bouncing arrow animation
+    const bounce = 4 * Math.sin(now / 150);
+
+    ctx.save();
+
+    // Measure text
+    ctx.font = 'bold 15px Nunito, system-ui';
+    const textWidth = ctx.measureText(message).width;
+    const padding = 14;
+    const boxWidth = textWidth + padding * 2;
+    const boxHeight = 36;
+
+    // Black rounded rectangle with orange border
+    const rx = boxX - boxWidth / 2;
+    const ry = boxY - boxHeight / 2;
+    const radius = 10;
+
+    ctx.beginPath();
+    ctx.moveTo(rx + radius, ry);
+    ctx.lineTo(rx + boxWidth - radius, ry);
+    ctx.quadraticCurveTo(rx + boxWidth, ry, rx + boxWidth, ry + radius);
+    ctx.lineTo(rx + boxWidth, ry + boxHeight - radius);
+    ctx.quadraticCurveTo(rx + boxWidth, ry + boxHeight, rx + boxWidth - radius, ry + boxHeight);
+    ctx.lineTo(rx + radius, ry + boxHeight);
+    ctx.quadraticCurveTo(rx, ry + boxHeight, rx, ry + boxHeight - radius);
+    ctx.lineTo(rx, ry + radius);
+    ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+    ctx.closePath();
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fill();
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // White text
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(message, boxX, boxY);
+
+    // Bouncing arrow pointing down to palm HUD
+    const arrowY = boxY + boxHeight / 2 + 10 + bounce;
+    ctx.beginPath();
+    ctx.fillStyle = '#f59e0b';
+    ctx.moveTo(boxX, arrowY + 12);
+    ctx.lineTo(boxX - 8, arrowY);
+    ctx.lineTo(boxX + 8, arrowY);
+    ctx.closePath();
+    ctx.fill();
+
     ctx.restore();
 }
 
