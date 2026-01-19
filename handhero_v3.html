@@ -396,7 +396,21 @@
         .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: #e8e4df; transition: background 0.35s, transform 0.35s; z-index: 3; display: inline-block; }
         .onboarding-dot.active { background: white; transform: scale(1.05); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
         .onboarding-dot.completed { background: #d8d8d8; }
-        .onboarding-dots .pill { position: absolute; left: 0; top: 50%; width: 28px; height: 10px; border-radius: 999px; background: var(--color-sage); transform: translate(0, -50%); transition: transform 480ms cubic-bezier(.2,.8,.2,1); will-change: transform; pointer-events: none; box-shadow: 0 6px 14px rgba(0,0,0,0.10); z-index: 1; }
+        .onboarding-dots .pill {
+          position: absolute;
+          left: 0;
+          top: 50%;
+          width: 28px;
+          height: 10px;
+          border-radius: 999px;
+          background: #cfd3d8;
+          transform: translate(0, -50%);
+          transition: transform 780ms cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: transform;
+          pointer-events: none;
+          box-shadow: 0 6px 14px rgba(0,0,0,0.10);
+          z-index: 1;
+        }
         
         /* Disclaimer */
         .disclaimer-box { background: white; border: 1px solid #e8e4df; border-radius: 16px; padding: 20px; text-align: left; margin-bottom: 24px; max-height: 180px; overflow-y: auto; }
@@ -1222,30 +1236,51 @@ function updateStepUI() {
 }
 
 function setStepperPill(stepIndex) {
-    const stepper = document.querySelector('.onboarding-step.active .onboarding-dots');
-    if (!stepper) return;
-    let pill = stepper.querySelector('.pill');
-    if (!pill) {
-        pill = document.createElement('div');
-        pill.className = 'pill';
-        stepper.appendChild(pill);
-    }
+  const stepper = document.querySelector('.onboarding-step.active .onboarding-dots');
+  if (!stepper) return;
 
-    const dots = Array.from(stepper.querySelectorAll('.onboarding-dot'));
-    if (dots.length === 0) return;
-    dots.forEach((d, i) => d.classList.toggle('completed', i < stepIndex));
+  let pill = stepper.querySelector('.pill');
+  const isNewPill = !pill;
 
-    const target = dots[Math.max(0, Math.min(stepIndex, dots.length - 1))];
-    const stepperRect = stepper.getBoundingClientRect();
-    const dotRect = target.getBoundingClientRect();
+  if (!pill) {
+    pill = document.createElement('div');
+    pill.className = 'pill';
+    stepper.appendChild(pill);
+  }
 
-    // Ensure pill has a measured width (force layout) before centering
-    const pillRect = pill.getBoundingClientRect();
-    const pillW = pillRect.width || 28;
+  const dots = Array.from(stepper.querySelectorAll('.onboarding-dot'));
+  if (dots.length === 0) return;
 
-    // Center pill over the dot
-    const x = (dotRect.left - stepperRect.left) + (dotRect.width / 2) - (pillW / 2);
-    pill.style.transform = `translate(${Math.round(x)}px, -50%)`;
+  dots.forEach((d, i) => d.classList.toggle('completed', i < stepIndex));
+
+  const target = dots[Math.max(0, Math.min(stepIndex, dots.length - 1))];
+  const stepperRect = stepper.getBoundingClientRect();
+  const dotRect = target.getBoundingClientRect();
+
+  // Measure pill width after insertion
+  const pillRect = pill.getBoundingClientRect();
+  const pillW = pillRect.width || 28;
+
+  // Center pill over the dot
+  const x = (dotRect.left - stepperRect.left) + (dotRect.width / 2) - (pillW / 2);
+  const transformValue = `translate(${Math.round(x)}px, -50%)`;
+
+  // Prevent the "jump" when switching steps (new dot row / new pill)
+  if (isNewPill) {
+    // Place it instantly at the correct position without animation
+    const prevTransition = pill.style.transition;
+    pill.style.transition = 'none';
+    pill.style.transform = transformValue;
+
+    // Re-enable CSS transition next frame so subsequent moves are smooth
+    requestAnimationFrame(() => {
+      pill.style.transition = prevTransition || '';
+    });
+    return;
+  }
+
+  // Normal smooth movement for existing pill
+  pill.style.transform = transformValue;
 }
 
 window.addEventListener('load', () => requestAnimationFrame(() => setStepperPill(state.step - 1)));
@@ -1630,7 +1665,10 @@ function checkResetPhase() {
         el.bar.style.width = '0%';
     }
     
-    const { ZONE } = InvisibleBoundaryEngine || {};
+    const ZONE = 
+        (typeof InvisibleBoundaryEngine !== 'undefined' && InvisibleBoundaryEngine.ZONE)
+            ? InvisibleBoundaryEngine.ZONE
+            : null;
     updateZoneIndicator(stableRelaxed ? (ZONE ? ZONE.YELLOW : 0.5) : (ZONE ? ZONE.RED : 0));
 }
 
