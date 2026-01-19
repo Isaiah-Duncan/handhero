@@ -1784,6 +1784,21 @@ function updateExecutePhase() {
         result = { score: r.accuracy || 0, passed: !!r.passed, zone: r.accuracy || 0 };
     }
     
+    const normalizedScore = (typeof result.score === 'number')
+        ? result.score
+        : (typeof result.accuracy === 'number')
+            ? result.accuracy
+            : (typeof result.overallScore === 'number' ? result.overallScore : 0);
+    const normalizedPassed = (typeof result.passed === 'boolean') ? result.passed : normalizedScore >= 0.65;
+    const fallbackZone = (typeof InvisibleBoundaryEngine !== 'undefined' && typeof InvisibleBoundaryEngine.getZoneFromScore === 'function')
+        ? InvisibleBoundaryEngine.getZoneFromScore(normalizedScore)
+        : normalizedScore;
+    const normalizedZone = result.zone || result.overallZone || fallbackZone;
+
+    result.score = normalizedScore;
+    result.passed = normalizedPassed;
+    result.zone = normalizedZone;
+
     // Update state
     state.currentAcc = result.score;
     state.lastEvaluation = result; // Store for BoundaryVisualizer
