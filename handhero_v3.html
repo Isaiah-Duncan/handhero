@@ -6,6 +6,7 @@
     <title>HandHero | Hand Therapy Companion</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="InvisibleBoundaryEngine.js"></script>
+    <script src="BoundaryVisualizer.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -497,6 +498,7 @@
     <button id="btn-audio" class="float-btn hidden" aria-label="Toggle audio" title="Toggle Audio">🔊</button>
     <button id="btn-skip" class="float-btn hidden" aria-label="Skip exercise" title="Skip">⏭️</button>
     <button id="btn-ibe" class="float-btn" aria-label="Toggle InvisibleBoundaryEngine" title="Toggle InvisibleBoundaryEngine">IBE</button>
+    <button id="toggleBoundaryViz" class="float-btn" aria-label="Toggle Boundary Visualizer" title="Toggle Boundary Visualization" style="right: 20px;">🔍</button>
 
     <!-- Toast Notification -->
     <div id="toast" class="toast">
@@ -1206,6 +1208,21 @@ if (el.btnIbe) {
 
 updateIbeButton();
 
+// Initialize BoundaryVisualizer toggle button
+const boundaryToggleBtn = document.getElementById('toggleBoundaryViz');
+if (boundaryToggleBtn && typeof BoundaryVisualizer !== 'undefined') {
+    boundaryToggleBtn.addEventListener('click', () => {
+        const isEnabled = BoundaryVisualizer.toggle();
+        boundaryToggleBtn.classList.toggle('active', isEnabled);
+        boundaryToggleBtn.textContent = isEnabled ? '🔍' : '🔍';
+        const msg = isEnabled ? 'Boundary Visualizer enabled' : 'Boundary Visualizer disabled';
+        el.toast.querySelector('.toast-message').textContent = msg;
+        el.toast.querySelector('.toast-icon').textContent = isEnabled ? '🟢' : '⚪';
+        el.toast.classList.add('show');
+        setTimeout(() => el.toast.classList.remove('show'), 1800);
+    });
+}
+
 // ============================================
 // TOAST NOTIFICATION
 // ============================================
@@ -1729,6 +1746,7 @@ function updateExecutePhase() {
     
     // Update state
     state.currentAcc = result.score;
+    state.lastEvaluation = result; // Store for BoundaryVisualizer
     if (result.score > state.peakAcc) state.peakAcc = result.score;
     
     // Update zone indicator
@@ -1898,6 +1916,13 @@ function renderVisuals(lm) {
     // InvisibleBoundaryEngine overlay (shows immediately when IBE is ON)
     if (state.invisibleEnabled && state.phase === 'EXECUTE') {
         renderIBEOverlay(lm, ex);
+    }
+    
+    // === BOUNDARY VISUALIZER ===
+    // Render boundary zones visualization (only draws if enabled)
+    if (typeof BoundaryVisualizer !== 'undefined') {
+        const targetFingers = ex?.targetFingers || [];
+        BoundaryVisualizer.render(ctx, el.canvas, lm, targetFingers, state.lastEvaluation || null);
     }
 }
 
