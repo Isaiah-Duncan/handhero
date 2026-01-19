@@ -776,7 +776,7 @@ const CONFIG = {
     SKIP_SUGGEST_AFTER_FLICKERS: 15,
 
     // Accuracy gating + guidance
-    GOOD_ZONE_GRACE_MS: 1500,
+    GOOD_ZONE_GRACE_MS: 1000,
     RED_GUIDANCE_MS: 2500,
     RED_PAUSE_MS: 1000,
     SKIP_RED_MS: 15000,
@@ -1267,6 +1267,8 @@ const state = {
     pauseHoldUntil: 0,
     guidanceUntil: 0,
     guidanceMessage: '',
+    goodZoneAccum: 0,
+    lastZoneTs: 0,
     
     // Low light tracking
     lowLightDetected: false,
@@ -1676,6 +1678,8 @@ function startExercise(index) {
     state.pauseHoldUntil = 0;
     state.guidanceUntil = 0;
     state.guidanceMessage = '';
+    state.goodZoneAccum = 0;
+    state.lastZoneTs = 0;
     
     // Ready gate - delay before tracking counts
     state.readyGateActive = true;
@@ -1944,6 +1948,30 @@ function getTargetTipNodesForExercise(ex) {
     return [];
 }
 
+function getTargetFingerIndices(ex) {
+    if (!ex) return [];
+    if (Array.isArray(ex.targetFingers) && ex.targetFingers.length) return ex.targetFingers;
+    if (ex.type === 'pinch' && Array.isArray(ex.pinchPair)) {
+        return ex.pinchPair.map(tipNode => FINGER_TIPS.indexOf(tipNode)).filter(i => i >= 0);
+    }
+    if (ex.type === 'spread' || ex.type === 'flat' || ex.type === 'fist') return [0,1,2,3,4];
+    return [];
+}
+
+function getPinchDistanceNormalized(lm, ex) {
+    if (!lm || !ex || ex.type !== 'pinch' || !Array.isArray(ex.pinchPair)) return null;
+    const frame = BoundaryEngine.getHandFrame(lm);
+    const [p1, p2] = ex.pinchPair;
+    const tip1 = lm[p1];
+    const tip2 = lm[p2];
+    const distance = Math.hypot(
+        tip1.x - tip2.x,
+        tip1.y - tip2.y,
+        (tip1.z || 0) - (tip2.z || 0)
+    );
+    return distance / frame.handWidth;
+}
+
 function getGuidanceMessage(ex) {
     if (!ex) return 'Adjust your hand position';
     if (ex.type === 'pinch') return ex.desc || 'Touch thumb to the target finger';
@@ -2014,12 +2042,20 @@ function updateExecutePhase() {
     
     const now = Date.now();
     const zoneLabel = resolveZoneLabel(result.zone);
-    const inGoodZone = zoneLabel === 'GREEN' || zoneLabel === 'BLUE';
+    let inGoodZone = zoneLabel === 'GREEN' || zoneLabel === 'BLUE';
+    const pinchDist = getPinchDistanceNormalized(evalLm, ex);
+    if (pinchDist !== null && pinchDist <= 0.12) {
+        inGoodZone = true;
+    }
+
+    const lastTs = state.lastZoneTs || now;
+    const dt = Math.max(0, now - lastTs);
+    state.lastZoneTs = now;
 
     if (inGoodZone) {
-        if (!state.goodZoneStart) state.goodZoneStart = now;
+        state.goodZoneAccum = Math.min(CONFIG.GOOD_ZONE_GRACE_MS, state.goodZoneAccum + dt);
     } else {
-        state.goodZoneStart = 0;
+        state.goodZoneAccum = Math.max(0, state.goodZoneAccum - dt * 0.5);
     }
 
     if (zoneLabel === 'RED') {
@@ -2028,7 +2064,7 @@ function updateExecutePhase() {
         state.redZoneStart = 0;
     }
 
-    const goodZoneStable = state.goodZoneStart && (now - state.goodZoneStart) >= CONFIG.GOOD_ZONE_GRACE_MS;
+    const goodZoneStable = state.goodZoneAccum >= CONFIG.GOOD_ZONE_GRACE_MS;
     const effectivePass = !!goodZoneStable;
 
     if (state.redZoneStart && (now - state.redZoneStart) >= CONFIG.RED_GUIDANCE_MS && now > state.guidanceUntil) {
@@ -2404,6 +2440,7 @@ function renderGuidanceOverlay(lm, ex) {
     const now = performance.now();
     const pulse = 0.6 + 0.4 * Math.sin(now / 180);
     const targets = getTargetTipNodesForExercise(ex);
+    const palm = project(lm[9]);
 
     ideDrawCurvedBoundaryLine(lm, BOUNDARY_NODES.PIP, IDE_COLORS.green, 4, 0.85);
     ideDrawCurvedBoundaryLine(lm, BOUNDARY_NODES.DIP, IDE_COLORS.blue, 4, 0.85);
@@ -2419,8 +2456,26 @@ function renderGuidanceOverlay(lm, ex) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(palm.x, palm.y);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
         ctx.restore();
     });
+
+    if (ex.type === 'pinch' && Array.isArray(ex.pinchPair)) {
+        const p1 = project(lm[ex.pinchPair[0]]);
+        const p2 = project(lm[ex.pinchPair[1]]);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(96, 165, 250, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+        ctx.restore();
+    }
 }
 
 function renderVisuals(lm) {
@@ -2477,12 +2532,32 @@ function renderFingerTargets(lm, ex) {
     if (!lm) return;
     const fingerColors = ['#e8998d','#68c896','#64b4e6','#d4a574','#c9a8d9'];
     const tips = FINGER_TIPS.map(i => project(lm[i]));
+    const targetFingers = getTargetFingerIndices(ex);
 
     tips.forEach((pt, fi) => {
-        const isPinch = ex && ex.type === 'pinch' && ex.pinchPair && ex.pinchPair.includes(FINGER_TIPS[fi]);
-        const isTarget = ex && ((ex.targetFingers && ex.targetFingers.includes(fi)) || ex.type === 'spread' || isPinch);
-
+        const isTarget = targetFingers.includes(fi);
         const base = fingerColors[fi] || '#cccccc';
+
+        if (isTarget) {
+            const nodes = FINGER_ARRAYS[fi] || [];
+            ctx.save();
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = base;
+            ctx.shadowColor = base;
+            ctx.shadowBlur = 20;
+            ctx.globalAlpha = 0.9;
+            ctx.beginPath();
+            for (let i = 0; i < nodes.length - 1; i++) {
+                const a = project(lm[nodes[i]]);
+                const b = project(lm[nodes[i + 1]]);
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
         // ring
         ctx.beginPath();
         ctx.lineWidth = isTarget ? 4 : 2;
